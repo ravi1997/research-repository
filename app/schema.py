@@ -1,7 +1,7 @@
 from flask_marshmallow import Marshmallow
 from marshmallow import fields, EXCLUDE
 
-from app.models import OTP, Client, Log, User
+from app.models import OTP, Client, Log, User, Article,Author
 
 ma = Marshmallow()
 
@@ -44,3 +44,20 @@ class GuestClientSchema(ma.SQLAlchemyAutoSchema):
         model = Client
         load_instance = True
         include_fk = True
+
+
+
+class AuthorSchema(ma.SQLAlchemyAutoSchema):
+    class Meta:
+        model = Author
+        load_instance = True
+        include_fk = True  # Include foreign keys
+
+
+class ArticleSchema(ma.SQLAlchemyAutoSchema):
+    class Meta:
+        model = Article
+        load_instance = True
+        include_fk = True
+
+    authors = fields.Nested(AuthorSchema, exclude=('articles',))  # Avoid circular dependency

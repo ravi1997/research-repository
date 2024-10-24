@@ -83,6 +83,8 @@ class User(db.Model):
     mobile = db.Column(db.String(30), nullable=False)
     email = db.Column(db.String(30), nullable=False)
 
+    
+
     roles = relationship("UserRoles", back_populates="user")
     status = db.Column(SQLAlchemyEnum(UserState), index=True, nullable=False, server_default=f'{UserState.CREATED}')
     employee_id = db.Column(db.String(20),nullable=False,unique=True)
@@ -97,6 +99,7 @@ class User(db.Model):
         self.firstname = firstname
         self.middlename = (middlename if middlename else None)
         self.lastname = (lastname if lastname else None)
+
 
         self.employee_id = employee_id
 
