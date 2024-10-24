@@ -1,7 +1,7 @@
 from flask_marshmallow import Marshmallow
 from marshmallow import fields, EXCLUDE
 
-from app.models import OTP, Client, Log, Organisation, User
+from app.models import OTP, Client, Log, User
 
 ma = Marshmallow()
 
@@ -13,15 +13,6 @@ class UserSchema(ma.SQLAlchemyAutoSchema):
         include_fk = True  # Include foreign keys
 
     clients = fields.Nested('ClientSchema', many=True, exclude=('user',))  # Avoid circular dependency
-
-
-class OrganisationSchema(ma.SQLAlchemyAutoSchema):
-    class Meta:
-        model = Organisation
-        load_instance = True
-        include_fk = True
-
-    users = fields.Nested(UserSchema, many=True, exclude=('organisation',))  # Avoid circular dependency
 
 
 class ClientSchema(ma.SQLAlchemyAutoSchema):

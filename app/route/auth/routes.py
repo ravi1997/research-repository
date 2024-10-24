@@ -4,10 +4,10 @@ from flask import jsonify,current_app
 from marshmallow import ValidationError
 from sqlalchemy import func
 
-from app.decorator import verify_GUEST_role, verify_body
-from app.models import OTP, Account, TokenList, User
+from app.decorator import verify_GUEST_role, verify_body, verify_user
+from app.models import OTP, User
 from app.extension import db,scheduler
-from app.schema import AccountSchema, GuestClientSchema, LoginAccoutSchema, UserSchema
+from app.schema import GuestClientSchema, UserSchema
 from app.util import decrypt, generate_otp, send_sms
 from . import auth_bp
 
@@ -182,7 +182,7 @@ def verifyOTP(request_data,session):
 
 
 @auth_bp.route("/logout", methods=["GET"])
-@verify_token
+@verify_user
 def logout(session):
     current_user = session.account_id
     db.session.delete(session)

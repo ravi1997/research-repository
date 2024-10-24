@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 import random
 import string
 import requests
-from extension import bcrypt
+from app.extension import bcrypt
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.backends import default_backend
 

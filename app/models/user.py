@@ -4,22 +4,24 @@ from app.extension import db, bcrypt
 from datetime import datetime
 from sqlalchemy import func
 
+from enum import Enum
+
 # ENUMS
-class UserState(SQLAlchemyEnum):
+class UserState(Enum):
     CREATED  = "created"
     ACTIVE   = "active"
     BLOCKED  = "blocked"
     DISABLED = "disabled"
     DELETED  = "deleted"
 
-class UserRole(SQLAlchemyEnum):
+class UserRole(Enum):
     SUPERADMIN = "superadmin"
     LIBRARYMANAGER = "libraryManager"
     FACULTY = "faculty"
     RESIDENT = "resident"
     GUEST = "guest"
 
-class ValidState(SQLAlchemyEnum):
+class ValidState(Enum):
     VALID = "valid"
     INVALID = "invalid"
 
@@ -30,13 +32,12 @@ class Client(db.Model):
     created_at = db.Column(DateTime, server_default=func.now())  # Corrected attribute name
     client_session_id = db.Column(db.String(64), index=True, unique=True, nullable=False)
     user_id = db.Column(db.Integer, ForeignKey('users.id'), index=True, nullable=True,server_default = '2') 
-    status = db.Column(SQLAlchemyEnum(ValidState), index=True, nullable=False, server_default=ValidState.VALID)
+    status = db.Column(SQLAlchemyEnum(ValidState), index=True, nullable=False, server_default=f'{ValidState.VALID}')
     ip = db.Column(db.String(16), nullable=True)
     salt = db.Column(db.String(256),nullable=False)
 
-    otp_id = db.Column(db.Integer, ForeignKey('otps.id'), index=True, nullable=True) 
     user = relationship("User", back_populates="clients")
-    otp = relationship("OTP", back_populates="client")
+    otp = relationship("OTP", back_populates="client",uselist=False)
     
     def __init__(self, client_session_id, user_id=None, ip=None):
         self.client_session_id = client_session_id
@@ -59,7 +60,7 @@ class OTP(db.Model):
     client_id = db.Column(db.Integer, ForeignKey('clients.id'), index=True, unique=True, nullable=False)  # Corrected table name
     otp = db.Column(db.String(7), nullable=False)
     created_at = db.Column(DateTime, server_default=func.now(), nullable=False)
-    status = db.Column(SQLAlchemyEnum(ValidState), index=True, nullable=False, server_default=ValidState.VALID)
+    status = db.Column(SQLAlchemyEnum(ValidState), index=True, nullable=False, server_default=f'{ValidState.VALID}')
     wrongAttempt = db.Column(db.Integer, server_default="0")
     sendAttempt = db.Column(db.Integer, server_default="0")
 
@@ -83,7 +84,7 @@ class User(db.Model):
     email = db.Column(db.String(30), nullable=False)
 
     roles = relationship("UserRoles", back_populates="user")
-    status = db.Column(SQLAlchemyEnum(UserState), index=True, nullable=False, server_default=UserState.CREATED)
+    status = db.Column(SQLAlchemyEnum(UserState), index=True, nullable=False, server_default=f'{UserState.CREATED}')
     employee_id = db.Column(db.String(20),nullable=False,unique=True)
 
     created_at = db.Column(DateTime, server_default=func.now(), nullable=False)
@@ -122,7 +123,7 @@ class User(db.Model):
         return self.status == UserState.BLOCKED
     
     def has_role(self, role):
-        return any(ur.role == role for ur in self.user_roles)
+        return any(ur.role == role for ur in self.roles)
 
 
 class UserRoles(db.Model):
@@ -130,4 +131,4 @@ class UserRoles(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
     role = db.Column(SQLAlchemyEnum(UserRole), primary_key=True)  # Use enum directly
 
-    user = relationship("User", back_populates="user_roles")  # Backref to User
+    user = relationship("User", back_populates="roles")  # Backref to User

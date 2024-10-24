@@ -1,4 +1,5 @@
 from app.extension import db
+from sqlalchemy import func
 
 
 class Log(db.Model):

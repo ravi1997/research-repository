@@ -9,7 +9,6 @@ from .route.main import main_bp
 from .route.auth import auth_bp
 from .route.public import public_bp
 from .route.user import user_bp
-from .route.account import account_bp
 from app.extra import job_listener
 from apscheduler.events import EVENT_JOB_EXECUTED
 from app.db_initializer import seed_db_command, empty_db_command
@@ -64,5 +63,4 @@ def create_app():
     app.register_blueprint(auth_bp, url_prefix="/waitinglist/auth")
     app.register_blueprint(public_bp, url_prefix="/waitinglist/public")
     app.register_blueprint(user_bp, url_prefix="/waitinglist/user")
-    app.register_blueprint(account_bp, url_prefix="/waitinglist/account")
     return app

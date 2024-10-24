@@ -1,3 +1,3 @@
-from article import *
-from log import *
-from user import *
+from .article import *
+from .log import *
+from .user import *
