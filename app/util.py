@@ -10,6 +10,9 @@ from app.extension import bcrypt
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.backends import default_backend
 from flask import current_app as app
+import rispy
+
+from app.models import Article
 
 
 
@@ -117,3 +120,27 @@ def decrypt(encrypted_data,session):
     pad_len = decrypted_padded[-1]
     decrypted_data = decrypted_padded[:-pad_len].decode('utf-8')
     return decrypted_data
+
+
+
+def readRisFile(filename):
+    filepath = f'files/{filename}'
+    articles = []
+
+    with open(filepath, 'r') as bibliography_file:    
+        entries = rispy.load(bibliography_file)
+        
+        for entry in entries:
+            if entry['type_of_reference'] == 'JOUR':
+
+                
+                
+                
+            article = Article()
+        
+        
+        
+            
+            articles.append(article)
+            
+    return articles

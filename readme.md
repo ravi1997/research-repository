@@ -18,7 +18,7 @@ documents structure
     title / primary_title - required
     abstract 
 
-    place_of_publication
+    place_of_publication / place_published
     journal / journal_name / secondary_title - required
     journal_abrevated / alternate_title1
 
