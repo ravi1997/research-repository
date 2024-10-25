@@ -15,7 +15,7 @@ from app.db_initializer import seed_db_command, empty_db_command
 
 
 def create_app():
-    app = Flask(__name__)
+    app = Flask(__name__,static_folder='web')
     app.config.from_object(DevConfig)
 
     # Initialize extensions
@@ -59,8 +59,8 @@ def create_app():
         return send_from_directory(app.static_folder, path)
 
     # Register blueprints
-    app.register_blueprint(main_bp, url_prefix="/waitinglist")
-    app.register_blueprint(auth_bp, url_prefix="/waitinglist/auth")
-    app.register_blueprint(public_bp, url_prefix="/waitinglist/public")
-    app.register_blueprint(user_bp, url_prefix="/waitinglist/user")
+    app.register_blueprint(main_bp, url_prefix="/researchrepository")
+    app.register_blueprint(auth_bp, url_prefix="/researchrepository/auth")
+    app.register_blueprint(public_bp, url_prefix="/researchrepository/public")
+    app.register_blueprint(user_bp, url_prefix="/researchrepository/user")
     return app

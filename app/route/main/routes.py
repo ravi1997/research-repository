@@ -1,11 +1,11 @@
-from flask import send_from_directory
+from flask import render_template
 from . import main_bp
 from flask import current_app
 
 @main_bp.route("/", methods=["GET"])
 def index():
     current_app.logger.info("main route called")
-    return send_from_directory(current_app.static_folder, 'index.html')
+    return render_template('index.html')
 
 
 """ @main_bp.route('/<path:path>')
