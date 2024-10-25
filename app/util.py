@@ -9,6 +9,9 @@ import requests
 from app.extension import bcrypt
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.backends import default_backend
+from flask import current_app as app
+
+
 
 
 def generate_otp(length=6):
@@ -20,12 +23,12 @@ def generate_otp(length=6):
 def send_sms(mobile,message):
     # Data for the POST request
     data = {
-        'username': 'Aiims',
-        'password': 'Aiims@123',
-        'senderid': 'AIIMSD',
+        'username': app.config.get('OTP_USERNAME'),
+        'password': app.config.get('OTP_PASSWORD'),
+        'senderid': app.config.get('OTP_SENDERID'),
         'mobileNos': mobile,
         'message': f'{message}',
-        'templateid1': '1307161579789431013'
+        'templateid1': app.config.get('OTP_ID')
     }
 
     # Headers for the POST request
@@ -34,8 +37,7 @@ def send_sms(mobile,message):
     }
 
     # URL of the service
-    url = 'http://192.168.14.30/sms_service/Service.asmx/sendSingleSMS'
-
+    url = app.config.get('OTP_SERVER')
     # Send the POST request
     response = requests.post(url, data=data, headers=headers)
 

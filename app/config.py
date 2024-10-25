@@ -16,12 +16,20 @@ class DevConfig(BaseConfig):
     SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URI', 'sqlite:///' + os.path.join(basedir, 'app.db'))
     
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    
     MAIL_SERVER = os.getenv('MAIL_SERVER')
     MAIL_PORT = os.getenv('MAIL_PORT')
     MAIL_USERNAME = os.getenv('MAIL_USERNAME')
     MAIL_PASSWORD = os.getenv('MAIL_PASSWORD')
     MAIL_USE_TLS = os.getenv('MAIL_USE_TLS')
     MAIL_USE_SSL = os.getenv('MAIL_USE_SSL')
+    
+    OTP_SERVER = os.getenv('OTP_SERVER')
+    OTP_USERNAME = os.getenv('OTP_USERNAME')
+    OTP_PASSWORD = os.getenv('OTP_PASSWORD')
+    OTP_ID = os.getenv('OTP_ID')
+    OTP_SENDERID = os.getenv('OTP_SENDERID')
+    
     JWT_ACCESS_TOKEN_EXPIRES = os.getenv('JWT_ACCESS_TOKEN_EXPIRES')
 
     if JWT_ACCESS_TOKEN_EXPIRES is not None:

@@ -83,7 +83,9 @@ class User(db.Model):
     mobile = db.Column(db.String(30), nullable=False)
     email = db.Column(db.String(30), nullable=False)
 
-    
+    department= db.Column(db.String(30), nullable=False)
+    designation= db.Column(db.String(30), nullable=False)
+    date_expiry= db.Column(DateTime, nullable=False)
 
     roles = relationship("UserRoles", back_populates="user")
     status = db.Column(SQLAlchemyEnum(UserState), index=True, nullable=False, server_default=f'{UserState.CREATED}')
