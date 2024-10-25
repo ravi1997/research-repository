@@ -96,7 +96,7 @@ class User(db.Model):
 
     clients = relationship("Client", back_populates="user")
 
-    def __init__(self, firstname, mobile,email,employee_id, middlename=None, lastname=None,
+    def __init__(self, firstname, mobile,email,employee_id,department,designation,date_expiry, middlename=None, lastname=None,
                  status=UserState.CREATED, updated_at=None):
         self.firstname = firstname
         self.middlename = (middlename if middlename else None)
@@ -108,6 +108,11 @@ class User(db.Model):
         self.mobile = mobile
         self.email = email
         self.status = status
+
+        self.department=department
+        self.designation =designation
+        self.date_expiry=date_expiry
+
 
         if updated_at is not None:
             self.updated_at = updated_at

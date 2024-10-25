@@ -1,5 +1,6 @@
 
 
+from datetime import datetime
 from app.models import User
 from app.extension import db
 import click
@@ -42,6 +43,9 @@ def create_user_guest():
 				employee_id="E9999999",
 				email="ravi199777@gmail.com",
 				mobile="9899378106",
+				department= "RPC",
+				designation="Programmer",
+				date_expiry= datetime(2057, 2, 28)
 			)
 			db.session.add(new_user)
 			db.session.commit()
@@ -60,6 +64,10 @@ def create_user_guest():
 				employee_id="E0000000",
 				email="guest123@mail.com",
 				mobile="9999999999",
+				department= "AIIMS",
+				designation="GUEST",
+				date_expiry= datetime(2100, 1, 1)
+
 			)
 			db.session.add(new_user)
 			db.session.commit()
