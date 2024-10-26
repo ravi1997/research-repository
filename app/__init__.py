@@ -11,7 +11,7 @@ from .route.public import public_bp
 from .route.user import user_bp
 from app.extra import job_listener
 from apscheduler.events import EVENT_JOB_EXECUTED
-from app.db_initializer import seed_db_command, empty_db_command
+from app.db_initializer import seed_db_command, empty_db_command,test_command
 
 
 def create_app():
@@ -29,6 +29,7 @@ def create_app():
     scheduler.start()
 
     app.cli.add_command(seed_db_command)
+    app.cli.add_command(test_command)
     app.cli.add_command(empty_db_command)
 
 

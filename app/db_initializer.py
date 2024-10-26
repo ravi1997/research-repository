@@ -6,6 +6,9 @@ from app.extension import db
 import click
 from flask import current_app as app
 
+from app.schema import ArticleSchema
+from app.util import risFileReader
+
 @click.command('empty-db')
 def empty_db_command():
 	"""Drop and recreate the database."""
@@ -22,6 +25,20 @@ def seed_db_command():
 	"""Seed the database with initial data."""
 	create_user_guest()
 	click.echo('Seeded the database.')
+
+
+@click.command('test')
+def test_command():
+	filepath = 'doc/zotero Exported Items.ris'
+	my_author = "Gupta, Vivek"
+ 
+	json = risFileReader(filepath=filepath,my_author=my_author)
+
+	schema = ArticleSchema(many=True)
+	objects = schema.load(json)
+
+	print(json)
+
 
 
 def drop_database():
