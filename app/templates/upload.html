@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload RIS File</title>
+</head>
+
+<body>
+    <h2>Upload .ris File</h2>
+    <form id="uploadForm" enctype="multipart/form-data">
+        <label for="file">Select a .ris file:</label>
+        <input type="file" id="file" name="file" accept=".ris" required>
+        <button type="button" onclick="uploadFile()">Upload</button>
+    </form>
+
+    <p id="message"></p>
+
+    <script>
+        async function uploadFile() {
+            const form = document.getElementById('uploadForm');
+            const formData = new FormData(form);
+
+            try {
+                const response = await fetch("http://127.0.0.1:5000/researchrepository/public/upload_ris", {
+                    method: "POST",
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    document.getElementById("message").innerText = "File uploaded successfully: " + result.filename;
+                } else {
+                    const error = await response.json();
+                    document.getElementById("message").innerText = "Error: " + error.error;
+                }
+            } catch (error) {
+                console.error("Upload error:", error);
+                document.getElementById("message").innerText = "An error occurred while uploading the file.";
+            }
+        }
+    </script>
+</body>
+
+</html>

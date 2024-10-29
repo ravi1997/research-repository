@@ -1,5 +1,7 @@
 import rispy
 from datetime import datetime
+import uuid
+
 
 def risFileReader(filepath,my_author):
     articles = []
@@ -25,14 +27,13 @@ def risFileReader(filepath,my_author):
             journal_abrevated = entry.get('alternate_title1',None)
             pub_date = entry.get('date',None)
             
-            
+            publication_date = None
             if pub_date:
                 dateSplit = pub_date.split('/')
                 year = int(dateSplit[0])
                 month = int(dateSplit[1]) if dateSplit[1] != '' else 1
                 day = int(dateSplit[2]) if dateSplit[2] != '' else 1
                 publication_date = datetime(year,month,day,0,0)
-                print(dateSplit)
             
             
             start_page = entry.get('start_page',None)
@@ -71,6 +72,7 @@ def risFileReader(filepath,my_author):
             
             if entry['type_of_reference'] == 'JOUR' and next((item for item in authors if item["fullName"] == my_author), None) is not None and journal is not None:
                 article = {
+                    "uuid":uuid.uuid4(),
                     "keywords":keywords,
                     "authors":authors,
                     "title":title,
@@ -78,7 +80,6 @@ def risFileReader(filepath,my_author):
                     "place_of_publication":place_of_publication,
                     "journal":journal,
                     "journal_abrevated":journal_abrevated,
-                    "publication_date":publication_date,
                     "pages":pages,
                     "journal_volume":journal_volume,
                     "number":journal_issue,
@@ -92,6 +93,10 @@ def risFileReader(filepath,my_author):
                     "nlm_journal_id":nlm_journal_id,
                     "links":links
                 }
+
+                if publication_date:
+                    article['publication_date'] = publication_date
+
                 articles.append(article)
                 
     return articles

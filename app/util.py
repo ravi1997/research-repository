@@ -2,6 +2,7 @@
 # UTILS
 import base64
 from datetime import datetime, timedelta
+import json
 import random
 import string
 import requests
@@ -10,9 +11,10 @@ from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.backends import default_backend
 from flask import current_app as app
 import rispy
-
+import uuid
 from app.models import Article
-
+import secrets
+import hashlib
 
 
 
@@ -88,8 +90,13 @@ def generate_strong_password(length=10):
 	
 	return password
 
-def getNewSalt():
-    return bcrypt.gensalt()
+
+
+def getNewSalt(length=16):
+    # Generate a random salt with the specified byte length
+    salt = secrets.token_bytes(length)
+    # Convert to a hexadecimal string for easy storage
+    return hashlib.sha256(salt).hexdigest()
 
 def derive_key(salt):
     secret_key = b'32_characters_long_key_here!!'    
@@ -123,7 +130,7 @@ def decrypt(encrypted_data,session):
 
 
 
-def risFileReader(filepath,my_author):
+def risFileReader(filepath):
     articles = []
 
     with open(filepath, 'r') as bibliography_file:    
@@ -133,7 +140,13 @@ def risFileReader(filepath,my_author):
         for entry in entries:
             
             publication_type = ['JOURNAL']
-            keywords = entry.get('keywords',None) or []
+            keyword_list = entry.get('keywords',None) or []
+            keywords = []
+            keywords += ({"keyword":keyword} for keyword in keyword_list)
+            
+            
+            
+            
             author_list = (entry.get('authors',None) or [])+(entry.get('first_authors',None) or [])
             
             authors = [{"fullName": author,"sequence_number":idx+1} for idx, author in enumerate(author_list)]
@@ -147,14 +160,13 @@ def risFileReader(filepath,my_author):
             journal_abrevated = entry.get('alternate_title1',None)
             pub_date = entry.get('date',None)
             
-            
+            publication_date = None
             if pub_date:
                 dateSplit = pub_date.split('/')
                 year = int(dateSplit[0])
                 month = int(dateSplit[1]) if dateSplit[1] != '' else 1
                 day = int(dateSplit[2]) if dateSplit[2] != '' else 1
                 publication_date = datetime(year,month,day,0,0)
-                print(dateSplit)
             
             
             start_page = entry.get('start_page',None)
@@ -183,27 +195,39 @@ def risFileReader(filepath,my_author):
             links = []
             
             if file_attachments1 is not None:
-                links.append(file_attachments1)
+                # print(file_attachments1)
+                links.append(
+                    {
+                        "link":file_attachments1                        
+                    }
+                    
+                    )
 
             if file_attachments2 is not None:
-                links.append(file_attachments2)
+                links.append(                    {
+                        "link":file_attachments2                        
+                    })
 
-            links += (urls or [])
+            if urls:
+                links += ({"link": link} for link in urls)
 
             
-            if entry['type_of_reference'] == 'JOUR' and next((item for item in authors if item["fullName"] == my_author), None) is not None and journal is not None:
+            if entry['type_of_reference'] == 'JOUR' and journal is not None and publication_date is not None:
+                # print(json.dumps(links,indent=4))
+                
                 article = {
+                    "uuid":str(uuid.uuid4()),
                     "keywords":keywords,
                     "authors":authors,
                     "title":title,
                     "abstract":abstract,
+                    "publication_date":publication_date.isoformat(),
                     "place_of_publication":place_of_publication,
                     "journal":journal,
                     "journal_abrevated":journal_abrevated,
-                    "publication_date":publication_date,
                     "pages":pages,
                     "journal_volume":journal_volume,
-                    "number":journal_issue,
+                    "journal_issue":journal_issue,
                     "pubmed_id":pubmed_id,
                     "pmc_id":pmc_id,
                     "pii":pii,
@@ -214,6 +238,8 @@ def risFileReader(filepath,my_author):
                     "nlm_journal_id":nlm_journal_id,
                     "links":links
                 }
+
+
                 articles.append(article)
                 
     return articles

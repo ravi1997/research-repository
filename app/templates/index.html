@@ -68,18 +68,40 @@
             background-color: #0059b3;
         }
 
-        footer {
+        .upload-section {
+            margin-top: 40px;
             text-align: center;
-            padding: 20px;
-            background-color: #004080;
-            color: white;
-            position: absolute;
-            width: 100%;
-            bottom: 0;
         }
 
-        footer p {
-            margin: 0;
+        .upload-section h3 {
+            font-size: 1.8rem;
+            color: #333;
+        }
+
+        .upload-section form {
+            margin-top: 20px;
+            display: inline-block;
+            text-align: left;
+        }
+
+        .upload-section input[type="file"] {
+            padding: 10px;
+            font-size: 1rem;
+        }
+
+        .upload-section button {
+            margin-top: 10px;
+            padding: 10px 20px;
+            font-size: 1rem;
+            color: white;
+            background-color: #004080;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .upload-section button:hover {
+            background-color: #0059b3;
         }
 
         .features {
@@ -106,6 +128,21 @@
             font-size: 1rem;
             color: #666;
         }
+
+        footer {
+            text-align: center;
+            padding: 20px;
+            background-color: #004080;
+            color: white;
+            position: relative;
+            width: 100%;
+            bottom: 0;
+            margin-top: 20px;
+        }
+
+        footer p {
+            margin: 0;
+        }
     </style>
 </head>
 
@@ -128,6 +165,16 @@
             </div>
         </div>
 
+        <!-- File Upload Section -->
+        <div class="upload-section">
+            <h3>Upload .ris File</h3>
+            <form id="uploadForm" enctype="multipart/form-data">
+                <input type="file" id="file" name="file" accept=".ris" required>
+                <button type="button" onclick="uploadFile()">Upload</button>
+            </form>
+            <p id="message"></p>
+        </div>
+
         <div class="features">
             <div class="feature">
                 <h3>Explore Research</h3>
@@ -147,6 +194,31 @@
     <footer>
         <p>&copy; 2024 AIIMS Research Repository. All Rights Reserved.</p>
     </footer>
+
+    <script>
+        async function uploadFile() {
+            const form = document.getElementById('uploadForm');
+            const formData = new FormData(form);
+
+            try {
+                const response = await fetch("http://127.0.0.1:5000/researchrepository/public/upload_ris", {
+                    method: "POST",
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    document.getElementById("message").innerText = "File uploaded successfully: " + result.filename;
+                } else {
+                    const error = await response.json();
+                    document.getElementById("message").innerText = "Error: " + error.error;
+                }
+            } catch (error) {
+                console.error("Upload error:", error);
+                document.getElementById("message").innerText = "An error occurred while uploading the file.";
+            }
+        }
+    </script>
 
 </body>
 

@@ -1,6 +1,8 @@
 
 
 from datetime import datetime
+import json
+from marshmallow import ValidationError
 from app.models import User
 from app.extension import db
 import click
@@ -29,16 +31,19 @@ def seed_db_command():
 
 @click.command('test')
 def test_command():
-	filepath = 'doc/zotero Exported Items.ris'
-	my_author = "Gupta, Vivek"
- 
-	json = risFileReader(filepath=filepath,my_author=my_author)
+	try:
+		filepath = 'doc/zotero Exported Items.ris'
+	
+		myjson = risFileReader(filepath=filepath)
 
-	schema = ArticleSchema(many=True)
-	objects = schema.load(json)
-
-	print(json)
-
+		schema = ArticleSchema(many=True)
+		objects = schema.load(myjson)
+		for object in objects:
+			db.session.add(object)
+		db.session.commit()
+		print( json.dumps(myjson, indent=4))
+	except ValidationError as e:
+		print(json.dumps(e.messages, indent=4))
 
 
 def drop_database():
@@ -71,27 +76,6 @@ def create_user_guest():
 		else:
 			app.logger.info("User Ravinder Singh already exists.")
 
-
-		existing_user = User.query.filter_by(firstname="GUEST", employee_id="E0000000").first()
-		if not existing_user:
-			new_user = User(
-				firstname='GUEST',
-				middlename='',
-				lastname='',
-				employee_id="E0000000",
-				email="guest123@mail.com",
-				mobile="9999999999",
-				department= "AIIMS",
-				designation="GUEST",
-				date_expiry= datetime(2100, 1, 1)
-
-			)
-			db.session.add(new_user)
-			db.session.commit()
-			
-			app.logger.info("User Guest Added.")
-		else:
-			app.logger.info("User Guest already exists.")
 
 
 

@@ -90,7 +90,7 @@ def verify_SUPERADMIN_role(f):
 def verify_GUEST_role(f):
 	@wraps(f)
 	def decorated_function(*args, **kwargs):
-		session_id = request.headers.get('Session-ID')
+		session_id = request.cookies.get('Session-ID')
 
 		if session_id is None:
 			return  jsonify({"message":"Not a valid Session"}),401
@@ -106,7 +106,11 @@ def verify_GUEST_role(f):
 		if session.user_id is None:
 			return jsonify({"message":"Not a valid user."}),401
 
-		if session.user.has_role(UserRole.GUEST):
+
+		conditions = [session.user.has_role(role) for role in UserRole]
+		condition = any(conditions)
+
+		if condition == False:
 			return f(session,*args, **kwargs)
 		else:
 			return jsonify({"message":"Unauthorized User."}),401

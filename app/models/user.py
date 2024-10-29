@@ -6,6 +6,8 @@ from sqlalchemy import func
 
 from enum import Enum
 
+from app.util import getNewSalt
+
 # ENUMS
 class UserState(Enum):
     CREATED  = "created"
@@ -32,7 +34,7 @@ class Client(db.Model):
     created_at = db.Column(DateTime, server_default=func.now())  # Corrected attribute name
     client_session_id = db.Column(db.String(64), index=True, unique=True, nullable=False)
     user_id = db.Column(db.Integer, ForeignKey('users.id'), index=True, nullable=True,server_default = '2') 
-    status = db.Column(SQLAlchemyEnum(ValidState), index=True, nullable=False, server_default=f'{ValidState.VALID}')
+    status = db.Column(SQLAlchemyEnum(ValidState), index=True, nullable=False)
     ip = db.Column(db.String(16), nullable=True)
     salt = db.Column(db.String(256),nullable=False)
 
@@ -43,6 +45,8 @@ class Client(db.Model):
         self.client_session_id = client_session_id
         self.user_id = user_id
         self.ip = ip
+        self.salt = getNewSalt()
+        self.status = ValidState.VALID
 
     def isValid(self):
         return self.status == ValidState.VALID
@@ -139,6 +143,6 @@ class User(db.Model):
 class UserRoles(db.Model):
     __tablename__ = 'user_roles'
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
-    role = db.Column(SQLAlchemyEnum(UserRole), primary_key=True)  # Use enum directly
+    role = db.Column(SQLAlchemyEnum(UserRole),nullable=False)  # Use enum directly
 
     user = relationship("User", back_populates="roles")  # Backref to User

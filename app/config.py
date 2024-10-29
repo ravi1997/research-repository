@@ -5,6 +5,7 @@ from datetime import timedelta
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 
+
 class BaseConfig:
     DB_NAME = "backend"
 
@@ -35,6 +36,10 @@ class DevConfig(BaseConfig):
     if JWT_ACCESS_TOKEN_EXPIRES is not None:
         JWT_ACCESS_TOKEN_EXPIRES = timedelta(minutes=float(JWT_ACCESS_TOKEN_EXPIRES))
     
+    
+    
+    UPLOAD_FOLDER = os.getenv('UPLOAD_FOLDER')
+    ALLOWED_EXTENSIONS = os.getenv('ALLOWED_EXTENSIONS')
     SCHEDULER_JOBSTORES = {
         "default": SQLAlchemyJobStore(url=SQLALCHEMY_DATABASE_URI)
     }

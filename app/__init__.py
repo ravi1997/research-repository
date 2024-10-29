@@ -1,4 +1,5 @@
 import logging
+import os
 from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 
@@ -27,6 +28,9 @@ def create_app():
     scheduler.add_listener(job_listener, EVENT_JOB_EXECUTED)
     CORS(app)
     scheduler.start()
+
+
+    os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
     app.cli.add_command(seed_db_command)
     app.cli.add_command(test_command)
