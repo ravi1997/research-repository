@@ -9,7 +9,7 @@ import click
 from flask import current_app as app
 
 from app.schema import ArticleSchema
-from app.util import risFileReader
+from app.util import nbibFileReader, risFileReader
 
 @click.command('empty-db')
 def empty_db_command():
@@ -32,9 +32,9 @@ def seed_db_command():
 @click.command('test')
 def test_command():
 	try:
-		filepath = 'doc/zotero Exported Items.ris'
+		filepath = 'doc/pubmed-35225509 - single.nbib'
 	
-		myjson = risFileReader(filepath=filepath)
+		myjson = nbibFileReader(filepath=filepath)
 
 		schema = ArticleSchema(many=True)
 		objects = schema.load(myjson)

@@ -104,16 +104,9 @@ def verify_GUEST_role(f):
 			return jsonify({"message":"Not a valid Session."}),401
 
 		if session.user_id is None:
-			return jsonify({"message":"Not a valid user."}),401
-
-
-		conditions = [session.user.has_role(role) for role in UserRole]
-		condition = any(conditions)
-
-		if condition == False:
 			return f(session,*args, **kwargs)
-		else:
-			return jsonify({"message":"Unauthorized User."}),401
+
+		return jsonify({"message":"Unauthorized User."}),401
 
 	return decorated_function
 

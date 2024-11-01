@@ -1,3 +1,5 @@
+from sqlalchemy import Text
+
 import logging
 import os
 from flask import Flask, jsonify, request, send_from_directory
@@ -13,7 +15,7 @@ from .route.user import user_bp
 from app.extra import job_listener
 from apscheduler.events import EVENT_JOB_EXECUTED
 from app.db_initializer import seed_db_command, empty_db_command,test_command
-
+from app.models import *
 
 def create_app():
     app = Flask(__name__,static_folder='web')
@@ -47,6 +49,7 @@ def create_app():
     app.logger.addHandler(sql_handler)
     app.logger.setLevel(logging.INFO)
     app.logger.info("Flask app startup")
+
 
 
 

@@ -170,9 +170,17 @@
             <h3>Upload .ris File</h3>
             <form id="uploadForm" enctype="multipart/form-data">
                 <input type="file" id="file" name="file" accept=".ris" required>
-                <button type="button" onclick="uploadFile()">Upload</button>
+                <button type="button" onclick="uploadrisFile()">Upload</button>
             </form>
             <p id="message"></p>
+        </div>
+        <div class="upload-section">
+            <h3>Upload .nbib File</h3>
+            <form id="uploadForm-nbib" enctype="multipart/form-data">
+                <input type="file" id="file" name="file" accept=".nbib" required>
+                <button type="button" onclick="uploadnbibFile()">Upload</button>
+            </form>
+            <p id="message1"></p>
         </div>
 
         <div class="features">
@@ -196,7 +204,7 @@
     </footer>
 
     <script>
-        async function uploadFile() {
+        async function uploadrisFile() {
             const form = document.getElementById('uploadForm');
             const formData = new FormData(form);
 
@@ -218,6 +226,29 @@
                 document.getElementById("message").innerText = "An error occurred while uploading the file.";
             }
         }
+
+        async function uploadnbibFile() {
+                const form = document.getElementById('uploadForm-nbib');
+                const formData = new FormData(form);
+
+                try {
+                    const response = await fetch("http://127.0.0.1:5000/researchrepository/public/upload_nbib", {
+                        method: "POST",
+                        body: formData
+                    });
+
+                    if (response.ok) {
+                        const result = await response.json();
+                        document.getElementById("message1").innerText = "File uploaded successfully: " + result.filename;
+                    } else {
+                        const error = await response.json();
+                        document.getElementById("message1").innerText = "Error: " + error.error;
+                    }
+                } catch (error) {
+                    console.error("Upload error:", error);
+                    document.getElementById("message1").innerText = "An error occurred while uploading the file.";
+                }
+            }
     </script>
 
 </body>

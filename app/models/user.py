@@ -33,7 +33,7 @@ class Client(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     created_at = db.Column(DateTime, server_default=func.now())  # Corrected attribute name
     client_session_id = db.Column(db.String(64), index=True, unique=True, nullable=False)
-    user_id = db.Column(db.Integer, ForeignKey('users.id'), index=True, nullable=True,server_default = '2') 
+    user_id = db.Column(db.Integer, ForeignKey('users.id'), index=True, nullable=True) 
     status = db.Column(SQLAlchemyEnum(ValidState), index=True, nullable=False)
     ip = db.Column(db.String(16), nullable=True)
     salt = db.Column(db.String(256),nullable=False)

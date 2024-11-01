@@ -5,11 +5,11 @@ from sqlalchemy import DateTime
 class Author(db.Model):
     __tablename__ = "authors"
     id = db.Column(db.Integer, primary_key=True)
-    fullName = db.Column(db.String(200), nullable=False)
-    author_abbreviated = db.Column(db.String(50), nullable=True)
-    affiliations = db.Column(db.String(500), nullable=True)
+    fullName = db.Column(db.Text, nullable=False)
+    author_abbreviated = db.Column(db.Text, nullable=True)
+    affiliations = db.Column(db.JSON, nullable=True) 
     sequence_number = db.Column(db.Integer, nullable=False)
-    employee_id = db.Column(db.String(20), nullable=True)
+    employee_id = db.Column(db.Text, nullable=True)
 
     # Establish a many-to-many relationship with Article
     articles = db.relationship('Article', secondary='article_authors', back_populates='authors')
@@ -20,7 +20,7 @@ class Author(db.Model):
 class Article(db.Model):
     __tablename__ = "articles"
     id = db.Column(db.Integer, primary_key=True)
-    uuid = db.Column(db.String(100), nullable=False)
+    uuid = db.Column(db.Text, nullable=False)
     
     # Many-to-Many relationship with PublicationType
     publication_types = db.relationship(
@@ -39,26 +39,26 @@ class Article(db.Model):
     # Many-to-Many relationship with Author
     authors = db.relationship('Author', secondary='article_authors', back_populates='articles')
     
-    title = db.Column(db.String(500), nullable=False)
-    abstract = db.Column(db.String(15000), nullable=True)
-    place_of_publication = db.Column(db.String(100), nullable=True)
-    journal = db.Column(db.String(500), nullable=True)
-    journal_abrevated = db.Column(db.String(500), nullable=True)
+    title = db.Column(db.Text, nullable=False)
+    abstract = db.Column(db.Text, nullable=True)
+    place_of_publication = db.Column(db.Text, nullable=True)
+    journal = db.Column(db.Text, nullable=True)
+    journal_abrevated = db.Column(db.Text, nullable=True)
     publication_date = db.Column(DateTime, nullable=True)
     electronic_publication_date = db.Column(DateTime, nullable=True)
-    pages = db.Column(db.String(30), nullable=True)
-    journal_volume = db.Column(db.String(100), nullable=True)
-    journal_issue = db.Column(db.String(100), nullable=True)
+    pages = db.Column(db.Text, nullable=True)
+    journal_volume = db.Column(db.Text, nullable=True)
+    journal_issue = db.Column(db.Text, nullable=True)
 
     # identifiers
-    pubmed_id = db.Column(db.String(100), nullable=True)
-    pmc_id = db.Column(db.String(100), nullable=True)
-    pii = db.Column(db.String(500), nullable=True)
-    doi = db.Column(db.String(500), nullable=True)
-    print_issn = db.Column(db.String(100), nullable=True)
-    electronic_issn = db.Column(db.String(100), nullable=True)
-    linking_issn = db.Column(db.String(100), nullable=True)
-    nlm_journal_id = db.Column(db.String(100), nullable=True)
+    pubmed_id = db.Column(db.Text, nullable=True)
+    pmc_id = db.Column(db.Text, nullable=True)
+    pii = db.Column(db.Text, nullable=True)
+    doi = db.Column(db.Text, nullable=True)
+    print_issn = db.Column(db.Text, nullable=True)
+    electronic_issn = db.Column(db.Text, nullable=True)
+    linking_issn = db.Column(db.Text, nullable=True)
+    nlm_journal_id = db.Column(db.Text, nullable=True)
 
     links = relationship("Link", back_populates="article")
     assets = relationship("Asset", back_populates="article")
@@ -69,7 +69,7 @@ class Article(db.Model):
 class Link(db.Model):
     __tablename__ = 'links'
     id = db.Column(db.Integer, primary_key=True)
-    link = db.Column(db.String(10000), nullable=False)
+    link = db.Column(db.Text, nullable=False)
     article_id = db.Column(db.Integer, db.ForeignKey('articles.id'), nullable=True)
 
     article = relationship("Article", back_populates="links")
@@ -77,9 +77,9 @@ class Link(db.Model):
 class Asset(db.Model):
     __tablename__ = 'assets'
     id = db.Column(db.Integer, primary_key=True)
-    asset = db.Column(db.String(500), nullable=False)
+    asset = db.Column(db.Text, nullable=False)
     article_id = db.Column(db.Integer, db.ForeignKey('articles.id'))
-    asset_type = db.Column(db.String(30), nullable=False)
+    asset_type = db.Column(db.Text, nullable=False)
 
     article = relationship("Article", back_populates="assets")
 
@@ -91,7 +91,7 @@ class ArticleAuthor(db.Model):
 class PublicationType(db.Model):
     __tablename__ = 'publication_types'
     id = db.Column(db.Integer, primary_key=True)
-    publication_type = db.Column(db.String(100), nullable=False)
+    publication_type = db.Column(db.Text, nullable=False)
 
     # Many-to-Many relationship with Article
     articles = db.relationship(
@@ -103,7 +103,7 @@ class PublicationType(db.Model):
 class Keyword(db.Model):
     __tablename__ = 'keywords'
     id = db.Column(db.Integer, primary_key=True)
-    keyword = db.Column(db.String(200), nullable=False)
+    keyword = db.Column(db.Text, nullable=False)
     
     # Many-to-Many relationship with Article
     articles = db.relationship(
