@@ -17,7 +17,7 @@ import secrets
 import hashlib
 from pprint import pprint
 from nbib import read_file
-
+import re
 
 def generate_otp(length=6):
 	"""Generate a random OTP of specified length."""
@@ -146,12 +146,7 @@ def risFileReader(filepath):
 			keywords += ({"keyword":keyword} for keyword in keyword_list)
 			
 			
-			
-			
 			author_list = (entry.get('authors',None) or [])+(entry.get('first_authors',None) or [])
-			for author in author_list:
-				if len(author) > 200:
-					print(author)  
 			
 			authors = [{"fullName": author,"sequence_number":idx+1} for idx, author in enumerate(author_list)]
 			
@@ -265,9 +260,6 @@ def risFileReader(filepath):
 	return articles
 
 
-from datetime import datetime
-import re
-
 def parse_date(date_string):
     # Define regex patterns for each format
     patterns = [
@@ -356,6 +348,7 @@ def nbibFileReader(filepath):
 		if 'Journal Article' in publication_type:
 			article = {
 				"uuid":str(uuid.uuid4()),
+				"publication_type":publication_type,
 				"keywords":keywords,
 				"authors":authors,
 				"title":title,

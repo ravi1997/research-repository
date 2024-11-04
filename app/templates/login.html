@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - AIIMS Research Publication Repository</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #004080, #0059b3);
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .login-container {
+            background: #fff;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.3);
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+            animation: fadeIn 0.8s ease-in-out;
+        }
+
+        .login-container h2 {
+            margin-bottom: 20px;
+            color: #004080;
+            font-weight: 500;
+        }
+
+        .login-container input[type="text"],
+        .login-container input[type="password"] {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .login-container input:focus {
+            border-color: #0059b3;
+            outline: none;
+        }
+
+        .login-container button {
+            width: 100%;
+            padding: 12px;
+            background: #0059b3;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.3s;
+            font-weight: 500;
+        }
+
+        .login-container button:hover {
+            background: #004080;
+        }
+
+        .login-container p {
+            margin-top: 15px;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .login-container a {
+            color: #0059b3;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .login-container a:hover {
+            text-decoration: underline;
+        }
+
+        .captcha-box {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+            justify-content: space-between;
+        }
+
+        .captcha-code {
+            font-weight: 500;
+            background-color: #f2f2f2;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 1.1rem;
+            user-select: none;
+            flex: 1;
+            text-align: center;
+            color: #333;
+        }
+
+        .refresh-btn {
+            background: none;
+            border: none;
+            color: #0059b3;
+            font-size: 1.1rem;
+            cursor: pointer;
+            margin-left: 10px;
+            transition: color 0.3s;
+        }
+
+        .refresh-btn:hover {
+            color: #004080;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="login-container">
+        <h2>Login to AIIMS Research Publication Repository</h2>
+
+        <!-- Mobile Number Form with CAPTCHA -->
+        <form id="login-form" action="/send-otp" method="post">
+            <input type="text" name="mobile" placeholder="Enter Mobile Number" required pattern="\d{10}">
+            <div class="captcha-box">
+                <div id="captchaCode" class="captcha-code"></div>
+                <button type="button" class="refresh-btn" onclick="generateCaptcha()">⟳</button>
+            </div>
+            <input type="text" name="captcha" placeholder="Enter CAPTCHA" required>
+            <button type="submit">Send OTP</button>
+        </form>
+
+        <!-- OTP Verification Form with CAPTCHA -->
+        <form id="otp-form" action="/verify-otp" method="post" style="display:none;">
+            <input type="text" name="otp" placeholder="Enter OTP" required pattern="\d{6}">
+            <div class="captcha-box">
+                <div id="captchaCode2" class="captcha-code"></div>
+                <button type="button" class="refresh-btn" onclick="generateCaptcha2()">⟳</button>
+            </div>
+            <input type="text" name="captcha2" placeholder="Enter CAPTCHA" required>
+            <button type="submit">Verify OTP</button>
+        </form>
+
+        <p>Don't have an account? <a href="/register">Register here</a></p>
+    </div>
+
+    <script>
+        // Generate CAPTCHA code
+        function generateCaptcha() {
+            const captcha = Math.random().toString(36).substring(2, 8).toUpperCase();
+            document.getElementById("captchaCode").textContent = captcha;
+        }
+
+        function generateCaptcha2() {
+            const captcha = Math.random().toString(36).substring(2, 8).toUpperCase();
+            document.getElementById("captchaCode2").textContent = captcha;
+        }
+
+        window.onload = function () {
+            generateCaptcha();
+            generateCaptcha2();
+        };
+
+        document.getElementById("login-form").onsubmit = function () {
+            document.getElementById("otp-form").style.display = "block";
+            document.getElementById("login-form").style.display = "none";
+            return false;
+        };
+    </script>
+</body>
+
+</html>

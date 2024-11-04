@@ -61,10 +61,6 @@ def create_app():
         app.logger.info(f"main app route : {url} {method}")
         return jsonify({"message":f"Url not found : {url} {method}"}),404
         
-    @app.route('/<path:path>')
-    def servedefault_static(path):
-        app.logger.info(f"main app route : {path}")
-        return send_from_directory(app.static_folder, path)
 
     # Register blueprints
     app.register_blueprint(main_bp, url_prefix="/researchrepository")
