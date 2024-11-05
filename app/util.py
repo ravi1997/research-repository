@@ -289,7 +289,10 @@ def nbibFileReader(filepath):
 	entries = read_file(filepath)
 
 	for entry in entries:
-		publication_type = entry.get('publication_types', None) or []
+		publication_type_list = entry.get('publication_types', None) or []
+		publication_type = []
+		publication_type += ({'publication_type':publication} for publication in publication_type_list)
+
 		keyword_list = entry.get('descriptors', None) or []
 		keywords = []
 		keywords += ({"keyword":keyword['descriptor']} for keyword in keyword_list)
@@ -345,10 +348,10 @@ def nbibFileReader(filepath):
 			links += ({"link": link} for link in urls)
 
 		
-		if 'Journal Article' in publication_type:
+		if 'Journal Article' in publication_type_list:
 			article = {
 				"uuid":str(uuid.uuid4()),
-				"publication_type":publication_type,
+				"publication_types":publication_type,
 				"keywords":keywords,
 				"authors":authors,
 				"title":title,

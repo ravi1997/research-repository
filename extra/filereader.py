@@ -18,8 +18,6 @@ def fileReader(filepath):
 		discriptor_list += (discriptor['descriptor'] for discriptor in (entry.get('descriptors', None) or []))
 		keyword_list = []
 		if len(discriptor_list) > 0:
-			print('printing discriptor')
-			pprint(discriptor_list)
 			keyword_list += discriptor_list
 		else:
 			keyword_list += entry.get('keywords',None) or []

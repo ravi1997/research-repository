@@ -3,7 +3,7 @@
 from datetime import datetime
 import json
 from marshmallow import ValidationError
-from app.models import User
+from app.models import User, Configuration
 from app.extension import db
 import click
 from flask import current_app as app
@@ -25,7 +25,8 @@ def empty_db_command():
 @click.command('seed-db')
 def seed_db_command():
 	"""Seed the database with initial data."""
-	create_user_guest()
+	create_user_superadmin()
+	create_configuration()
 	click.echo('Seeded the database.')
 
 
@@ -53,7 +54,13 @@ def drop_database():
 	db.create_all()
 	click.echo('Database dropped and recreated.')
 
-def create_user_guest():
+
+def create_configuration():
+	db.session.add(Configuration())
+	db.session.commit()
+
+
+def create_user_superadmin():
 	"""Create a sample user."""
 	try:
 		existing_user = User.query.filter_by(firstname="RAVINDER", employee_id="E9999999").first()

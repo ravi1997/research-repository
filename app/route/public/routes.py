@@ -57,7 +57,7 @@ def upload_ris(session):
 		file.save(file_path)
 		
 		myjson = risFileReader(filepath=file_path)
-		app.logger.info(json.dumps(myjson))  
+
 		
 		schema = ArticleSchema(many=True)
 		objects = schema.load(myjson)
@@ -97,7 +97,7 @@ def upload_nbib(session):
 		file.save(file_path)
 		
 		myjson = nbibFileReader(filepath=file_path)
-		app.logger.info(json.dumps(myjson))  
+
 		
 		schema = ArticleSchema(many=True)
 		objects = schema.load(myjson)
@@ -110,7 +110,4 @@ def upload_nbib(session):
 		
 		return jsonify({"message": "File uploaded successfully", "filename": filename,"length":len(objects)}), 200
 	else:
-		app.logger.info(app.config['ALLOWED_EXTENSIONS'])
-		app.logger.info("error was here")
-		app.logger.info(allowed_file(file.filename))
 		return jsonify({"error": "Invalid file type. Only nbib files are allowed."}), 400
