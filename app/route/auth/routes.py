@@ -1,6 +1,6 @@
 from datetime import datetime
 import uuid
-from flask import jsonify,current_app
+from flask import jsonify,current_app as app
 from marshmallow import ValidationError
 from sqlalchemy import func
 
@@ -17,7 +17,7 @@ def index():
 
 
 def delete_session(jwt):
-    with current_app.app_context():
+    with app.app_context():
         # print(jwt)
         token = TokenList.query.filter(
             jwt == str(jwt).lower()
@@ -45,9 +45,10 @@ def login(request_data,session):
         ).one_or_none()
         
         if not user:
-            return jsonify({"message":"Wrong mobile number"}),401
+            return jsonify({"message":"Account does not exsist"}),401
 
         if user.isDeleted():
+            app.logger.info("Account is deleted")
             return jsonify({"message":"Account is deleted."}),401
 
         if user.isBlocked():

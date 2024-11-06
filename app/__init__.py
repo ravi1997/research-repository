@@ -62,6 +62,43 @@ def create_app():
         return jsonify({"message":f"Url not found : {url} {method}"}),404
         
 
+
+    @app.before_request
+    def log_request():    
+        app.logger.info("=== New Request ===")
+        # Log request method and URL
+        app.logger.info(f"Request Method: {request.method}")
+        app.logger.info(f"Request URL: {request.url}")
+        
+        # Log request headers
+        headers = dict(request.headers)
+        app.logger.info(f"Headers: {json.dumps(headers, indent=2)}")
+        
+        # Log query parameters
+        app.logger.info(f"Query Parameters: {request.args.to_dict()}")
+        
+        # Log form data (for POST or PUT requests)
+        if request.form:
+            app.logger.info(f"Form Data: {request.form.to_dict()}")
+        
+        # Log JSON body if present
+        if request.is_json:
+            app.logger.info(f"JSON Body: {request.get_json()}")
+        else:
+            # Log raw body as text if it's not JSON
+            app.logger.info(f"Body (raw text): {request.get_data(as_text=True)}")
+        
+        # Log cookies
+        app.logger.info(f"Cookies: {request.cookies.to_dict()}")
+        
+        # Log client information
+        real_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
+        app.logger.info(f"Client IP: {real_ip}")
+        app.logger.info(f"Client User Agent: {request.user_agent}")
+        
+        app.logger.info("=== End of Request Log ===")
+
+
     # Register blueprints
     app.register_blueprint(main_bp, url_prefix="/researchrepository")
     app.register_blueprint(auth_bp, url_prefix="/researchrepository/auth")
