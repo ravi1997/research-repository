@@ -1,14 +1,9 @@
 		
 # UTILS
-import base64
 from datetime import datetime, timedelta
-import json
 import random
 import string
 import requests
-from app.extension import bcrypt
-from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-from cryptography.hazmat.backends import default_backend
 from flask import current_app as app
 import rispy
 import uuid
@@ -18,6 +13,14 @@ import hashlib
 from pprint import pprint
 from nbib import read_file
 import re
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+import base64
+import os
+
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
 def generate_otp(length=6):
 	"""Generate a random OTP of specified length."""
@@ -99,34 +102,29 @@ def getNewSalt(length=16):
 	# Convert to a hexadecimal string for easy storage
 	return hashlib.sha256(salt).hexdigest()
 
-def derive_key(salt):
-	secret_key = b'32_characters_long_key_here!!'    
-	# Derive a key using the salt (this example uses a simple XOR for demonstration)
-	derived_key = bytearray(secret_key)
-	for i in range(len(derived_key)):
-		derived_key[i] ^= salt[i % len(salt)]
-	return bytes(derived_key)
 
-def decrypt(encrypted_data,session):
-	salt = base64.b64decode(session.salt)
+def decrypt(encrypted_data,session,password = "my_secret_password"):
+	salt = base64.b64decode(session.salt)  
+	kdf = PBKDF2HMAC(
+		algorithm=hashes.SHA256(),
+		length=32,
+		salt=salt,
+		iterations=100000,
+		backend=default_backend()
+	)
+	key = kdf.derive(password.encode())
+
+	# Split the encrypted data into IV and ciphertext
 	encrypted_data_bytes = base64.b64decode(encrypted_data)
-
-	# Extract IV and ciphertext
-	iv = encrypted_data_bytes[:16]  # The first 16 bytes are the IV
+	iv = encrypted_data_bytes[:16]  # First 16 bytes are the IV
 	ciphertext = encrypted_data_bytes[16:]  # The rest is the ciphertext
 
-	# Derive the key using the salt
-	derived_key = derive_key(salt)
-
-	# Decrypt the data
-	cipher = Cipher(algorithms.AES(derived_key), modes.CBC(iv), backend=default_backend())
+	# Decrypt the data using AES in CBC mode
+	cipher = Cipher(algorithms.AES(key), modes.CBC(iv), backend=default_backend())
 	decryptor = cipher.decryptor()
-	decrypted_padded = decryptor.update(ciphertext) + decryptor.finalize()
+	decrypted_data = decryptor.update(ciphertext) + decryptor.finalize()
 
-	# Remove padding (PKCS7 padding)
-	pad_len = decrypted_padded[-1]
-	decrypted_data = decrypted_padded[:-pad_len].decode('utf-8')
-	return decrypted_data
+	return decrypted_data.decode()
 
 
 
@@ -261,28 +259,28 @@ def risFileReader(filepath):
 
 
 def parse_date(date_string):
-    # Define regex patterns for each format
-    patterns = [
-        (r"^(\d{4}) (\w{3}) (\d{1,2})$", "%Y %b %d"),     # Format: "2024 Aug 19"
-        (r"^(\d{4}) (\w{3})$", "%Y %b"),                   # Format: "2022 Mar"
-        (r"^(\d{4}) (\w{3})-(\w{3})$", "%Y %b"),           # Format: "2019 Nov-Dec" (we'll handle end month separately)
-        (r"^(\d{4})$", "%Y"),                              # Format: "2020"
-    ]
-    
-    for pattern, date_format in patterns:
-        match = re.match(pattern, date_string)
-        if match:
-            if pattern == r"^(\d{4}) (\w{3})-(\w{3})$":
-                year, start_month, end_month = match.groups()
-                # Handle ranges by returning both start and end dates
-                start_date = datetime.strptime(f"{year} {start_month}", "%Y %b")
-                end_date = datetime.strptime(f"{year} {end_month}", "%Y %b")
-                return start_date
-            
-            # For other patterns, parse normally
-            return datetime.strptime(date_string, date_format)
-    
-    raise ValueError(f"Date format for '{date_string}' is not supported.")
+	# Define regex patterns for each format
+	patterns = [
+		(r"^(\d{4}) (\w{3}) (\d{1,2})$", "%Y %b %d"),     # Format: "2024 Aug 19"
+		(r"^(\d{4}) (\w{3})$", "%Y %b"),                   # Format: "2022 Mar"
+		(r"^(\d{4}) (\w{3})-(\w{3})$", "%Y %b"),           # Format: "2019 Nov-Dec" (we'll handle end month separately)
+		(r"^(\d{4})$", "%Y"),                              # Format: "2020"
+	]
+	
+	for pattern, date_format in patterns:
+		match = re.match(pattern, date_string)
+		if match:
+			if pattern == r"^(\d{4}) (\w{3})-(\w{3})$":
+				year, start_month, end_month = match.groups()
+				# Handle ranges by returning both start and end dates
+				start_date = datetime.strptime(f"{year} {start_month}", "%Y %b")
+				end_date = datetime.strptime(f"{year} {end_month}", "%Y %b")
+				return start_date
+			
+			# For other patterns, parse normally
+			return datetime.strptime(date_string, date_format)
+	
+	raise ValueError(f"Date format for '{date_string}' is not supported.")
 
 def nbibFileReader(filepath):
 	articles = []

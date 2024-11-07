@@ -1,7 +1,7 @@
 from flask_marshmallow import Marshmallow
 from marshmallow import fields, EXCLUDE,validate
 
-from app.models import OTP, Client, Log, User, Article,Author
+from app.models import OTP, Client, User, Article,Author
 from app.models.article import Keyword, Link, PublicationType
 
 ma = Marshmallow()
@@ -34,11 +34,6 @@ class OTPSchema(ma.SQLAlchemyAutoSchema):
     client = fields.Nested(ClientSchema, exclude=('otps',))  # Avoid circular dependency
 
 
-class LogSchema(ma.SQLAlchemyAutoSchema):
-    class Meta:
-        model = Log
-        load_instance = True
-        include_fk = True
 
 class GuestClientSchema(ma.SQLAlchemyAutoSchema):
     class Meta:

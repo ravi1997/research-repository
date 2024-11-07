@@ -1,4 +1,5 @@
-from datetime import datetime
+from datetime import datetime, timedelta
+import json
 import uuid
 from flask import jsonify,current_app as app
 from marshmallow import ValidationError
@@ -7,6 +8,7 @@ from sqlalchemy import func
 from app.decorator import verify_GUEST_role, verify_body, verify_user
 from app.models import OTP, User
 from app.extension import db,scheduler
+from app.models.user import UserState, ValidState
 from app.schema import GuestClientSchema, UserSchema
 from app.util import decrypt, generate_otp, send_sms
 from . import auth_bp
@@ -16,17 +18,17 @@ def index():
     return "This is The waiting list auth route"
 
 
-def delete_session(jwt):
+def delete_OTP(id):
     with app.app_context():
         # print(jwt)
-        token = TokenList.query.filter(
-            jwt == str(jwt).lower()
+        otp = OTP.query.filter(
+            id == id
         ).first()
-        if token:
-            db.session.delete(token)
+        if otp:
+            db.session.delete(otp)
             db.session.commit()
         else:
-            print("Not Found")
+            app.logger.info(f"for deletion of OTP : {id} not found")
 
 
 @auth_bp.route("/login", methods=["POST"])
@@ -34,25 +36,33 @@ def delete_session(jwt):
 @verify_body
 def login(request_data,session):
     try:
-        data = decrypt(request_data['data'],session)
+        app.logger.info(request_data['data'])
+        data_str = decrypt(request_data['data'],session)
+        data = json.loads(data_str)
+        app.logger.info(data)
 
         if not 'mobile' in data:
+            app.logger.info("Phone number is compulsory")
             return jsonify({"message":"Phone number is compulsory"}),401
         
         phone = data['mobile']
+        
+        
         user = User.query.filter_by(
             mobile=phone
         ).one_or_none()
         
         if not user:
-            return jsonify({"message":"Account does not exsist"}),401
+            app.logger.info(f"Account does not exist : {phone}")
+            return jsonify({"message":"Account does not exist"}),401
 
         if user.isDeleted():
-            app.logger.info("Account is deleted")
-            return jsonify({"message":"Account is deleted."}),401
+            app.logger.info(f"Account is deleted : {phone}")
+            return jsonify({"message":"Account is either deleted or blocked. Please contact admin."}),401
 
         if user.isBlocked():
-            return jsonify({"message":"Account is blocked. Please contact admin."}),401
+            app.logger.info(f"Account is blocked : {phone}")
+            return jsonify({"message":"Account is either deleted or blocked. Please contact admin."}),401
 
         new_otp = ""
         found=False
@@ -61,126 +71,123 @@ def login(request_data,session):
             otp = OTP.query.filter_by(id = session.otp_id).one_or_none()
             
             if otp is None:
-                new_otp = generate_otp()
+                if app.config['OTP_GENERATION']:
+                    new_otp = generate_otp()
+                else:
+                    new_otp = "123456"
             else:
                 new_otp = otp.otp
                 otp.sendAttempt = otp.sendAttempt + 1
                 found = True
         else:
-            new_otp = generate_otp()
-            
+            if app.config['OTP_GENERATION']:
+                new_otp = generate_otp()
+            else:
+                new_otp = "123456"            
+        
         message = f'Your OTP for Login in AIIMS is {new_otp}'
         if not found:
-            db.session.add(OTP(client_id=session.id,otp=new_otp))
- 
-        sms_status = send_sms(phone,message)
-        if sms_status == 200:
+            otp = OTP(client_id=session.id,otp=new_otp)
+            db.session.add(otp)
+
+
+        if app.config['OTP_FLAG']:
+            sms_status = send_sms(phone,message)
+            if sms_status == 200:
+                db.session.commit()
+                if not found:
+                    scheduler.add_job(
+                        str(uuid.uuid4()),
+                        delete_OTP,
+                        trigger="date",
+                        run_date=datetime.now() + app.config['OTP_DELTA'],
+                        args=[otp.id],
+                    )
+                
+                return jsonify({"message":"OTP has been generated"}),200
+            else:
+                db.session.rollback()
+                return jsonify({"message":"something went wrong. Please try again."}),500
+        else:
             db.session.commit()
             return jsonify({"message":"OTP has been generated"}),200
-        else:
-            db.session.rollback()
-            return jsonify({"message":"something went wrong. Please try again."}),500
-        
-        access_token = str(uuid.uuid4())
 
-        db.session.add(TokenList(jwt=access_token, account_id=userAccount.id))
-        db.session.commit()
-
-        job_id = access_token
-
-        delta = current_app.config["JWT_ACCESS_TOKEN_EXPIRES"]
-
-        scheduler.add_job(
-            str(job_id),
-            delete_session,
-            trigger="date",
-            run_date=datetime.now() + delta,
-            args=[access_token],
-        )
-        user = User.query.filter_by(id=userAccount.user_id).first_or_404()
-        return jsonify(
-            access_token=access_token,
-            user=user_schema.dump(user),
-            account=account_schema.dump(userAccount),
-        )
     except ValidationError as err:
         # Return a nice message if validation fails
-        return jsonify({"message":err.messages}),400
+        return jsonify({"message":err.messages}),401
 
 
 @auth_bp.route("/verify_otp", methods=["POST"])
 @verify_GUEST_role
 @verify_body
 def verifyOTP(request_data,session):
-    schema = LoginAccoutSchema()
     user_schema = UserSchema()
-    account_schema = AccountSchema()
     try:
-        errors = schema.validate(request_data)
-        if errors:
-            return jsonify({"message":errors}),400
-            
+        data = decrypt(request_data['data'],session)
 
+        if not 'OTP' in data:
+            app.logger.info("OTP is compulsory")
+            return jsonify({"message":"OTP is compulsory"}),401
+        
+        if not 'mobile' in data:
+            app.logger.info("Phone number is compulsory")
+            return jsonify({"message":"Phone number is compulsory"}),401
+        
+        phone = data['mobile']
+        
+        current_otp = data['OTP']
+        
         # Convert validated request schema into a User object
-        useraccount_data = schema.load(request_data)
+        otp = None
+        for otp_t in session.otp:
+            if otp_t.isValid():
+                otp = otp_t
+                
+        if otp is None:
+            return jsonify({"message":"Something went wrong. Please reload the site."}),401
+        
+        otp_data = otp.otp
 
-        userAccount = Account.query.filter_by(
-            username=useraccount_data.username
+        user = User.query.filter_by(
+            mobile=phone
         ).one_or_none()
-        if not userAccount:
-            return jsonify({"message":"Wrong username"}),401
+            
+        if not user:
+            app.logger.info(f"Account does not exist : {phone}")
+            app.logger.info(f"Invalid request")
+            session.status = ValidState.INVALID
+            db.session.commit()
+            return jsonify({"message":"Invalid request"}),401
 
-        if userAccount.isDeleted():
-            return jsonify({"message":"Account is deleted."}),401
+        if user.isDeleted() or user.isBlocked():
+            app.logger.info(f"Account {phone} is deleted or blocked.Please contact admin.")
+            session.status = ValidState.INVALID
+            db.session.commit()
+            return jsonify({"message":"Invalid request"}),401
 
-        if userAccount.isVerified() == False:
-            return jsonify({"message":"Account is not verfied. Please try again."}),401
-
-        if userAccount.isBlocked():
-            return jsonify({"message":"Account is blocked. Please contact admin."}),401
-
-        if not userAccount.check_password(useraccount_data.password):
-            userAccount.wrongAttempt = useraccount_data.wrongAttempt + 1
-            attempt = 5 - userAccount.wrongAttempt
+        if otp_data != current_otp:    
+            user.wrongAttempt += 1
+            attempt = app.config['OTP_MAX_ATTEMPT'] - user.wrongAttempt
+            message = f"Wrong OTP.Attempt left : {attempt}"
+            if user.wrongAttempt == 3:
+                user.status = UserState.BLOCKED
+                otp.status = ValidState.INVALID
+                db.session.commit()
+                message += " Account is blocked"
+            return jsonify({"message":message}),401
+        else:
+            user.wrongAttempt = 0
+            session.user_id = user.id
             db.session.commit()
 
-            if attempt == 0:
-                userAccount.blockAccount()
-                db.session.commit()
-                return jsonify({"message":"Wrong password. Account blocked"}),401
-            else:
-                return jsonify({"message":f"Wrong password. {attempt} left"}),401
+            return jsonify(
+                message = "successfull login",
+                user=user_schema.dump(user),
+            ),200
 
-        useraccount_data.wrongAttempt = 0
-        db.session.commit()
-
-        access_token = str(uuid.uuid4())
-
-        db.session.add(TokenList(jwt=access_token, account_id=userAccount.id))
-        db.session.commit()
-
-        job_id = access_token
-
-        delta = current_app.config["JWT_ACCESS_TOKEN_EXPIRES"]
-
-        scheduler.add_job(
-            str(job_id),
-            delete_session,
-            trigger="date",
-            run_date=datetime.now() + delta,
-            args=[access_token],
-        )
-        user = User.query.filter_by(id=userAccount.user_id).first_or_404()
-        return jsonify(
-            access_token=access_token,
-            user=user_schema.dump(user),
-            account=account_schema.dump(userAccount),
-        )
     except ValidationError as err:
         # Return a nice message if validation fails
         return jsonify({"message":err.messages}),400
-
-
 
 @auth_bp.route("/logout", methods=["GET"])
 @verify_user

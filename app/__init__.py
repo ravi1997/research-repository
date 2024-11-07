@@ -1,12 +1,13 @@
+from logging.handlers import RotatingFileHandler
 from sqlalchemy import Text
 
+import json
 import logging
 import os
 from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 
 from app.config import DevConfig
-from app.logger import SQLAlchemyHandler
 from .extension import db, migrate,ma,bcrypt,scheduler
 from .route.main import main_bp
 from .route.auth import auth_bp
@@ -39,14 +40,24 @@ def create_app():
     app.cli.add_command(empty_db_command)
 
 
-    # Configure SQLAlchemy logging handler
-    sql_handler = SQLAlchemyHandler()
-    sql_handler.setLevel(logging.INFO)
+    log_dir = os.path.join('logs')
+    os.makedirs(log_dir, exist_ok=True)
+    log_file = os.path.join(log_dir, 'app.log')
+
+    handler = RotatingFileHandler(
+        log_file,
+        maxBytes=10 * 1024 * 1024,  # Max log file size: 10 MB
+        backupCount=5  # Keep 5 backup logs
+    )
+
+    # Create a formatter with a custom format
     formatter = logging.Formatter(
         "%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]"
     )
-    sql_handler.setFormatter(formatter)
-    app.logger.addHandler(sql_handler)
+
+    # Attach the formatter to the handler
+    handler.setFormatter(formatter)
+    app.logger.addHandler(handler)
     app.logger.setLevel(logging.INFO)
     app.logger.info("Flask app startup")
 
@@ -64,44 +75,43 @@ def create_app():
 
 
     @app.before_request
-    def log_request():    
-        app.logger.info("=== New Request ===")
-        # Log request method and URL
-        app.logger.info(f"Request Method: {request.method}")
-        app.logger.info(f"Request URL: {request.url}")
-        
-        # Log request headers
-        headers = dict(request.headers)
-        app.logger.info(f"Headers: {json.dumps(headers, indent=2)}")
-        
-        # Log query parameters
-        app.logger.info(f"Query Parameters: {request.args.to_dict()}")
-        
-        # Log form data (for POST or PUT requests)
-        if request.form:
-            app.logger.info(f"Form Data: {request.form.to_dict()}")
-        
-        # Log JSON body if present
-        if request.is_json:
-            app.logger.info(f"JSON Body: {request.get_json()}")
-        else:
-            # Log raw body as text if it's not JSON
-            app.logger.info(f"Body (raw text): {request.get_data(as_text=True)}")
-        
-        # Log cookies
-        app.logger.info(f"Cookies: {request.cookies.to_dict()}")
-        
-        # Log client information
-        real_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
-        app.logger.info(f"Client IP: {real_ip}")
-        app.logger.info(f"Client User Agent: {request.user_agent}")
-        
-        app.logger.info("=== End of Request Log ===")
+    def log_request():
+        if app.config['LOG_REQUEST']:
+            log  = "\n=== New Request ===\n"
+            log += f"Request Method: {request.method}\n"
+            log += f"Request URL: {request.url}\n"
+            
+            headers = dict(request.headers)
+            log += f"Headers: {json.dumps(headers, indent=2)}\n"
+            log += f"Query Parameters: {request.args.to_dict()}\n"
 
+            # Log form data (for POST or PUT requests)
+            if request.form:
+                log += f"Form Data: {request.form.to_dict()}\n"
+            
+            # Log JSON body if present
+            if request.is_json:
+                log += f"JSON Body: {request.get_json()}\n"
+            else:
+                # Log raw body as text if it's not JSON
+                log += f"Body (raw text): {request.get_data(as_text=True)}\n"
+            
+            # Log cookies
+            log += f"Cookies: {request.cookies.to_dict()}\n"
+            
+            # Log client information
+            real_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
+            log += f"Client IP: {real_ip}\n"
+            log += f"Client User Agent: {request.user_agent}\n"
+            
+            log += "=== End of Request Log ==="
+
+            app.logger.info(log)
+        
 
     # Register blueprints
     app.register_blueprint(main_bp, url_prefix="/researchrepository")
-    app.register_blueprint(auth_bp, url_prefix="/researchrepository/auth")
-    app.register_blueprint(public_bp, url_prefix="/researchrepository/public")
-    app.register_blueprint(user_bp, url_prefix="/researchrepository/user")
+    app.register_blueprint(auth_bp, url_prefix="/researchrepository/api/auth")
+    app.register_blueprint(public_bp, url_prefix="/researchrepository/api/public")
+    app.register_blueprint(user_bp, url_prefix="/researchrepository/api/user")
     return app

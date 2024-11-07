@@ -23,7 +23,7 @@ def index():
 
     # Set the session ID in the response header
     response.set_cookie('Session-ID', session.client_session_id, httponly=True, max_age=60*60*24)  # expires in 1 day
-    response.set_cookie('Session-SALT', session.salt, httponly=True, max_age=60*60*24)  # expires in 1 day
+    response.set_cookie('Session-SALT', session.salt,  max_age=60*60*24)  # expires in 1 day
 
     return response
 
@@ -38,7 +38,7 @@ def loginPage():
         if session is not None:
             if session.isValid():
                 response.set_cookie('Session-ID', session.client_session_id, httponly=True, max_age=60*60*24)  # expires in 1 day
-                response.set_cookie('Session-SALT', session.salt, httponly=True, max_age=60*60*24)  # expires in 1 day
+                response.set_cookie('Session-SALT', session.salt,  max_age=60*60*24)  # expires in 1 day
                 return response
 
     x_forwarded_for = request.headers.get('X-Forwarded-For')
@@ -53,5 +53,5 @@ def loginPage():
 
     # Set the session ID in the response header
     response.set_cookie('Session-ID', session.client_session_id, httponly=True, max_age=60*60*24)  # expires in 1 day
-    response.set_cookie('Session-SALT', session.salt, httponly=True, max_age=60*60*24)  # expires in 1 day
+    response.set_cookie('Session-SALT', session.salt,  max_age=60*60*24)  # expires in 1 day
     return response

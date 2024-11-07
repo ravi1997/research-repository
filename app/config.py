@@ -8,6 +8,11 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 
 class BaseConfig:
     DB_NAME = "backend"
+    OTP_FLAG = False
+    OTP_GENERATION = False
+    LOG_REQUEST = True
+    OTP_DELTA = timedelta(minutes=30)    
+    OTP_MAX_ATTEMPT = 3
 
 class DevConfig(BaseConfig):
     load_dotenv('.env')

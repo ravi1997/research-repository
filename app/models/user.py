@@ -39,7 +39,7 @@ class Client(db.Model):
     salt = db.Column(db.String(256),nullable=False)
 
     user = relationship("User", back_populates="clients")
-    otp = relationship("OTP", back_populates="client",uselist=False)
+    otp = relationship("OTP", back_populates="client")
     
     def __init__(self, client_session_id, user_id=None, ip=None):
         self.client_session_id = client_session_id
@@ -65,7 +65,6 @@ class OTP(db.Model):
     otp = db.Column(db.String(7), nullable=False)
     created_at = db.Column(DateTime, server_default=func.now(), nullable=False)
     status = db.Column(SQLAlchemyEnum(ValidState), index=True, nullable=False, server_default=f'{ValidState.VALID}')
-    wrongAttempt = db.Column(db.Integer, server_default="0")
     sendAttempt = db.Column(db.Integer, server_default="0")
 
     client = relationship("Client", back_populates="otp")
@@ -73,6 +72,9 @@ class OTP(db.Model):
     def __init__(self, client_id, otp):
         self.client_id = client_id
         self.otp = otp
+
+    def isValid(self):
+        return self.status == ValidState.VALID
 
     def __repr__(self):
         return (f"<OTP(id={self.id}, client_id={self.client_id}, otp='{self.otp}', "
@@ -97,6 +99,7 @@ class User(db.Model):
 
     created_at = db.Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = db.Column(DateTime, server_default=func.now(), nullable=False)
+    wrongAttempt = db.Column(db.Integer,nullable=False, server_default="0")
 
     clients = relationship("Client", back_populates="user")
 
