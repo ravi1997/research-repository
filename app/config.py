@@ -13,6 +13,8 @@ class BaseConfig:
     LOG_REQUEST = True
     OTP_DELTA = timedelta(minutes=30)    
     OTP_MAX_ATTEMPT = 3
+    SALT_PASSWORD = "some_unique_code"
+
 
 class DevConfig(BaseConfig):
     load_dotenv('.env')

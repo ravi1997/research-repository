@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 import json
 import uuid
 from flask import jsonify,current_app as app
@@ -9,8 +9,8 @@ from app.decorator import verify_GUEST_role, verify_body, verify_user
 from app.models import OTP, User
 from app.extension import db,scheduler
 from app.models.user import UserState, ValidState
-from app.schema import GuestClientSchema, UserSchema
-from app.util import decrypt, generate_otp, send_sms
+from app.schema import UserSchema
+from app.util import  decrypt_aes_gcm, generate_otp, send_sms
 from . import auth_bp
 
 @auth_bp.route("/")
@@ -37,7 +37,7 @@ def delete_OTP(id):
 def login(request_data,session):
     try:
         app.logger.info(request_data['data'])
-        data_str = decrypt(request_data['data'],session)
+        data_str = decrypt_aes_gcm(request_data['data'],session.salt)
         data = json.loads(data_str)
         app.logger.info(data)
 
@@ -123,7 +123,8 @@ def login(request_data,session):
 def verifyOTP(request_data,session):
     user_schema = UserSchema()
     try:
-        data = decrypt(request_data['data'],session)
+        fernet = decrypt_aes_gcm(session.salt)
+        data = fernet.decrypt(request_data['data'].encode('utf-8')).decode('utf-8')
 
         if not 'OTP' in data:
             app.logger.info("OTP is compulsory")

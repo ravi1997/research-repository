@@ -13,14 +13,12 @@ import hashlib
 from pprint import pprint
 from nbib import read_file
 import re
-from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.primitives.ciphers import Cipher
 from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 import base64
 import os
-
-from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.backends import default_backend
 
 def generate_otp(length=6):
 	"""Generate a random OTP of specified length."""
@@ -103,31 +101,19 @@ def getNewSalt(length=16):
 	return hashlib.sha256(salt).hexdigest()
 
 
-def decrypt(encrypted_data,session,password = "my_secret_password"):
-	salt = base64.b64decode(session.salt)  
-	kdf = PBKDF2HMAC(
-		algorithm=hashes.SHA256(),
-		length=32,
-		salt=salt,
-		iterations=100000,
-		backend=default_backend()
-	)
-	key = kdf.derive(password.encode())
+def decrypt_aes_gcm(encrypted_data, salt):
+    key = salt.encode('utf-8').ljust(32)[:32]  # Ensure 32-byte key length
+    encrypted_data = base64.b64decode(encrypted_data)
+    nonce, ciphertext = encrypted_data[:12], encrypted_data[12:]
 
-	# Split the encrypted data into IV and ciphertext
-	encrypted_data_bytes = base64.b64decode(encrypted_data)
-	iv = encrypted_data_bytes[:16]  # First 16 bytes are the IV
-	ciphertext = encrypted_data_bytes[16:]  # The rest is the ciphertext
+    decryptor = Cipher(
+        algorithms.AES(key),
+        modes.GCM(nonce),
+        backend=default_backend()
+    ).decryptor()
 
-	# Decrypt the data using AES in CBC mode
-	cipher = Cipher(algorithms.AES(key), modes.CBC(iv), backend=default_backend())
-	decryptor = cipher.decryptor()
-	decrypted_data = decryptor.update(ciphertext) + decryptor.finalize()
-
-	return decrypted_data.decode()
-
-
-
+    decrypted_data = decryptor.update(ciphertext) + decryptor.finalize()
+    return decrypted_data.decode('utf-8')
 
 def risFileReader(filepath):
 	articles = []

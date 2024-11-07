@@ -165,8 +165,7 @@
 
         <p>Don't have an account? <a href="/register">Register here</a></p>
     </div>
-    <script src="https://unpkg.com/crypto-js@3.1.9-1/build/crypto-js.min.js"></script>
-<script>
+    <script>
 
 
         function generateCaptcha() {
@@ -184,46 +183,52 @@
             generateCaptcha2();
         };
 
+        async function encryptData(data, salt) {
+            const encoder = new TextEncoder();
+            const keyData = encoder.encode(salt.padEnd(32, ' ').slice(0, 32));
+            const key = await crypto.subtle.importKey('raw', keyData, 'AES-GCM', false, ['encrypt']);
+            const iv = crypto.getRandomValues(new Uint8Array(12));
+
+            const encrypted = await crypto.subtle.encrypt(
+                { name: 'AES-GCM', iv: iv },
+                key,
+                encoder.encode(data)
+            );
+
+            const ciphertext = new Uint8Array(encrypted);
+            const result = new Uint8Array(iv.length + ciphertext.length);
+            result.set(iv, 0);  // Place IV at the beginning
+            result.set(ciphertext, iv.length);  // Followed by the ciphertext
+
+            return btoa(String.fromCharCode(...result));  // Convert to base64 for sending
+        }
+
+
+        function getCookie(name) {
+            const nameEQ = name + "=";
+            const ca = document.cookie.split(';');
+            for (let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) == ' ') c = c.substring(1, c.length);
+                if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
+            }
+            return null;
+        }
         async function submitForm(event) {
             event.preventDefault();  // Prevent the default form submission
-            const salt_cc = getCookie("Session-SALT");  // Assuming the salt cookie is named "salt"
-            if (!salt_cc) {
+            const salt = getCookie("Session-SALT");  // Assuming the salt cookie is named "salt"
+            if (!salt) {
                 console.error("Salt not found in cookies.");
                 return;
             }
-            const salt = CryptoJS.enc.Base64.parse(saltBase64);
-            const password = "32_characters_long_key_here___!!";  // The password (or salt) should be known on both sides
-
             const form = document.getElementById("login-form");
             const formData = new FormData(form);
             const formDataJson = Object.fromEntries(formData.entries())
 
             const data = JSON.stringify(formDataJson);
 
+            const encryptedData = await encryptData(data, salt);
 
-            // 2. Generate the key using PBKDF2
-            const key = CryptoJS.PBKDF2(password, salt, {
-                keySize: 256 / 32,
-                iterations: 100000,
-                hasher: CryptoJS.algo.SHA256
-            });
-
-            // 3. Encrypt the data using AES CBC
-            const iv = CryptoJS.lib.WordArray.random(16);  // Generate a random 16-byte IV
-            const encrypted = CryptoJS.AES.encrypt(data, key, { iv: iv });
-
-            // 4. Base64 encode the IV and ciphertext
-            const encryptedData = {
-                iv: CryptoJS.enc.Base64.stringify(iv),
-                ciphertext: encrypted.ciphertext.toString(CryptoJS.enc.Base64)
-            };
-
-
-            // Gather form data
-
-
-            // Step 3: Generate the key using the salt
-            
             try {
                 // Send data to the server using fetch API
                 const response = await fetch(form.action, {
@@ -231,7 +236,7 @@
                     headers: {
                         'Content-Type': 'application/json',  // Ensure JSON is being sent
                     },
-                    body: JSON.stringify(encryptedData)
+                    body: JSON.stringify({ data: encryptedData })
                 });
 
                 // Check if the response is successful
@@ -252,14 +257,6 @@
             document.getElementById("login-form").style.display = "none";
         }
 
-        // Helper function to get a cookie by name
-        function getCookie(name) {
-            const value = `; ${document.cookie}`;
-            console.log(value);
-
-            const parts = value.split(`; ${name}=`);
-            if (parts.length === 2) return parts.pop().split(";").shift();
-        }
     </script>
 </body>
 
