@@ -11,7 +11,6 @@ from . import user_bp
 def index():
     return "This is The waiting list user route"
 
-
 @user_bp.route("/getAll", methods=["GET"])
 @verify_SUPERADMIN_role
 def getAll_users(session):

@@ -10,7 +10,7 @@ from app.models import OTP, User
 from app.extension import db,scheduler
 from app.models.user import UserState, ValidState
 from app.schema import UserSchema
-from app.util import  decrypt_aes_gcm, generate_otp, send_sms
+from app.util import  decode_text, generate_otp, send_sms
 from . import auth_bp
 
 @auth_bp.route("/")
@@ -36,10 +36,8 @@ def delete_OTP(id):
 @verify_body
 def login(request_data,session):
     try:
-        app.logger.info(request_data['data'])
-        data_str = decrypt_aes_gcm(request_data['data'],session.salt)
+        data_str = decode_text(session.salt,request_data['data'].encode('UTF-8'))
         data = json.loads(data_str)
-        app.logger.info(data)
 
         if not 'mobile' in data:
             app.logger.info("Phone number is compulsory")
@@ -67,18 +65,28 @@ def login(request_data,session):
         new_otp = ""
         found=False
 
-        if session.otp_id is not None:
-            otp = OTP.query.filter_by(id = session.otp_id).one_or_none()
-            
-            if otp is None:
+        if session.otp != []:
+            valid = False
+            for otp in session.otp :
+                if otp.isValid():
+                    valid = True
+                    otp = OTP.query.filter_by(id = otp.id).one_or_none()
+                    
+                    if otp is None:
+                        if app.config['OTP_GENERATION']:
+                            new_otp = generate_otp()
+                        else:
+                            new_otp = "123456"
+                    else:
+                        new_otp = otp.otp
+                        otp.sendAttempt = otp.sendAttempt + 1
+                        found = True
+
+            if not valid:
                 if app.config['OTP_GENERATION']:
                     new_otp = generate_otp()
                 else:
-                    new_otp = "123456"
-            else:
-                new_otp = otp.otp
-                otp.sendAttempt = otp.sendAttempt + 1
-                found = True
+                    new_otp = "123456" 
         else:
             if app.config['OTP_GENERATION']:
                 new_otp = generate_otp()
@@ -123,9 +131,8 @@ def login(request_data,session):
 def verifyOTP(request_data,session):
     user_schema = UserSchema()
     try:
-        fernet = decrypt_aes_gcm(session.salt)
-        data = fernet.decrypt(request_data['data'].encode('utf-8')).decode('utf-8')
-
+        data_str = decode_text(session.salt,request_data['data'].encode('UTF-8'))
+        data = json.loads(data_str)
         if not 'OTP' in data:
             app.logger.info("OTP is compulsory")
             return jsonify({"message":"OTP is compulsory"}),401

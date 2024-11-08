@@ -20,7 +20,7 @@ def verify_body(f):
 def verify_session(f):
 	@wraps(f)
 	def decorated_function(*args, **kwargs):
-		session_id = request.headers.get('Session-ID')
+		session_id = request.cookies.get('Session-ID')
 
 		if session_id is None:
 			app.logger.info(f'Session Id not passed')
@@ -42,7 +42,7 @@ def verify_session(f):
 def verify_user(f):
 	@wraps(f)
 	def decorated_function(*args, **kwargs):
-		session_id = request.headers.get('Session-ID')
+		session_id = request.cookies.get('Session-ID')
 
 		if session_id is None:
 			app.logger.info(f'Session Id not passed')
@@ -72,7 +72,7 @@ def verify_user(f):
 def verify_SUPERADMIN_role(f):
 	@wraps(f)
 	def decorated_function(*args, **kwargs):
-		session_id = request.headers.get('Session-ID')
+		session_id = request.cookies.get('Session-ID')
 
 		if session_id is None:
 			app.logger.info(f'Session Id not passed')

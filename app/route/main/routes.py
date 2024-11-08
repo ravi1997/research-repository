@@ -1,14 +1,16 @@
 import uuid
 from flask import render_template,make_response, request, send_from_directory
 
+from app.decorator import verify_user
 from app.models import Client
 from app.extension import db
+from app.util import setCookie
 from . import main_bp
-from flask import current_app
+from flask import current_app as app
 
 @main_bp.route("/", methods=["GET"])
 def index():
-    current_app.logger.info("main route called")
+    app.logger.info("main route called")
     response = make_response(render_template('index.html'))
 
     x_forwarded_for = request.headers.get('X-Forwarded-For')
@@ -22,8 +24,9 @@ def index():
     db.session.commit()
 
     # Set the session ID in the response header
-    response.set_cookie('Session-ID', session.client_session_id, httponly=True, max_age=60*60*24)  # expires in 1 day
-    response.set_cookie('Session-SALT', session.salt,  max_age=60*60*24)  # expires in 1 day
+    setCookie(response,'Session-ID',session.client_session_id)
+    response.set_cookie('Session-ID',session.client_session_id, httponly=True, max_age=app.config['COOKIE_AGE'], secure = True, samesite='None')  # expires in 1 day
+    response.set_cookie('Session-SALT', session.salt,  max_age=app.config['COOKIE_AGE'], secure = True, samesite='None')  # expires in 1 day
 
     return response
 
@@ -37,8 +40,8 @@ def loginPage():
         session = Client.query.filter_by(client_session_id = session_ID).first()
         if session is not None:
             if session.isValid():
-                response.set_cookie('Session-ID', session.client_session_id, httponly=True, max_age=60*60*24)  # expires in 1 day
-                response.set_cookie('Session-SALT', session.salt,  max_age=60*60*24)  # expires in 1 day
+                response.set_cookie('Session-ID', session.client_session_id, httponly=True, max_age=app.config['COOKIE_AGE'], secure = True, samesite='None')  # expires in 1 day
+                response.set_cookie('Session-SALT', session.salt,  max_age=app.config['COOKIE_AGE'], secure = True, samesite='None')  # expires in 1 day
                 return response
 
     x_forwarded_for = request.headers.get('X-Forwarded-For')
@@ -52,6 +55,18 @@ def loginPage():
     db.session.commit()
 
     # Set the session ID in the response header
-    response.set_cookie('Session-ID', session.client_session_id, httponly=True, max_age=60*60*24)  # expires in 1 day
-    response.set_cookie('Session-SALT', session.salt,  max_age=60*60*24)  # expires in 1 day
+    response.set_cookie('Session-ID', session.client_session_id, httponly=True, max_age=app.config['COOKIE_AGE'], secure = True, samesite='None')  # expires in 1 day
+    response.set_cookie('Session-SALT', session.salt,  max_age=app.config['COOKIE_AGE'], secure = True, samesite='None')  # expires in 1 day
     return response
+
+
+
+@main_bp.route('/home')
+@verify_user
+def homePage(session):
+    response = make_response(render_template('home.html'))
+    response.set_cookie('Session-ID', session.client_session_id, httponly=True, max_age=app.config['COOKIE_AGE'], secure = True, samesite='None')  # expires in 1 day
+    response.set_cookie('Session-SALT', session.salt,  max_age=app.config['COOKIE_AGE'], secure = True, samesite='None')  # expires in 1 day
+    return response
+
+

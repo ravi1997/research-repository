@@ -4,7 +4,12 @@
 ENV_NAME="env"
 
 # Activate the virtual environment
-source "$ENV_NAME/bin/activate"
+if [ -d "$ENV_NAME/bin/activate" ]; then
+    source "$ENV_NAME/bin/activate"
+else
+    # Create a virtual environment
+    .\env\Scripts\activate
+fi
 
 if [ -d "migrations" ]; then
     rm -rf migrations

@@ -14,7 +14,15 @@ else
 fi
 
 # Activate the virtual environment
-source "$ENV_NAME/bin/activate"
+
+
+if [ -d "$ENV_NAME/bin/activate" ]; then
+    source "$ENV_NAME/bin/activate"
+else
+    # Create a virtual environment
+    .\env\Scripts\activate
+fi
+
 
 # Install the required packages
 echo "Installing requirements..."

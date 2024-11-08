@@ -69,9 +69,10 @@ class OTP(db.Model):
 
     client = relationship("Client", back_populates="otp")
     
-    def __init__(self, client_id, otp):
+    def __init__(self, client_id, otp,status=ValidState.VALID):
         self.client_id = client_id
         self.otp = otp
+        self.status = status
 
     def isValid(self):
         return self.status == ValidState.VALID

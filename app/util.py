@@ -1,6 +1,7 @@
 		
 # UTILS
 from datetime import datetime, timedelta
+from functools import reduce
 import random
 import string
 import requests
@@ -92,33 +93,54 @@ def generate_strong_password(length=10):
 	
 	return password
 
+def getNewSalt(length: int = 16) -> str:
+    characters = string.ascii_letters + string.digits
+    salt = ''.join(secrets.choice(characters) for _ in range(length))
+    return salt
 
 
-def getNewSalt(length=16):
-	# Generate a random salt with the specified byte length
-	salt = secrets.token_bytes(length)
-	# Convert to a hexadecimal string for easy storage
-	return hashlib.sha256(salt).hexdigest()
+def setCookie(response,name,value,httponly=True):
+    response.set_cookie(name,value, httponly=httponly, max_age=app.config['COOKIE_AGE'], secure = True, samesite='None')  
 
+def hash_salt(salt: str) -> str:
+    # Encode the salt and generate SHA-256 hash
+    hash_object = hashlib.sha256(salt.encode('UTF-8'))
+    # Convert to hexadecimal format
+    return hash_object.hexdigest()
 
-def decrypt_aes_gcm(encrypted_data, salt):
-    key = salt.encode('utf-8').ljust(32)[:32]  # Ensure 32-byte key length
-    encrypted_data = base64.b64decode(encrypted_data)
-    nonce, ciphertext = encrypted_data[:12], encrypted_data[12:]
+def decipher(salt: str):
+    # Get the hashed salt
+    hashed_salt = hash_salt(salt)
+    
+    # Function to convert text to char codes
+    def text_to_chars(text):
+        return [ord(c) for c in text]
+    
+    # Apply the hashed salt to the character code
+    def apply_salt_to_char(code):
+        # Reduce the XOR operation across all characters in the hashed salt
+        return reduce(lambda a, b: a ^ b, text_to_chars(hashed_salt), code)
+    
+    # The main decode function
+    def decode(encoded: str) -> str:
+        # Split the encoded string into hex pairs and convert to integers
+        chars = [int(encoded[i:i+2], 16) for i in range(0, len(encoded), 2)]
+        # Apply salt to each char code and convert back to characters
+        decoded_chars = [chr(apply_salt_to_char(char_code)) for char_code in chars]
+        return ''.join(decoded_chars)
+    
+    return decode
 
-    decryptor = Cipher(
-        algorithms.AES(key),
-        modes.GCM(nonce),
-        backend=default_backend()
-    ).decryptor()
+# Example function to decode text
+def decode_text(salt: str, encoded: str) -> str:
+    decode_function = decipher(salt)
+    return decode_function(encoded)
 
-    decrypted_data = decryptor.update(ciphertext) + decryptor.finalize()
-    return decrypted_data.decode('utf-8')
 
 def risFileReader(filepath):
 	articles = []
 
-	with open(filepath, 'r') as bibliography_file:    
+	with open(filepath, 'r',encoding='UTF-8') as bibliography_file:    
 		entries = rispy.load(bibliography_file)
 
 

@@ -14,7 +14,7 @@ class BaseConfig:
     OTP_DELTA = timedelta(minutes=30)    
     OTP_MAX_ATTEMPT = 3
     SALT_PASSWORD = "some_unique_code"
-
+    COOKIE_AGE = 60*60*24
 
 class DevConfig(BaseConfig):
     load_dotenv('.env')
