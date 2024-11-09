@@ -17,7 +17,7 @@ article = fetch.article_by_pmid('35225509')
 #     print(f"authors : {author}")
 # pprint(article.xml)
 
-publication_type_list = article.publication_types
+publication_type_list = list(article.publication_types.values())
 
 if 'Journal Article' in publication_type_list:
 	publication_type = []
@@ -25,24 +25,28 @@ if 'Journal Article' in publication_type_list:
 
 	keyword_list = article.keywords
 	keywords = []
-	keywords += ({"keyword":keyword['descriptor']} for keyword in keyword_list)
+
+	
+	keywords += ({"keyword":str(keyword)} for keyword in keyword_list)
 	
 	authors = [{"fullName": author.collective_name, "author_abbreviated": f"{author.last_name}, {author.initials}", "affiliations": author.affiliations, "sequence_number":idx + 1} for idx, author in enumerate(article.author_list)]
 	title = article.title
 	abstract = article.abstract
 	
 	journal = article.journal
+ 
+	# journal_abrevated
 	
-	publication_date = datetime(year=article.year,month=1,day=1) 
+	publication_date = datetime(year=int(article.year),month=1,day=1) 
 	pages = article.pages
 
 	journal_volume = article.volume
 	journal_issue = article.issue
-				
+	
 	pmc_id = str(article.pmc)
 	pii = article.pii
 	doi = article.doi
-	print(article.url)
+	# print(article.url)
 			
 			
 	links = []
