@@ -34,11 +34,8 @@ def delete_OTP(id):
 @auth_bp.route("/login", methods=["POST"])
 @verify_GUEST_role
 @verify_body
-def login(request_data,session):
+def login(data,session):
     try:
-        data_str = decode_text(session.salt,request_data['data'].encode('UTF-8'))
-        data = json.loads(data_str)
-
         if not 'mobile' in data:
             app.logger.info("Phone number is compulsory")
             return jsonify({"message":"Phone number is compulsory"}),401
@@ -128,11 +125,9 @@ def login(request_data,session):
 @auth_bp.route("/verify_otp", methods=["POST"])
 @verify_GUEST_role
 @verify_body
-def verifyOTP(request_data,session):
+def verifyOTP(data,session):
     user_schema = UserSchema()
     try:
-        data_str = decode_text(session.salt,request_data['data'].encode('UTF-8'))
-        data = json.loads(data_str)
         if not 'OTP' in data:
             app.logger.info("OTP is compulsory")
             return jsonify({"message":"OTP is compulsory"}),401

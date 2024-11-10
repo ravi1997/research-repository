@@ -2,9 +2,9 @@ import json
 import os
 from flask import jsonify,current_app as app, render_template, request
 
-from app.decorator import verify_GUEST_role
+from app.decorator import verify_GUEST_role, verify_body
 from app.schema import ArticleSchema
-from app.util import nbibFileReader, risFileReader
+from app.util import download_xml, nbibFileReader, parse_pubmed_xml, risFileReader
 from . import public_bp
 from app.extension import db
 
@@ -70,7 +70,7 @@ def upload_ris(session):
 		
 		return jsonify({"message": "File uploaded successfully", "filename": filename,"length":len(objects)}), 200
 	else:
-		return jsonify({"error": "Invalid file type. Only .ris files are allowed."}), 400
+		return jsonify({"error": "Invalid file type. Only .ris files are allowed."}), 401
 
 
 
@@ -110,4 +110,31 @@ def upload_nbib(session):
 		
 		return jsonify({"message": "File uploaded successfully", "filename": filename,"length":len(objects)}), 200
 	else:
-		return jsonify({"error": "Invalid file type. Only nbib files are allowed."}), 400
+		return jsonify({"error": "Invalid file type. Only nbib files are allowed."}), 401
+
+
+
+
+@public_bp.route('/pubmedFectch', methods=['POST'])
+@verify_GUEST_role
+@verify_body
+def pubmedFectch(data,session):
+	pubmed_id = data["pmid"]
+
+	filename = os.path.join(app.config["UPLOAD_FOLDER"],'pubfetch',f'pubmed-{pubmed_id}.xml')
+
+
+	success = download_xml(pubmed_id,filename)
+	if success:
+		myjson = parse_pubmed_xml(filename)
+		
+		schema = ArticleSchema()
+		object = schema.load(myjson)
+		db.session.add(object)
+		db.session.commit()
+		app.logger.info("1 item added in the db")  
+			
+		return jsonify({"message": "Pubmed Article Added successfully" }), 200
+
+	else:
+		return jsonify({"message":"Either you provided wrong Pubmed ID or something went wrong."}),401

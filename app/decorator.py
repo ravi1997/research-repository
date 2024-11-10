@@ -1,9 +1,11 @@
 #decorator
 from functools import wraps
+import json
 
 from flask import jsonify, request,current_app as app
 
 from app.models import Client, UserRole
+from app.util import decode_text
 
 def verify_body(f):
 	@wraps(f)
@@ -13,7 +15,14 @@ def verify_body(f):
 		if request_data is None:
 			return jsonify({"message":"Invalid request data format"}),401
 		
-		return f(request_data,*args, **kwargs)
+		session_id = request.cookies.get('Session-ID')
+		session = Client.query.filter_by(client_session_id=session_id).first()
+		app.logger.info(request_data)
+		data_str = decode_text(session.salt,request_data['data'].encode('UTF-8'))
+		app.logger.info(data_str)
+		data = json.loads(data_str)
+		app.logger.info(data)
+		return f(data,*args, **kwargs)
 	return decorated_function
 
 

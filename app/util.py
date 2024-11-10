@@ -20,6 +20,7 @@ import base64
 import os
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.backends import default_backend
+import xml.etree.ElementTree as ET
 
 def generate_otp(length=6):
 	"""Generate a random OTP of specified length."""
@@ -94,47 +95,47 @@ def generate_strong_password(length=10):
 	return password
 
 def getNewSalt(length: int = 16) -> str:
-    characters = string.ascii_letters + string.digits
-    salt = ''.join(secrets.choice(characters) for _ in range(length))
-    return salt
+	characters = string.ascii_letters + string.digits
+	salt = ''.join(secrets.choice(characters) for _ in range(length))
+	return salt
 
 
 def setCookie(response,name,value,httponly=True):
-    response.set_cookie(name,value, httponly=httponly, max_age=app.config['COOKIE_AGE'], secure = True, samesite='None')  
+	response.set_cookie(name,value, httponly=httponly, max_age=app.config['COOKIE_AGE'], secure = True, samesite='None')  
 
 def hash_salt(salt: str) -> str:
-    # Encode the salt and generate SHA-256 hash
-    hash_object = hashlib.sha256(salt.encode('UTF-8'))
-    # Convert to hexadecimal format
-    return hash_object.hexdigest()
+	# Encode the salt and generate SHA-256 hash
+	hash_object = hashlib.sha256(salt.encode('UTF-8'))
+	# Convert to hexadecimal format
+	return hash_object.hexdigest()
 
 def decipher(salt: str):
-    # Get the hashed salt
-    hashed_salt = hash_salt(salt)
-    
-    # Function to convert text to char codes
-    def text_to_chars(text):
-        return [ord(c) for c in text]
-    
-    # Apply the hashed salt to the character code
-    def apply_salt_to_char(code):
-        # Reduce the XOR operation across all characters in the hashed salt
-        return reduce(lambda a, b: a ^ b, text_to_chars(hashed_salt), code)
-    
-    # The main decode function
-    def decode(encoded: str) -> str:
-        # Split the encoded string into hex pairs and convert to integers
-        chars = [int(encoded[i:i+2], 16) for i in range(0, len(encoded), 2)]
-        # Apply salt to each char code and convert back to characters
-        decoded_chars = [chr(apply_salt_to_char(char_code)) for char_code in chars]
-        return ''.join(decoded_chars)
-    
-    return decode
+	# Get the hashed salt
+	hashed_salt = hash_salt(salt)
+	
+	# Function to convert text to char codes
+	def text_to_chars(text):
+		return [ord(c) for c in text]
+	
+	# Apply the hashed salt to the character code
+	def apply_salt_to_char(code):
+		# Reduce the XOR operation across all characters in the hashed salt
+		return reduce(lambda a, b: a ^ b, text_to_chars(hashed_salt), code)
+	
+	# The main decode function
+	def decode(encoded: str) -> str:
+		# Split the encoded string into hex pairs and convert to integers
+		chars = [int(encoded[i:i+2], 16) for i in range(0, len(encoded), 2)]
+		# Apply salt to each char code and convert back to characters
+		decoded_chars = [chr(apply_salt_to_char(char_code)) for char_code in chars]
+		return ''.join(decoded_chars)
+	
+	return decode
 
 # Example function to decode text
 def decode_text(salt: str, encoded: str) -> str:
-    decode_function = decipher(salt)
-    return decode_function(encoded)
+	decode_function = decipher(salt)
+	return decode_function(encoded)
 
 
 def risFileReader(filepath):
@@ -383,3 +384,86 @@ def nbibFileReader(filepath):
 
 	return articles
 		
+def download_xml(pmid, filename):
+	# Construct the URL for the E-utilities API
+	url = f"https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id={pmid}"
+	
+	# Send a GET request to fetch the content
+	response = requests.get(url)
+	
+	# Check if the request was successful
+	if response.status_code == 200:
+		# Write the content to a .nbib file
+		with open(filename, 'w', encoding='utf-8') as file:
+			file.write(response.content.decode('UTF-8'))
+		app.logger.info(f"Downloaded {filename} successfully.")
+	else:
+		app.logger.info(f"Failed to download. HTTP Status Code: {response.status_code}")
+
+	return response.status_code == 200
+	
+def parse_pubmed_xml(file_path):
+	tree = ET.parse(file_path)
+	root = tree.getroot()
+		
+	article = root.find("PubmedArticle")
+	article_data = {
+		"uuid":str(uuid.uuid4())
+	}
+	article_data["publication_types"] = [{"publication_type":pubType.text} for pubType in article.findall(".//PublicationTypeList/PublicationType")]
+
+	# Extract Keywords
+	article_data["keywords"] = [{"keyword":pubType.text} for pubType in article.findall(".//Keyword")]
+
+
+	# Extract Authors
+	authors = []
+	for idx,author in enumerate(article.findall(".//Author")):
+		last_name = author.find("LastName").text
+		fore_name = author.find("ForeName").text
+		initials = author.find("Initials").text
+		affiliations = [affiliation.text for affiliation in author.findall(".//AffiliationInfo/Affiliation")]
+		authors.append(
+			{
+				'fullName':f"{last_name}, {fore_name}",
+				'author_abbreviated':f"{last_name} {initials}",
+				'affiliations':affiliations,
+				"sequence_number":idx + 1
+			}    
+		)
+	article_data["authors"] = authors
+
+	article_data["title"] = article.find(".//ArticleTitle").text
+	article_data["abstract"] = article.find(".//Abstract/AbstractText").text
+	pub_year = article.find(".//PubDate/Year").text
+	pub_month = article.find(".//PubDate/Month").text
+	pub_date = f"{pub_year} {pub_month}"
+	article_data["publication_date"] = datetime.strptime(pub_date, "%Y %b").isoformat()
+	article_data["place_of_publication"] = article.find(".//MedlineJournalInfo/Country").text
+	article_data["journal"] = article.find(".//Journal/Title").text
+	article_data["journal_abrevated"] = article.find(".//ISOAbbreviation").text
+	article_data["pages"] = article.find(".//Pagination/MedlinePgn").text
+	article_data["journal_volume"] = article.find(".//JournalIssue/Volume").text
+	article_data["journal_issue"] = article.find(".//JournalIssue/Issue").text
+	article_data["pubmed_id"] = article.find(".//PMID").text
+
+	# Extract Article IDs (PubMed, DOI, PMC, etc.)
+	for article_id in article.findall(".//ArticleId"):
+		id_type = article_id.get("IdType")
+		if id_type == "doi":
+			article_data["doi"] = article_id.text
+		elif id_type == "pmc":
+			article_data["pmc_id"] = article_id.text
+		elif id_type == "pii":
+			article_data["pii"] = article_id.text
+
+	issn = article.find(".//Journal/ISSN")
+	IssnType = issn.get("IssnType")
+	if IssnType == "Electronic":
+		article_data["electronic_issn"]=issn.text
+	
+	article_data["linking_issn"] = article.find(".//ISSNLinking").text
+	article_data["nlm_journal_id"] = article.find(".//NlmUniqueID").text
+	article_data["links"] = []
+
+	return article_data
