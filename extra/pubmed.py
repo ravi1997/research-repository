@@ -47,9 +47,7 @@ pmid = '35225509'  # Replace with the actual PMID
 input_xml = 'pubmed_data.xml'  # Your PubMed XML file
 output_nbib = 'pubmed_data.nbib'  # Desired output NBIB file
 
-# Parse the XML and convert to NBIB
-download_nbib(pmid, input_xml)
-nbib_data = parse_pubmed_xml(input_xml)
+nbib_data = {}
 
 # print(nbib_data)
 

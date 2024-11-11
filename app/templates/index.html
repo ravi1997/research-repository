@@ -5,145 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AIIMS Research Publication Repository</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f4f4f9;
-        }
+    <link rel="stylesheet" href="/researchrepository/constant/style/style.css">
 
-        header {
-            background-color: #004080;
-            color: white;
-            padding: 15px 0;
-            text-align: center;
-        }
-
-        header h1 {
-            margin: 0;
-            font-size: 2.5rem;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 20px auto;
-            padding: 20px;
-        }
-
-        .intro {
-            background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-            text-align: center;
-        }
-
-        .intro h2 {
-            margin-top: 0;
-            font-size: 2rem;
-            color: #333;
-        }
-
-        .intro p {
-            font-size: 1.2rem;
-            line-height: 1.6;
-            color: #555;
-        }
-
-        .button {
-            margin-top: 20px;
-        }
-
-        .button a {
-            text-decoration: none;
-            color: white;
-            background-color: #004080;
-            padding: 10px 20px;
-            border-radius: 5px;
-            font-size: 1.2rem;
-        }
-
-        .button a:hover {
-            background-color: #0059b3;
-        }
-
-        .upload-section {
-            margin-top: 40px;
-            text-align: center;
-        }
-
-        .upload-section h3 {
-            font-size: 1.8rem;
-            color: #333;
-        }
-
-        .upload-section form {
-            margin-top: 20px;
-            display: inline-block;
-            text-align: left;
-        }
-
-        .upload-section input[type="file"] {
-            padding: 10px;
-            font-size: 1rem;
-        }
-
-        .upload-section button {
-            margin-top: 10px;
-            padding: 10px 20px;
-            font-size: 1rem;
-            color: white;
-            background-color: #004080;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-
-        .upload-section button:hover {
-            background-color: #0059b3;
-        }
-
-        .features {
-            display: flex;
-            justify-content: space-around;
-            margin-top: 40px;
-        }
-
-        .feature {
-            text-align: center;
-            padding: 20px;
-            background-color: #e9ecef;
-            border-radius: 8px;
-            width: 30%;
-        }
-
-        .feature h3 {
-            margin-bottom: 15px;
-            font-size: 1.5rem;
-            color: #333;
-        }
-
-        .feature p {
-            font-size: 1rem;
-            color: #666;
-        }
-
-        footer {
-            text-align: center;
-            padding: 20px;
-            background-color: #004080;
-            color: white;
-            position: relative;
-            width: 100%;
-            bottom: 0;
-            margin-top: 20px;
-        }
-
-        footer p {
-            margin: 0;
-        }
-    </style>
 </head>
 
 <body>
@@ -170,22 +33,7 @@
         </div>
 
         <!-- File Upload Section -->
-        <div class="upload-section">
-            <h3>Upload .ris File</h3>
-            <form id="uploadForm" enctype="multipart/form-data">
-                <input type="file" id="file" name="file" accept=".ris" required>
-                <button type="button" onclick="uploadrisFile()">Upload</button>
-            </form>
-            <p id="message"></p>
-        </div>
-        <div class="upload-section">
-            <h3>Upload .nbib File</h3>
-            <form id="uploadForm-nbib" enctype="multipart/form-data">
-                <input type="file" id="file" name="file" accept=".nbib" required>
-                <button type="button" onclick="uploadnbibFile()">Upload</button>
-            </form>
-            <p id="message1"></p>
-        </div>
+
 
         <div class="features">
             <div class="feature">
@@ -207,53 +55,6 @@
         <p>&copy; 2024 AIIMS Research Repository. All Rights Reserved.</p>
     </footer>
 
-    <script>
-        async function uploadrisFile() {
-            const form = document.getElementById('uploadForm');
-            const formData = new FormData(form);
-
-            try {
-                const response = await fetch("../researchrepository/api/public/upload_ris", {
-                    method: "POST",
-                    body: formData
-                });
-
-                if (response.ok) {
-                    const result = await response.json();
-                    document.getElementById("message").innerText = "File uploaded successfully: " + result.filename;
-                } else {
-                    const error = await response.json();
-                    document.getElementById("message").innerText = "Error: " + error.error;
-                }
-            } catch (error) {
-                console.error("Upload error:", error);
-                document.getElementById("message").innerText = "An error occurred while uploading the file.";
-            }
-        }
-
-        async function uploadnbibFile() {
-                const form = document.getElementById('uploadForm-nbib');
-                const formData = new FormData(form);
-
-                try {
-                    const response = await fetch("../researchrepository/api/public/upload_nbib", {
-                        method: "POST",
-                        body: formData
-                    });
-
-                    if (response.ok) {
-                        const result = await response.json();
-                        document.getElementById("message1").innerText = "File uploaded successfully: " + result.filename;
-                    } else {
-                        const error = await response.json();
-                        document.getElementById("message1").innerText = "Error: " + error.error;
-                    }
-                } catch (error) {
-                    console.error("Upload error:", error);
-                    document.getElementById("message1").innerText = "An error occurred while uploading the file.";
-                }
-            }
-    </script>
 
 </body>
 

@@ -6,135 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - AIIMS Research Publication Repository</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
-    <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            font-family: 'Roboto', sans-serif;
-            background: linear-gradient(135deg, #004080, #0059b3);
-            color: #333;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-        }
-
-        .login-container {
-            background: #fff;
-            padding: 40px;
-            border-radius: 10px;
-            box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.3);
-            max-width: 400px;
-            width: 100%;
-            text-align: center;
-            animation: fadeIn 0.8s ease-in-out;
-        }
-
-        .login-container h2 {
-            margin-bottom: 20px;
-            color: #004080;
-            font-weight: 500;
-        }
-
-        .login-container input[type="text"],
-        .login-container input[type="password"] {
-            width: 100%;
-            padding: 12px;
-            margin: 10px 0;
-            border-radius: 5px;
-            border: 1px solid #ddd;
-            font-size: 1rem;
-            transition: border-color 0.3s;
-        }
-
-        .login-container input:focus {
-            border-color: #0059b3;
-            outline: none;
-        }
-
-        .login-container button {
-            width: 100%;
-            padding: 12px;
-            background: #0059b3;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: background 0.3s;
-            font-weight: 500;
-        }
-
-        .login-container button:hover {
-            background: #004080;
-        }
-
-        .login-container p {
-            margin-top: 15px;
-            font-size: 0.9rem;
-            color: #666;
-        }
-
-        .login-container a {
-            color: #0059b3;
-            text-decoration: none;
-            font-weight: 500;
-        }
-
-        .login-container a:hover {
-            text-decoration: underline;
-        }
-
-        .captcha-box {
-            display: flex;
-            align-items: center;
-            margin: 10px 0;
-            justify-content: space-between;
-        }
-
-        .captcha-code {
-            font-weight: 500;
-            background-color: #f2f2f2;
-            padding: 10px;
-            border-radius: 5px;
-            font-size: 1.1rem;
-            user-select: none;
-            flex: 1;
-            text-align: center;
-            color: #333;
-        }
-
-        .refresh-btn {
-            background: none;
-            border: none;
-            color: #0059b3;
-            font-size: 1.1rem;
-            cursor: pointer;
-            margin-left: 10px;
-            transition: color 0.3s;
-        }
-
-        .refresh-btn:hover {
-            color: #004080;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="/researchrepository/constant/style/style.css">
+    <link rel="preload" href="/researchrepository/constant/style/style.css" as="style"
+        onload="this.onload=null;this.rel='stylesheet'">
 </head>
 
 <body>
@@ -146,7 +20,7 @@
             <input type="text" name="mobile" placeholder="Enter Mobile Number" required pattern="\d{10}">
             <div class="captcha-box">
                 <div id="captchaCode" class="captcha-code"></div>
-                <button type="button" class="refresh-btn" onclick="generateCaptcha()">⟳</button>
+                <button type="button" class="refresh-btn" onclick="generateCaptcha('captchaCode')">⟳</button>
             </div>
             <input type="text" name="captcha" placeholder="Enter CAPTCHA" required>
             <button type="submit">Send OTP</button>
@@ -158,7 +32,7 @@
             <input type="text" name="OTP" placeholder="Enter OTP" required pattern="\d{6}">
             <div class="captcha-box">
                 <div id="captchaCode2" class="captcha-code"></div>
-                <button type="button" class="refresh-btn" onclick="generateCaptcha2()">⟳</button>
+                <button type="button" class="refresh-btn" onclick="generateCaptcha('captchaCode2')">⟳</button>
             </div>
             <input type="text" name="captcha2" placeholder="Enter CAPTCHA" required>
             <button type="submit">Verify OTP</button>
@@ -166,145 +40,9 @@
 
         <p>Don't have an account? <a href="/register">Register here</a></p>
     </div>
-    <script>
+    <script src="/researchrepository/constant/js/common.js"></script>
+    <script src="/researchrepository/constant/js/login.js"></script>
 
-
-        function generateCaptcha() {
-            const captcha = Math.random().toString(36).substring(2, 8).toUpperCase();
-            document.getElementById("captchaCode").textContent = captcha;
-        }
-
-        function generateCaptcha2() {
-            const captcha = Math.random().toString(36).substring(2, 8).toUpperCase();
-            document.getElementById("captchaCode2").textContent = captcha;
-        }
-
-        window.onload = function () {
-            generateCaptcha();
-            generateCaptcha2();
-        };
-
-        async function hashSalt(salt) {
-            const encoder = new TextEncoder();
-            const data = encoder.encode(salt);
-            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-            const hashArray = Array.from(new Uint8Array(hashBuffer));
-            return hashArray.map(byte => byte.toString(16).padStart(2, '0')).join('');
-        }
-
-        async function cipher(salt) {
-            const hashedSalt = await hashSalt(salt);
-            const textToChars = text => text.split('').map(c => c.charCodeAt(0));
-            const byteHex = n => ("0" + Number(n).toString(16)).substr(-2);
-            const applySaltToChar = code => textToChars(hashedSalt).reduce((a, b) => a ^ b, code);
-
-            return text => text.split('')
-                .map(textToChars)
-                .map(applySaltToChar)
-                .map(byteHex)
-                .join('');
-        }
-
-
-        function getCookie(name) {
-            const nameEQ = name + "=";
-            const ca = document.cookie.split(';');
-            for (let i = 0; i < ca.length; i++) {
-                let c = ca[i];
-                while (c.charAt(0) == ' ') c = c.substring(1, c.length);
-                if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
-            }
-            return null;
-        }
-
-
-        async function submitFormVerify(event) {
-            event.preventDefault();  // Prevent the default form submission
-            const salt = getCookie("Session-SALT");  // Assuming the salt cookie is named "salt"
-            if (!salt) {
-                console.error("Salt not found in cookies.");
-                return;
-            }
-            const form = document.getElementById("otp-form");
-            const formData = new FormData(form);
-            const formDataJson = Object.fromEntries(formData.entries())
-
-            const Loginform = document.getElementById("login-form");
-            const LoginformData = new FormData(Loginform);
-            const LoginformDataJson = Object.fromEntries(LoginformData.entries())
-            formDataJson["mobile"] = LoginformDataJson["mobile"]
-            const data = JSON.stringify(formDataJson);
-            const encodeFunction = await cipher(salt);
-            const encryptedData = encodeFunction(data);
-
-            try {
-                // Send data to the server using fetch API
-                const response = await fetch(form.action, {
-                    method: form.method,
-                    headers: {
-                        'Content-Type': 'application/json',  // Ensure JSON is being sent
-                    },
-                    body: JSON.stringify({ data: encryptedData })
-                });
-
-                // Check if the response is successful
-                if (response.ok) {
-                    console.log("successfull")
-                    window.location.href = "../researchrepository/home";
-                } else {
-                    // Handle errors, if any (e.g., show an error message)
-                    console.error("Form submission failed.");
-                }
-            } catch (error) {
-                console.error("An error occurred:", error);
-            }
-        }
-
-        async function submitForm(event) {
-            event.preventDefault();  // Prevent the default form submission
-            const salt = getCookie("Session-SALT");  // Assuming the salt cookie is named "salt"
-            if (!salt) {
-                console.error("Salt not found in cookies.");
-                return;
-            }
-            const form = document.getElementById("login-form");
-            const formData = new FormData(form);
-            const formDataJson = Object.fromEntries(formData.entries())
-
-            const data = JSON.stringify(formDataJson);
-            console.log(data)
-            const encodeFunction = await cipher(salt);
-            const encryptedData = encodeFunction(data);
-
-            try {
-                // Send data to the server using fetch API
-                const response = await fetch(form.action, {
-                    method: form.method,
-                    headers: {
-                        'Content-Type': 'application/json',  // Ensure JSON is being sent
-                    },
-                    body: JSON.stringify({ data: encryptedData })
-                });
-
-                // Check if the response is successful
-                if (response.ok) {
-                    // Call toggleForms if the response is successful
-                    toggleForms();
-                } else {
-                    // Handle errors, if any (e.g., show an error message)
-                    console.error("Form submission failed.");
-                }
-            } catch (error) {
-                console.error("An error occurred:", error);
-            }
-        }
-
-        function toggleForms() {
-            document.getElementById("otp-form").style.display = "block";
-            document.getElementById("login-form").style.display = "none";
-        }
-
-    </script>
 </body>
 
 </html>

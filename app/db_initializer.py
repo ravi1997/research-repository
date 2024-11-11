@@ -4,6 +4,7 @@ from datetime import datetime
 import json
 from marshmallow import ValidationError
 from app.models import User
+from app.logger import*
 from app.extension import db
 import click
 from flask import current_app as app
@@ -81,6 +82,6 @@ def create_user_superadmin():
 
 
 	except Exception as e:
-		app.logger.error(f"Error creating user: {str(e)}")
+		error_logger(f"Error creating user: {str(e)}")
 		db.session.rollback()
 		raise

@@ -398,7 +398,7 @@ def download_xml(pmid, filename):
 			file.write(response.content.decode('UTF-8'))
 		app.logger.info(f"Downloaded {filename} successfully.")
 	else:
-		app.logger.info(f"Failed to download. HTTP Status Code: {response.status_code}")
+		app.logger.error(f"Failed to download. HTTP Status Code: {response.status_code}")
 
 	return response.status_code == 200
 	

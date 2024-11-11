@@ -28,7 +28,7 @@ def delete_OTP(id):
             db.session.delete(otp)
             db.session.commit()
         else:
-            app.logger.info(f"for deletion of OTP : {id} not found")
+            app.logger.error(f"for deletion of OTP : {id} not found")
 
 
 @auth_bp.route("/login", methods=["POST"])
@@ -37,7 +37,7 @@ def delete_OTP(id):
 def login(data,session):
     try:
         if not 'mobile' in data:
-            app.logger.info("Phone number is compulsory")
+            app.logger.error("Phone number is compulsory")
             return jsonify({"message":"Phone number is compulsory"}),401
         
         phone = data['mobile']
@@ -48,15 +48,15 @@ def login(data,session):
         ).one_or_none()
         
         if not user:
-            app.logger.info(f"Account does not exist : {phone}")
+            app.logger.error(f"Account does not exist : {phone}")
             return jsonify({"message":"Account does not exist"}),401
 
         if user.isDeleted():
-            app.logger.info(f"Account is deleted : {phone}")
+            app.logger.error(f"Account is deleted : {phone}")
             return jsonify({"message":"Account is either deleted or blocked. Please contact admin."}),401
 
         if user.isBlocked():
-            app.logger.info(f"Account is blocked : {phone}")
+            app.logger.error(f"Account is blocked : {phone}")
             return jsonify({"message":"Account is either deleted or blocked. Please contact admin."}),401
 
         new_otp = ""
@@ -129,11 +129,11 @@ def verifyOTP(data,session):
     user_schema = UserSchema()
     try:
         if not 'OTP' in data:
-            app.logger.info("OTP is compulsory")
+            app.logger.error("OTP is compulsory")
             return jsonify({"message":"OTP is compulsory"}),401
         
         if not 'mobile' in data:
-            app.logger.info("Phone number is compulsory")
+            app.logger.error("Phone number is compulsory")
             return jsonify({"message":"Phone number is compulsory"}),401
         
         phone = data['mobile']
@@ -156,14 +156,14 @@ def verifyOTP(data,session):
         ).one_or_none()
             
         if not user:
-            app.logger.info(f"Account does not exist : {phone}")
-            app.logger.info(f"Invalid request")
+            app.logger.error(f"Account does not exist : {phone}")
+            app.logger.error(f"Invalid request")
             session.status = ValidState.INVALID
             db.session.commit()
             return jsonify({"message":"Invalid request"}),401
 
         if user.isDeleted() or user.isBlocked():
-            app.logger.info(f"Account {phone} is deleted or blocked.Please contact admin.")
+            app.logger.error(f"Account {phone} is deleted or blocked.Please contact admin.")
             session.status = ValidState.INVALID
             db.session.commit()
             return jsonify({"message":"Invalid request"}),401

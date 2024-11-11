@@ -1,7 +1,7 @@
 import uuid
 from flask import render_template,make_response, request, send_from_directory
 
-from app.decorator import verify_user
+from app.decorator import verify_session, verify_user
 from app.models import Client
 from app.extension import db
 from app.util import setCookie
@@ -69,4 +69,13 @@ def homePage(session):
     response.set_cookie('Session-SALT', session.salt,  max_age=app.config['COOKIE_AGE'], secure = True, samesite='None')  # expires in 1 day
     return response
 
+
+
+@main_bp.route('/constant/<path:filename>')
+@verify_session
+def style_css(session,filename):
+    response = make_response(send_from_directory('static', filename))
+    response.set_cookie('Session-ID', session.client_session_id, httponly=True, max_age=app.config['COOKIE_AGE'], secure = True, samesite='None')  # expires in 1 day
+    response.set_cookie('Session-SALT', session.salt,  max_age=app.config['COOKIE_AGE'], secure = True, samesite='None')  # expires in 1 day
+    return response
 
