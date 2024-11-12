@@ -301,6 +301,42 @@ footer p {
     background-color: #004080;
 }
 
+/* Alert Box Styling */
+.alert-box {
+    display: none;
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 15px 20px;
+    background-color: #f44336;
+    /* Red color */
+    color: white;
+    border-radius: 5px;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+    min-width: 250px;
+    font-size: 1rem;
+}
+
+/* Close Button Styling */
+.alert-box .close-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.2rem;
+    font-weight: bold;
+    cursor: pointer;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    transition: color 0.3s;
+}
+
+.alert-box .close-btn:hover {
+    color: #ffccd2;
+}
+
+
 /* Fade In Animation */
 @keyframes fadeIn {
     from {

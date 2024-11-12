@@ -49,5 +49,39 @@ async function uploadnbibFile() {
     }
 }
 
+// Function to show the alert box with a custom message
+function showAlert(message) {
+    const alertBox = document.getElementById("customAlert");
+    const alertMessage = document.getElementById("alertMessage");
+    alertMessage.innerText = message;
+    alertBox.style.display = "block";
+
+    // Hide the alert automatically after 3 seconds
+    setTimeout(closeAlert, 3000);
+}
+
+// Function to close the alert box
+function closeAlert() {
+    document.getElementById("customAlert").style.display = "none";
+}
 
 
+
+
+async function logout(){
+    try {
+        const response = await fetch("../researchrepository/api/auth/logout", {
+            method: "GET",
+        });
+
+        if (response.ok) {
+            window.location.href = "../researchrepository/login";
+        } else {
+            const error = await response.json()["message"];
+            showAlert(error);
+        }
+    } catch (error) {
+        console.error(error);
+        showAlert(error);
+    }
+}

@@ -195,8 +195,8 @@ def verifyOTP(data,session):
 @auth_bp.route("/logout", methods=["GET"])
 @verify_user
 def logout(session):
-    current_user = session.account_id
-    db.session.delete(session)
+    current_user = session.user_id
+    session.user_id = None
     db.session.commit()
     return jsonify(logged_in_as=current_user), 200
 

@@ -12,10 +12,15 @@
     <!-- Header Section -->
     <header>
         <h1>AIIMS Research Publication Repository</h1>
-        <div class="button">
-            <a href="../researchrepository/api/auth/logout">Logout</a>
+        <div class="button" onclick="logout()">
+            Logout
         </div>
     </header>
+
+    <div id="customAlert" class="alert-box">
+        <span id="alertMessage">This is an alert message!</span>
+        <button class="close-btn" onclick="closeAlert()">×</button>
+    </div>
 
     <!-- Main Content Container -->
     <div class="container">
