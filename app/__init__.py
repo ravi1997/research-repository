@@ -50,6 +50,7 @@ def create_app():
 	app_log_file = os.path.join(log_dir, 'app.log')
 	error_log_file = os.path.join(log_dir, 'error.log')
 	request_log_file = os.path.join(log_dir, 'request.log')
+	response_log_file = os.path.join(log_dir, 'response.log')
 
 	# Create a formatter with a custom format
 	formatter = logging.Formatter(
@@ -81,6 +82,17 @@ def create_app():
 	)
 	request_handler.setFormatter(formatter)
 
+
+	# 3. Request Log
+	response_handler = RotatingFileHandler(
+		response_log_file,
+		maxBytes=10 * 1024 * 1024,  # Max log file size: 10 MB
+		backupCount=5  # Keep 5 backup logs
+	)
+	response_handler.setFormatter(formatter)
+
+
+
 	# Add the handlers to specific loggers
 	# Application Logger
 	app.logger.addHandler(app_handler)
@@ -94,6 +106,10 @@ def create_app():
 
 	request_logger.addHandler(request_handler)
 	request_logger.setLevel(logging.INFO)
+
+	response_logger.addHandler(response_handler)
+	response_logger.setLevel(logging.INFO)
+
 
 
 	app.logger.propagate = False
@@ -144,6 +160,31 @@ def create_app():
 
 			request_logger.info(log)
 		
+
+
+	@app.after_request
+	def log_response(response):
+		if app.config['LOG_RESPONSE']:
+			log = "\n=== New Response ===\n"
+			log += f"Response Status: {response.status}\n"
+			log += f"Request Path: {request.path}\n"
+			log += f"Response Headers: {dict(response.headers)}\n"
+
+			# Log response data if JSON
+			if response.is_json:
+				log += f"Response JSON: {response.get_json()}\n"
+			else:
+				# Log raw response data as text
+				log += "Response Body (raw text)\n"
+
+			# Log status code
+			log += f"Response Status Code: {response.status_code}\n"
+
+			log += "=== End of Response Log ==="
+
+			response_logger.info(log)
+
+		return response
 
 	# Register blueprints
 	app.register_blueprint(main_bp, url_prefix="/researchrepository")

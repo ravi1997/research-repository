@@ -24,8 +24,7 @@ def index():
 
     # Set the session ID in the response header
     setCookie(response,'Session-ID',session.client_session_id)
-    response.set_cookie('Session-ID',session.client_session_id, httponly=True, max_age=app.config['COOKIE_AGE'], secure = True, samesite='None')  # expires in 1 day
-    response.set_cookie('Session-SALT', session.salt,  max_age=app.config['COOKIE_AGE'], secure = True, samesite='None')  # expires in 1 day
+    setCookie(response,'Session-SALT',session.salt,httponly=False)
 
     return response
 
@@ -71,10 +70,6 @@ def homePage(session):
 
 
 @main_bp.route('/constant/<path:filename>')
-@verify_session
-def style_css(session,filename):
-    response = make_response(send_from_directory('static', filename))
-    response.set_cookie('Session-ID', session.client_session_id, httponly=True, max_age=app.config['COOKIE_AGE'], secure = True, samesite='None')  # expires in 1 day
-    response.set_cookie('Session-SALT', session.salt,  max_age=app.config['COOKIE_AGE'], secure = True, samesite='None')  # expires in 1 day
-    return response
+def style_css(filename):
+    return send_from_directory('static', filename)
 

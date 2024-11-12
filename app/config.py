@@ -11,6 +11,7 @@ class BaseConfig:
     OTP_FLAG = False
     OTP_GENERATION = False
     LOG_REQUEST = True
+    LOG_RESPONSE = True
     OTP_DELTA = timedelta(minutes=30)    
     OTP_MAX_ATTEMPT = 3
     SALT_PASSWORD = "some_unique_code"

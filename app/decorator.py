@@ -30,17 +30,17 @@ def verify_session(f):
 		session_id = request.cookies.get('Session-ID')
 
 		if session_id is None:
-			error_logger(f'Session Id not passed')
+			error_logger.error(f'Session Id not passed')
 			return  jsonify({"message":"Not a valid Session"}),401
    
 		session = Client.query.filter_by(client_session_id=session_id).first()
 
 		if session is None:
-			error_logger(f'session does not exsit in the db : {session_id}')
+			error_logger.error(f'session does not exsit in the db : {session_id}')
 			return jsonify({"message":"Not a valid Session."}),401
 
 		if not session.isValid():
-			error_logger(f'session is not valid : {session_id}')
+			error_logger.error(f'session is not valid : {session_id}')
 			return jsonify({"message":"Not a valid Session."}),401
 		
 		return f(session,*args, **kwargs)
@@ -52,27 +52,27 @@ def verify_user(f):
 		session_id = request.cookies.get('Session-ID')
 
 		if session_id is None:
-			error_logger(f'Session Id not passed')
+			error_logger.error(f'Session Id not passed')
 			return  jsonify({"message":"Not a valid Session"}),401
    
 		session = Client.query.filter_by(client_session_id=session_id).first()
 
 		if session is None:
-			error_logger(f'session does not exsit in the db : {session_id}')
+			error_logger.error(f'session does not exsit in the db : {session_id}')
 			return jsonify({"message":"Not a valid Session."}),401
 
 		if not session.isValid():
-			error_logger(f'session is not valid : {session_id}')
+			error_logger.error(f'session is not valid : {session_id}')
 			return jsonify({"message":"Not a valid Session."}),401
 
 		if session.user_id is None:
-			error_logger(f'User id not found in the db for a valid session: {session_id}')
+			error_logger.error(f'User id not found in the db for a valid session: {session_id}')
 			return jsonify({"message":"Not a valid Session."}),401
 
 		if session.user:
 			return f(session,*args, **kwargs)
 		  
-		error_logger(f'Something went wrong with request')
+		error_logger.error(f'Something went wrong with request')
 		return jsonify({"message":"Something went wrong."}),401
 	return decorated_function
 
@@ -82,28 +82,28 @@ def verify_SUPERADMIN_role(f):
 		session_id = request.cookies.get('Session-ID')
 
 		if session_id is None:
-			error_logger(f'Session Id not passed')
+			error_logger.error(f'Session Id not passed')
 			return  jsonify({"message":"Not a valid Session"}),401
    
 		session = Client.query.filter_by(client_session_id=session_id).first()
 
 		if session is None:
-			error_logger(f'session does not exsit in the db : {session_id}')
+			error_logger.error(f'session does not exsit in the db : {session_id}')
 			return jsonify({"message":"Not a valid Session."}),401
 
 		if not session.isValid():
-			error_logger(f'session is not valid : {session_id}')
+			error_logger.error(f'session is not valid : {session_id}')
 			return jsonify({"message":"Not a valid Session."}),401
 
 		if session.user_id is None:
-			error_logger(f'User id not found in the db for a valid session: {session_id}')
+			error_logger.error(f'User id not found in the db for a valid session: {session_id}')
 			return jsonify({"message":"Not a valid Session."}),401
 
 
 		if session.user.has_role(UserRole.SUPERADMIN):
 			return f(session,*args, **kwargs)
 		else:
-			error_logger(f'User is not authorised')
+			error_logger.error(f'User is not authorised')
 			return jsonify({"message":"Unauthorized User"}),401
 
 	return decorated_function
@@ -115,17 +115,17 @@ def verify_GUEST_role(f):
 		session_id = request.cookies.get('Session-ID')
 
 		if session_id is None:
-			error_logger(f'Session Id not passed')
+			error_logger.error(f'Session Id not passed')
 			return  jsonify({"message":"Not a valid Session"}),401
    
 		session = Client.query.filter_by(client_session_id=session_id).first()
 
 		if session is None:
-			error_logger(f'session does not exsit in the db : {session_id}')
+			error_logger.error(f'session does not exsit in the db : {session_id}')
 			return jsonify({"message":"Not a valid Session."}),401
 
 		if not session.isValid():
-			error_logger(f'session is not valid : {session_id}')
+			error_logger.error(f'session is not valid : {session_id}')
 			return jsonify({"message":"Not a valid Session."}),401
 
 		return f(session,*args, **kwargs)
