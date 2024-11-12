@@ -1,3 +1,8 @@
+
+window.onload = function () {
+    generateCaptcha("captchaCode");
+};
+
 async function uploadrisFile() {
     const form = document.getElementById('uploadForm');
     const formData = new FormData(form);

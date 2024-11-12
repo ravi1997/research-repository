@@ -6,11 +6,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AIIMS Research Publication Repository</title>
     <link rel="stylesheet" href="/researchrepository/constant/style/style.css">
-    <link rel="preload" href="/researchrepository/constant/style/style.css" as="style"
-        onload="this.onload=null;this.rel='stylesheet'">
 </head>
 
 <body>
+    <!-- Header Section -->
     <header>
         <h1>AIIMS Research Publication Repository</h1>
         <div class="button">
@@ -18,8 +17,10 @@
         </div>
     </header>
 
+    <!-- Main Content Container -->
     <div class="container">
-        <div class="upload-section">
+        <!-- Upload Section for RIS Files -->
+        <div class="card">
             <h3>Upload .ris File</h3>
             <form id="uploadForm" enctype="multipart/form-data">
                 <input type="file" id="file" name="file" accept=".ris" required>
@@ -27,7 +28,9 @@
             </form>
             <p id="message"></p>
         </div>
-        <div class="upload-section">
+
+        <!-- Upload Section for NBIB Files -->
+        <div class="card">
             <h3>Upload .nbib File</h3>
             <form id="uploadForm-nbib" enctype="multipart/form-data">
                 <input type="file" id="file" name="file" accept=".nbib" required>
@@ -36,11 +39,12 @@
             <p id="message1"></p>
         </div>
 
-        <div class="upload-section">
-
+        <!-- PubMed Fetch Section with CAPTCHA -->
+        <div class="card">
+            <h3>Fetch Publication via PubMed ID</h3>
             <form id="pubmed-form" action="../researchrepository/api/public/pubmedFectch" method="post"
                 onsubmit="submitForm(event)">
-                <input type="text" name="pmid" placeholder="Enter Pubmed ID" required>
+                <input type="text" name="pmid" placeholder="Enter PubMed ID" required>
                 <div class="captcha-box">
                     <div id="captchaCode" class="captcha-code"></div>
                     <button type="button" class="refresh-btn" onclick="generateCaptcha('captchaCode')">⟳</button>
@@ -48,16 +52,17 @@
                 <input type="text" name="captcha" placeholder="Enter CAPTCHA" required>
                 <button type="submit">Submit</button>
             </form>
-
         </div>
     </div>
 
+    <!-- Footer Section -->
     <footer>
         <p>&copy; 2024 AIIMS Research Repository. All Rights Reserved.</p>
     </footer>
 
+    <!-- JavaScript Files -->
+    <script src="/researchrepository/constant/js/common.js"></script>
     <script src="/researchrepository/constant/js/home.js"></script>
-
 </body>
 
 </html>

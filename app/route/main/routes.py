@@ -10,7 +10,6 @@ from flask import current_app as app
 
 @main_bp.route("/", methods=["GET"])
 def index():
-    app.logger.info("main route called")
     response = make_response(render_template('index.html'))
 
     x_forwarded_for = request.headers.get('X-Forwarded-For')

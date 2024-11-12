@@ -4,7 +4,7 @@ from datetime import datetime
 import json
 from marshmallow import ValidationError
 from app.models import User
-from app.logger import*
+from app.mylogger import*
 from app.extension import db
 import click
 from flask import current_app as app

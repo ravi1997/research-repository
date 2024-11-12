@@ -8,7 +8,7 @@ from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 
 from app.config import DevConfig
-from app.logger import *
+from app.mylogger import *
 from .extension import db, migrate,ma,bcrypt,scheduler
 from .route.main import main_bp
 from .route.auth import auth_bp
@@ -142,7 +142,7 @@ def create_app():
 			
 			log += "=== End of Request Log ==="
 
-			request_handler.info(log)
+			request_logger.info(log)
 		
 
 	# Register blueprints
