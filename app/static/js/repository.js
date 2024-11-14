@@ -20,15 +20,15 @@ function renderTable(data) {
         const row = document.createElement('tr');
         row.innerHTML = `
     <td>${item.title}</td>
-    <td>${item.authors.map(author => author.fullName).join(', ')}</td>
-    <td>${item.publication_date}</td>
-    <td>${item.journal}</td>
-    <td>${item.journal_issue}</td>
-    <td>${item.journal_volume}</td>
-    <td>${item.pages}</td>
-    <td>${item.keywords.map(keyword => keyword.keyword).join(', ')}</td>
-    <td>${item.pubmed_id || 'N/A'}</td>
-    <td><a href="https://doi.org/${item.doi}" target="_blank">${item.doi}</a></td>
+    <td>${item.authors.map(author => author.fullName).join('; ')}</td>
+    <td>${item.publication_date || ''}</td>
+    <td>${item.journal || ''}</td>
+    <td>${item.journal_issue || ''}</td>
+    <td>${item.journal_volume || ''}</td>
+    <td>${item.pages || ''}</td>
+    <td>${item.keywords.map(keyword => keyword.keyword).join('; ')}</td>
+    <td>${item.pubmed_id || ''}</td>
+    <td>${item.doi ? `<a href="https://doi.org/${item.doi}" target="_blank">${item.doi}</a>` : ''}</td>
     <td><a href="/researchrepository/article/${item.uuid}">View</a></td>
     `;
         tableBody.appendChild(row);
