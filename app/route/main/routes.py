@@ -95,6 +95,9 @@ def articlePage(session,id):
                 article_data["publication_date"], "%Y-%m-%dT%H:%M:%S"
             ).strftime("%Y-%m-%d")
         
+        
+        
+        
         response = make_response(render_template('article.html',article=article_data))
         response.set_cookie('Session-ID', session.client_session_id, httponly=True, max_age=app.config['COOKIE_AGE'], secure = True, samesite='None')  # expires in 1 day
         response.set_cookie('Session-SALT', session.salt,  max_age=app.config['COOKIE_AGE'], secure = True, samesite='None')  # expires in 1 day

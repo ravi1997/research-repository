@@ -8,7 +8,7 @@ async function uploadrisFile() {
     const formData = new FormData(form);
 
     try {
-        const response = await fetch("../researchrepository/api/public/upload_ris", {
+        const response = await fetch("../researchrepository/api/article/upload_ris", {
             method: "POST",
             body: formData
         });
@@ -31,7 +31,7 @@ async function uploadnbibFile() {
     const formData = new FormData(form);
 
     try {
-        const response = await fetch("../researchrepository/api/public/upload_nbib", {
+        const response = await fetch("../researchrepository/api/article/upload_nbib", {
             method: "POST",
             body: formData
         });

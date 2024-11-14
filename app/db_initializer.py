@@ -4,6 +4,7 @@ from datetime import datetime
 import json
 from marshmallow import ValidationError
 from app.models import User
+from app.models.user import UserRole, UserRoles
 from app.mylogger import*
 from app.extension import db
 import click
@@ -27,6 +28,7 @@ def empty_db_command():
 def seed_db_command():
 	"""Seed the database with initial data."""
 	create_user_superadmin()
+	create_user_Faculty()
 	click.echo('Seeded the database.')
 
 
@@ -69,7 +71,8 @@ def create_user_superadmin():
 				mobile="9899378106",
 				department= "RPC",
 				designation="Programmer",
-				date_expiry= datetime(2057, 2, 28)
+				date_expiry= datetime(2057, 2, 28),
+				roles= [UserRoles(role=UserRole.SUPERADMIN)]
 			)
 			db.session.add(new_user)
 			db.session.commit()
@@ -78,10 +81,37 @@ def create_user_superadmin():
 		else:
 			app.logger.info("User Ravinder Singh already exists.")
 
+	except Exception as e:
+		error_logger(f"Error creating user: {str(e)}")
+		db.session.rollback()
+		raise
 
-
+def create_user_Faculty():
+	"""Create a sample user."""
+	try:
+		existing_user = User.query.filter_by(firstname="Vivek", employee_id="E1111111").first()
+		if not existing_user:
+			new_user = User(
+				firstname='Vivek',
+				middlename='',
+				lastname='Gupta',
+				employee_id="E1111111",
+				email="vivek.gupta@gmail.com",
+				mobile="9999999999",
+				department= "RPC",
+				designation="Professor",
+				date_expiry= datetime(2057, 2, 28),
+				roles= [UserRoles(role=UserRole.FACULTY)]
+			)
+			db.session.add(new_user)
+			db.session.commit()
+			
+			app.logger.info("User Vivek gupta Added.")
+		else:
+			app.logger.info("User Ravinder Singh already exists.")
 
 	except Exception as e:
 		error_logger(f"Error creating user: {str(e)}")
 		db.session.rollback()
 		raise
+
