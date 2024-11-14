@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIIMS Research Publication Repository</title>
+    <link rel="stylesheet" href="/researchrepository/constant/style/style.css">
+
+</head>
+
+<body>
+    <header>
+        <h1>AIIMS Research Publication Repository</h1>
+        <div class="button">
+            <a href="/researchrepository/login">Login</a>
+        </div>
+    </header>
+    
+    <div class="center-container">
+        <div id="table-section">
+            <h2>Published Articles</h2>
+            <div id="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Author(s)</th>
+                            <th>Published Date</th>
+                            <th>Journal</th>
+                            <th>Issue</th>
+                            <th>Volume</th>
+                            <th>Pages</th>
+                            <th>Keywords</th>
+                            <th>PubMed ID</th>
+                            <th>DOI</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body">
+                        <!-- Data rows will be inserted here -->
+                    </tbody>
+                </table>
+            </div>
+    
+            <div class="pagination">
+                <button onclick="prevPage()">Previous</button>
+                <span id="page-info"></span>
+                <button onclick="nextPage()">Next</button>
+            </div>
+        </div>
+    </div>
+    
+    <footer>
+        <p>&copy; 2024 AIIMS Research Repository. All Rights Reserved.</p>
+    </footer>
+
+</body>
+    <script src="/researchrepository/constant/js/common.js"></script>
+    <script src="/researchrepository/constant/js/repository.js"></script>
+</html>

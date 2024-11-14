@@ -10,6 +10,7 @@ from flask_cors import CORS
 from app.config import DevConfig
 from app.mylogger import *
 from .extension import db, migrate,ma,bcrypt,scheduler
+from .route.article import article_bp
 from .route.main import main_bp
 from .route.auth import auth_bp
 from .route.public import public_bp
@@ -191,4 +192,6 @@ def create_app():
 	app.register_blueprint(auth_bp, url_prefix="/researchrepository/api/auth")
 	app.register_blueprint(public_bp, url_prefix="/researchrepository/api/public")
 	app.register_blueprint(user_bp, url_prefix="/researchrepository/api/user")
+	app.register_blueprint(article_bp, url_prefix="/researchrepository/api/article")
+ 
 	return app
