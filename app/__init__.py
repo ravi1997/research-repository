@@ -63,7 +63,8 @@ def create_app():
 	app_handler = RotatingFileHandler(
 		app_log_file,
 		maxBytes=10 * 1024 * 1024,  # Max log file size: 10 MB
-		backupCount=5  # Keep 5 backup logs
+		backupCount=5,  # Keep 5 backup logs
+		encoding='utf-8'
 	)
 	app_handler.setFormatter(formatter)
 
@@ -71,7 +72,8 @@ def create_app():
 	error_handler = RotatingFileHandler(
 		error_log_file,
 		maxBytes=10 * 1024 * 1024,  # Max log file size: 10 MB
-		backupCount=5  # Keep 5 backup logs
+		backupCount=5,  # Keep 5 backup logs
+		encoding='utf-8'
 	)
 	error_handler.setFormatter(formatter)
 
@@ -79,7 +81,8 @@ def create_app():
 	request_handler = RotatingFileHandler(
 		request_log_file,
 		maxBytes=10 * 1024 * 1024,  # Max log file size: 10 MB
-		backupCount=5  # Keep 5 backup logs
+		backupCount=5,  # Keep 5 backup logs
+		encoding='utf-8'
 	)
 	request_handler.setFormatter(formatter)
 
@@ -88,7 +91,8 @@ def create_app():
 	response_handler = RotatingFileHandler(
 		response_log_file,
 		maxBytes=10 * 1024 * 1024,  # Max log file size: 10 MB
-		backupCount=5  # Keep 5 backup logs
+		backupCount=5,  # Keep 5 backup logs
+		encoding='utf-8'
 	)
 	response_handler.setFormatter(formatter)
 

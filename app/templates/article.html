@@ -6,38 +6,47 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ article.title }}</title>
     <link rel="stylesheet" href="/researchrepository/constant/style/style.css">
+    <link rel="stylesheet" href="/researchrepository/constant/style/article.css">
 </head>
 
 <body>
     <header>
         <h1>AIIMS Research Publication Repository</h1>
-        <div class="button">
-            <a href="/researchrepository/login">Login</a>
-        </div>
+        <nav>
+            <div class="button">
+                <a href="/researchrepository/login">Login</a>
+            </div>
+        </nav>
     </header>
 
-    <div class="article">
+    <main class="article">
         <h1>{{ article.title }}</h1>
 
-        <div class="section">
+        <section class="section">
             <h2>Abstract</h2>
             <p>{{ article.abstract }}</p>
-        </div>
+        </section>
 
         <div class="section">
             <h2>Authors</h2>
             <ul class="authors">
                 {% for author in article.authors %}
-                <li>{{ author.fullName }}</li>
+                <li>
+                    <h3>{{ author.fullName }}</h3>
+                    <div class="author-details">
+                        <p><strong>Affiliation:</strong> {{ author.affiliations or "" }}</p>
+                        <p><strong>Author Abbreviated:</strong> {{ author.author_abbreviated or "" }}</a></p>
+                    </div>
+                </li>
                 {% endfor %}
             </ul>
         </div>
+        
 
-        <div class="section">
+        <section class="section">
             <h2>Publication Details</h2>
             <p><strong>Journal:</strong> {{ article.journal }} ({{ article.journal_abrevated }})</p>
-            <p><strong>Volume:</strong> {{ article.journal_volume }}, <strong>Issue:</strong> {{ article.journal_issue
-                }}</p>
+            <p><strong>Volume:</strong> {{ article.journal_volume }}, <strong>Issue:</strong> {{ article.journal_issue }}</p>
             <p><strong>Pages:</strong> {{ article.pages }}</p>
             <p><strong>Published Date:</strong> {{ article.publication_date }}</p>
             <p><strong>Print ISSN:</strong> {{ article.print_issn }}</p>
@@ -46,31 +55,28 @@
             <p><strong>PMC ID:</strong> {{ article.pmc_id or "N/A" }}</p>
             <p><strong>PubMed ID:</strong> {{ article.pubmed_id or "N/A" }}</p>
             <p><strong>PII:</strong> {{ article.pii or "N/A" }}</p>
-        </div>
+        </section>
 
-        <div class="section">
+        <section class="section">
             <h2>Keywords</h2>
             <ul class="keywords">
                 {% for keyword in article.keywords %}
                 <li>{{ keyword.keyword }}</li>
                 {% endfor %}
             </ul>
-        </div>
+        </section>
 
-        <div class="section">
+        <section class="section">
             <h2>DOI and Links</h2>
-            <p><strong>DOI:</strong> <a href="https://doi.org/{{ article.doi }}" target="_blank" class="button">{{
-                    article.doi }}</a></p>
-            <p><strong>PubMed Link:</strong>
-
+            <p><strong>DOI:</strong> <a href="https://doi.org/{{ article.doi }}" target="_blank" class="button">{{ article.doi }}</a></p>
+            <p><strong>PubMed Link:</strong></p>
             <ul class="links">
                 {% for link in article.links %}
-                <li><a href="{{ link.link }}" target="_blank">link {{ loop.index }}</a></li>
+                <li><a href="{{ link.link }}" target="_blank">Link {{ loop.index }}</a></li>
                 {% endfor %}
             </ul>
-
-        </div>
-    </div>
+        </section>
+    </main>
 
     <footer>
         <p>&copy; 2024 AIIMS Research Repository. All Rights Reserved.</p>

@@ -20,7 +20,7 @@ def generateTable(session):
 	page = request.args.get('page', 1, type=int)
 	per_page = 10  # Number of items per page
 	articles_schema = ArticleSchema(many=True)
-	articles = Article.query.all()
+	articles = Article.query.order_by(Article.publication_date.desc()).all()
 	data = articles_schema.dump(articles)
 	# Implement pagination logic
 	start = (page - 1) * per_page
@@ -43,10 +43,6 @@ def getSingle_article(session,id):
 		return article_schema.dump(article)
 	else:
 		return jsonify({"message":f"Article id {id} not found"}),404
-
-
-
-
 
 def allowed_file(filename):
 	"""Check if the file has the correct .ris extension."""

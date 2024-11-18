@@ -75,11 +75,39 @@ def homePage(session):
 @main_bp.route('/repository')
 @verify_session
 def repositoryPage(session):
-    response = make_response(render_template('repository.html'))
-    response.set_cookie('Session-ID', session.client_session_id, httponly=True, max_age=app.config['COOKIE_AGE'], secure = True, samesite='None')  # expires in 1 day
-    response.set_cookie('Session-SALT', session.salt,  max_age=app.config['COOKIE_AGE'], secure = True, samesite='None')  # expires in 1 day
-    return response
+    page = request.args.get('page', 1, type=int)
+    entry = request.args.get('entry', 10, type=int)
 
+    server_url = request.host_url.rstrip("/")
+    url = f"{server_url}/researchrepository/api/article/table"
+    headers = {
+        "API-ID":app.config.get('API_ID')
+    }
+    
+    cookies = request.cookies.to_dict()  # Converts the ImmutableMultiDict to a regular dictionary
+    params = {
+        'page': page,
+        'entry': entry
+    }
+
+    response = requests.get(url, headers=headers, cookies=cookies,params=params)  # Use `requests.get`
+
+    if response.status_code==200:
+        data =  response.json()
+        articles = data["data"]
+        total_pages = data["total_pages"]
+        for article_data in articles:
+            if article_data.get("publication_date"):
+                article_data["publication_date"] = datetime.strptime(
+                    article_data["publication_date"], "%Y-%m-%dT%H:%M:%S"
+                ).strftime("%Y-%m-%d")
+        
+        response = make_response(render_template('repository.html',articles=articles,current_page=page,entry=entry,total_pages = total_pages))
+        response.set_cookie('Session-ID', session.client_session_id, httponly=True, max_age=app.config['COOKIE_AGE'], secure = True, samesite='None')  # expires in 1 day
+        response.set_cookie('Session-SALT', session.salt,  max_age=app.config['COOKIE_AGE'], secure = True, samesite='None')  # expires in 1 day
+        return response
+    else:
+        return jsonify({"message":"Something went wrong"}),500
 
 
 @main_bp.route('/article/<string:id>')
@@ -103,7 +131,6 @@ def articlePage(session,id):
             article_data["publication_date"] = datetime.strptime(
                 article_data["publication_date"], "%Y-%m-%dT%H:%M:%S"
             ).strftime("%Y-%m-%d")
-        
         
         response = make_response(render_template('article.html',article=article_data))
         response.set_cookie('Session-ID', session.client_session_id, httponly=True, max_age=app.config['COOKIE_AGE'], secure = True, samesite='None')  # expires in 1 day

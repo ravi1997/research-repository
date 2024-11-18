@@ -37,16 +37,50 @@
                     </tr>
                 </thead>
                 <tbody id="table-body">
-                    <!-- Data rows will be inserted here -->
+                    {% for article in articles %}
+                    <tr>
+                        <td>{{ article.title }}</td>
+                        <td>{{ article.authors | map(attribute='fullName') | join('; ') }}</td>
+                        <td>{{ article.publication_date or '' }}</td>
+                        <td>{{ article.journal or '' }}</td>
+                        <td>{{ article.journal_issue or '' }}</td>
+                        <td>{{ article.journal_volume or '' }}</td>
+                        <td>{{ article.pages or '' }}</td>
+                        <td>{{ article.keywords | map(attribute='keyword') | join('; ') }}</td>
+                        <td>{{ article.pubmed_id or '' }}</td>
+                        <td>
+                            {% if article.doi %}
+                            <a href="https://doi.org/{{ article.doi }}" target="_blank">{{ article.doi }}</a>
+                            {% endif %}
+                        </td>
+                        <td><a href="/researchrepository/article/{{ article.uuid }}">View</a></td>
+                    </tr>
+                    {% endfor %}
                 </tbody>
             </table>
         </div>
 
         <div class="pagination">
-            <button onclick="prevPage()">Previous</button>
-            <span id="page-info"></span>
-            <button onclick="nextPage()">Next</button>
+            <!-- Previous button -->
+            <button 
+                {% if current_page <= 1 %}disabled{% endif %} 
+                type="button"
+                onclick="navigateToPage({{ current_page - 1 }}, '{{ entry | safe }}', {{ total_pages }})">
+                Previous
+            </button>
+        
+            <!-- Page info -->
+            <span id="page-info">Page {{ current_page }} of {{ total_pages }}</span>
+        
+            <!-- Next button -->
+            <button 
+                {% if current_page >= total_pages %}disabled{% endif %} 
+                type="button"
+                onclick="navigateToPage({{ current_page + 1 }}, '{{ entry | safe }}', {{ total_pages }})">
+                Next
+            </button>
         </div>
+
     </div>
 
     <footer>
