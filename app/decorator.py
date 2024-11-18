@@ -8,6 +8,24 @@ from app.models import Client, UserRole
 from app.util import decode_text
 from app.mylogger import error_logger
 
+def verify_internal_api_id(f):
+	@wraps(f)
+	def decorated_function(*args, **kwargs):
+		api_id = request.headers.get('API-ID')
+
+		if api_id is None:
+			error_logger.error(f'API Id not passed')
+			return  jsonify({"message":"Not a valid API request"}),401
+   
+
+		if api_id != app.config.get('API_ID'):
+			error_logger.error(f'session does not have valid API-ID : {api_id}')
+			return jsonify({"message":"Not a valid API request."}),401
+
+		return f(*args, **kwargs)
+	return decorated_function
+
+
 def verify_body(f):
 	@wraps(f)
 	def decorated_function(*args, **kwargs):

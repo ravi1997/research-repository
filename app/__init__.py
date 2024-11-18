@@ -193,5 +193,8 @@ def create_app():
 	app.register_blueprint(public_bp, url_prefix="/researchrepository/api/public")
 	app.register_blueprint(user_bp, url_prefix="/researchrepository/api/user")
 	app.register_blueprint(article_bp, url_prefix="/researchrepository/api/article")
- 
+
+
+	app.logger.info(f"API-ID : {app.config.get('API_ID')}")
+
 	return app

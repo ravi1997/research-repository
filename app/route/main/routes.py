@@ -1,6 +1,7 @@
 from datetime import datetime
 import uuid
 from flask import jsonify, render_template,make_response, request, send_from_directory
+import requests
 
 from app.decorator import verify_session, verify_user
 from app.models import Client
@@ -84,18 +85,24 @@ def repositoryPage(session):
 @main_bp.route('/article/<string:id>')
 @verify_session
 def articlePage(session,id):
-    article_schema = ArticleSchema()
-    article = Article.query.filter_by(uuid=id).first()
+    server_url = request.host_url.rstrip("/")
+    url = f"{server_url}/researchrepository/api/article/{id}"
+    headers = {
+        "API-ID":app.config.get('API_ID')
+    }
     
-    if article:
-        article_data = article_schema.dump(article)
+    cookies = request.cookies.to_dict()  # Converts the ImmutableMultiDict to a regular dictionary
+
+    response = requests.get(url, headers=headers, cookies=cookies)  # Use `requests.get`
+
+    if response.status_code==200:
+        
+        article_data = response.json()
         # Format the publication date
         if article_data.get("publication_date"):
             article_data["publication_date"] = datetime.strptime(
                 article_data["publication_date"], "%Y-%m-%dT%H:%M:%S"
             ).strftime("%Y-%m-%d")
-        
-        
         
         
         response = make_response(render_template('article.html',article=article_data))

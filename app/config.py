@@ -1,4 +1,5 @@
 import os
+import uuid
 from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 from dotenv import load_dotenv
 from datetime import timedelta
@@ -9,6 +10,7 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 class BaseConfig:
     DB_NAME = "backend"
     OTP_FLAG = False
+    OTP_FLAG = False
     OTP_GENERATION = False
     LOG_REQUEST = True
     LOG_RESPONSE = True
@@ -16,6 +18,7 @@ class BaseConfig:
     OTP_MAX_ATTEMPT = 3
     SALT_PASSWORD = "some_unique_code"
     COOKIE_AGE = 60*60*24
+    API_ID = str(uuid.uuid4())
 
 class DevConfig(BaseConfig):
     load_dotenv('.env')

@@ -2,7 +2,7 @@ import os
 from flask import jsonify,current_app as app, request
 from marshmallow import ValidationError
 
-from app.decorator import verify_USER_role, verify_body, verify_session
+from app.decorator import verify_USER_role, verify_body, verify_internal_api_id, verify_session
 from app.extension import db,scheduler
 from app.models.article import Article
 from app.schema import ArticleSchema
@@ -11,26 +11,39 @@ from . import article_bp
 
 @article_bp.route("/")
 def index():
-    return "This is The research repository article route"
+	return "This is The research repository article route"
 
 @article_bp.route("/table")
 @verify_session
+@verify_internal_api_id
 def generateTable(session):
-    page = request.args.get('page', 1, type=int)
-    per_page = 10  # Number of items per page
-    articles_schema = ArticleSchema(many=True)
-    articles = Article.query.all()
-    data = articles_schema.dump(articles)
-    # Implement pagination logic
-    start = (page - 1) * per_page
-    end = start + per_page
-    paginated_data = data[start:end]
-    
-    return jsonify({
-        'data': paginated_data,
-        'page': page,
-        'total_pages': len(data) // per_page + (1 if len(data) % per_page > 0 else 0)
-    })
+	page = request.args.get('page', 1, type=int)
+	per_page = 10  # Number of items per page
+	articles_schema = ArticleSchema(many=True)
+	articles = Article.query.all()
+	data = articles_schema.dump(articles)
+	# Implement pagination logic
+	start = (page - 1) * per_page
+	end = start + per_page
+	paginated_data = data[start:end]
+	
+	return jsonify({
+		'data': paginated_data,
+		'page': page,
+		'total_pages': len(data) // per_page + (1 if len(data) % per_page > 0 else 0)
+	})
+
+@article_bp.route("/<string:id>")
+@verify_session
+@verify_internal_api_id
+def getSingle_article(session,id):
+	article = Article.query.filter_by(uuid=id).first()
+	if article:
+		article_schema = ArticleSchema()
+		return article_schema.dump(article)
+	else:
+		return jsonify({"message":f"Article id {id} not found"}),404
+
 
 
 
