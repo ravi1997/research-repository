@@ -5,7 +5,7 @@ from flask import jsonify,current_app as app
 from marshmallow import ValidationError
 from sqlalchemy import func
 
-from app.decorator import verify_GUEST_role, verify_body, verify_user
+from app.decorator import checkBlueprintRouteFlag, verify_GUEST_role, verify_SUPERADMIN_role, verify_body, verify_user
 from app.models import OTP, User
 from app.extension import db,scheduler
 from app.models.user import UserState, ValidState
@@ -14,7 +14,9 @@ from app.util import  decode_text, generate_otp, send_sms
 from . import auth_bp
 
 @auth_bp.route("/")
-def index():
+@checkBlueprintRouteFlag
+@verify_SUPERADMIN_role
+def index(session):
     return "This is The waiting list auth route"
 
 

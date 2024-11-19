@@ -13,6 +13,7 @@ from .extension import db, migrate,ma,bcrypt,scheduler
 from .route.article import article_bp
 from .route.main import main_bp
 from .route.auth import auth_bp
+from .route.superadmin import superadmin_bp
 from .route.public import public_bp
 from .route.user import user_bp
 from app.extra import job_listener
@@ -197,6 +198,7 @@ def create_app():
 	app.register_blueprint(public_bp, url_prefix="/researchrepository/api/public")
 	app.register_blueprint(user_bp, url_prefix="/researchrepository/api/user")
 	app.register_blueprint(article_bp, url_prefix="/researchrepository/api/article")
+	app.register_blueprint(superadmin_bp, url_prefix="/researchrepository/api/superadmin")
 
 
 	app.logger.info(f"API-ID : {app.config.get('API_ID')}")

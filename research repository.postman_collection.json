@@ -467,7 +467,13 @@
 					"name": "table",
 					"request": {
 						"method": "GET",
-						"header": [],
+						"header": [
+							{
+								"key": "API-ID",
+								"value": "de0a74cf-444e-4e8b-8e44-5adaea313706",
+								"type": "text"
+							}
+						],
 						"url": {
 							"raw": "{{article_route}}/table",
 							"host": [
@@ -475,6 +481,51 @@
 							],
 							"path": [
 								"table"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "single article fetch",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "API-ID",
+								"value": "24a2fe3f-3270-4158-85c3-bc143856b178",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{article_route}}/302a324b-acba-4bb2-8a99-1c9297cfb887",
+							"host": [
+								"{{article_route}}"
+							],
+							"path": [
+								"302a324b-acba-4bb2-8a99-1c9297cfb887"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "super admin",
+			"item": [
+				{
+					"name": "New Request",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{superadmin_route}}/dbFetch",
+							"host": [
+								"{{superadmin_route}}"
+							],
+							"path": [
+								"dbFetch"
 							]
 						}
 					},

@@ -2,7 +2,7 @@ import os
 from flask import jsonify,current_app as app, request
 from marshmallow import ValidationError
 
-from app.decorator import verify_USER_role, verify_body, verify_internal_api_id, verify_session
+from app.decorator import checkBlueprintRouteFlag, verify_SUPERADMIN_role, verify_USER_role, verify_body, verify_internal_api_id, verify_session
 from app.extension import db,scheduler
 from app.models.article import Article
 from app.schema import ArticleSchema
@@ -10,7 +10,9 @@ from app.util import download_xml, nbibFileReader, parse_pubmed_xml, risFileRead
 from . import article_bp
 
 @article_bp.route("/")
-def index():
+@checkBlueprintRouteFlag
+@verify_SUPERADMIN_role
+def index(session):
 	return "This is The research repository article route"
 
 @article_bp.route("/table")

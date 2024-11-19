@@ -8,6 +8,18 @@ from app.models import Client, UserRole
 from app.util import decode_text
 from app.mylogger import error_logger
 
+
+def checkBlueprintRouteFlag(f):
+	@wraps(f)
+	def decorated_function(*args, **kwargs):
+		if app.config.get('BLUEPRINT_ROUTE'):
+			return f(*args, **kwargs)
+		else:
+			error_logger.info("Blueprint_route flag is disabled")
+			return jsonify({"message":"route not found"}),404
+	return decorated_function
+
+
 def verify_internal_api_id(f):
 	@wraps(f)
 	def decorated_function(*args, **kwargs):

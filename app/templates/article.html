@@ -69,10 +69,12 @@
         <section class="section">
             <h2>DOI and Links</h2>
             <p><strong>DOI:</strong> <a href="https://doi.org/{{ article.doi }}" target="_blank" class="button">{{ article.doi }}</a></p>
-            <p><strong>PubMed Link:</strong></p>
+            <p><strong>Link:</strong></p>
             <ul class="links">
                 {% for link in article.links %}
-                <li><a href="{{ link.link }}" target="_blank">Link {{ loop.index }}</a></li>
+                <a href="{{ link.link }}" target="_blank">
+                        <img src="/researchrepository/constant/assets/logo/document-svgrepo-com.svg" alt="Icon" class="link-icon">
+                </a>
                 {% endfor %}
             </ul>
         </section>

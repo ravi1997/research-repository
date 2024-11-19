@@ -63,6 +63,7 @@ class Article(db.Model):
     links = relationship("Link", back_populates="article")
     assets = relationship("Asset", back_populates="article")
 
+
     def __repr__(self):
         return f"<Article(id={self.id}, title='{self.title}')>"
 

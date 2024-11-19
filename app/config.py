@@ -10,7 +10,6 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 class BaseConfig:
     DB_NAME = "backend"
     OTP_FLAG = False
-    OTP_FLAG = False
     OTP_GENERATION = False
     LOG_REQUEST = True
     LOG_RESPONSE = True
@@ -19,6 +18,7 @@ class BaseConfig:
     SALT_PASSWORD = "some_unique_code"
     COOKIE_AGE = 60*60*24
     API_ID = str(uuid.uuid4())
+    BLUEPRINT_ROUTE = True
 
 class DevConfig(BaseConfig):
     load_dotenv('.env')

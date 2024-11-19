@@ -42,83 +42,128 @@ header h1 {
 
 /* Article Styling */
 .article {
-    max-width: 800px; /* Limit width for readability */
-    margin: 20px auto; /* Center the article */
+    max-width: 800px;
+    /* Limit width for readability */
+    margin: 20px auto;
+    /* Center the article */
     padding: 20px;
-    background-color: white; /* White background for article */
-    border-radius: var(--border-radius); /* Rounded corners */
-    box-shadow: 0 4px 8px var(--shadow); /* Shadow for depth */
+    background-color: white;
+    /* White background for article */
+    border-radius: var(--border-radius);
+    /* Rounded corners */
+    box-shadow: 0 4px 8px var(--shadow);
+    /* Shadow for depth */
 }
 
 /* Section Styling */
 .section {
-    margin-bottom: 20px; /* Space between sections */
+    margin-bottom: 20px;
+    /* Space between sections */
 }
 
 .section h2 {
-    font-size: 1.5rem; /* Section header size */
-    color: var(--primary-color); /* Primary color for section headers */
-    margin-bottom: 10px; /* Space below section header */
+    font-size: 1.5rem;
+    /* Section header size */
+    color: var(--primary-color);
+    /* Primary color for section headers */
+    margin-bottom: 10px;
+    /* Space below section header */
 }
 
 /* Author List Styling */
 .authors {
-    display: flex; /* Use flexbox for layout */
-    flex-wrap: wrap; /* Allow wrapping for multiple authors */
-    justify-content: center; /* Center authors */
-    list-style-type: none; /* Remove default list style */
-    padding-left: 0; /* Remove padding */
+    display: flex;
+    /* Use flexbox for layout */
+    flex-wrap: wrap;
+    /* Allow wrapping for multiple authors */
+    justify-content: center;
+    /* Center authors */
+    list-style-type: none;
+    /* Remove default list style */
+    padding-left: 0;
+    /* Remove padding */
 }
 
 .authors li {
-    position: relative; /* Position relative for absolute positioning of hover details */
-    background-color: #e9ecef; /* Light background for author cards */
-    margin: 10px; /* Space between items */
-    padding: 15px; /* Padding for items */
-    border-radius: var(--border-radius); /* Rounded corners */
-    box-shadow: 0 2px 4px var(--shadow); /* Subtle shadow for depth */
-    flex: 1 1 200px; /* Flex properties for responsive layout */
-    max-width: 300px; /* Max width for each author card */
-    text-align: center; /* Center text */
-    transition: transform 0.2s, box-shadow 0.2s; /* Transition for hover effects */
+    position: relative;
+    /* Position relative for absolute positioning of hover details */
+    background-color: #e9ecef;
+    /* Light background for author cards */
+    margin: 10px;
+    /* Space between items */
+    padding: 15px;
+    /* Padding for items */
+    border-radius: var(--border-radius);
+    /* Rounded corners */
+    box-shadow: 0 2px 4px var(--shadow);
+    /* Subtle shadow for depth */
+    flex: 1 1 200px;
+    /* Flex properties for responsive layout */
+    max-width: 300px;
+    /* Max width for each author card */
+    text-align: center;
+    /* Center text */
+    transition: transform 0.2s, box-shadow 0.2s;
+    /* Transition for hover effects */
 }
 
 .authors li:hover {
-    transform: translateY(-3px); /* Slightly lift the item on hover */
-    box-shadow: 0 4px 8px var(--shadow); /* Enhanced shadow on hover */
+    transform: translateY(-3px);
+    /* Slightly lift the item on hover */
+    box-shadow: 0 4px 8px var(--shadow);
+    /* Enhanced shadow on hover */
 }
 
 .authors li h3 {
-    font-size: 1.2rem; /* Title size for author names */
-    color: var(--primary-color); /* Author name color */
-    margin-bottom: 5px; /* Space below title */
+    font-size: 1.2rem;
+    /* Title size for author names */
+    color: var(--primary-color);
+    /* Author name color */
+    margin-bottom: 5px;
+    /* Space below title */
 }
 
 /* Author Details Box */
 .author-details {
-    display: none; /* Hide by default */
-    position: absolute; /* Position absolutely for placement */
-    bottom: 100%; /* Position above the author card */
-    left: 50%; /* Center horizontally */
-    transform: translateX(-50%); /* Offset to center */
-    background-color: white; /* White background for details box */
-    padding: 10px; /* Padding inside the box */
-    border-radius: var(--border-radius); /* Rounded corners */
-    box-shadow: 0 4px 8px var(--shadow); /* Shadow for depth */
-    z-index: 1; /* Ensure it appears above other elements */
-    width: 200px; /* Fixed width for the details box */
-    text-align: left; /* Align text to the left */
+    display: none;
+    /* Hide by default */
+    position: absolute;
+    /* Position absolutely for placement */
+    bottom: 100%;
+    /* Position above the author card */
+    left: 50%;
+    /* Center horizontally */
+    transform: translateX(-50%);
+    /* Offset to center */
+    background-color: white;
+    /* White background for details box */
+    padding: 10px;
+    /* Padding inside the box */
+    border-radius: var(--border-radius);
+    /* Rounded corners */
+    box-shadow: 0 4px 8px var(--shadow);
+    /* Shadow for depth */
+    z-index: 1;
+    /* Ensure it appears above other elements */
+    width: 200px;
+    /* Fixed width for the details box */
+    text-align: left;
+    /* Align text to the left */
 }
 
 .authors li:hover .author-details {
-    display: block; /* Show details on hover */
+    display: block;
+    /* Show details on hover */
 }
 
 /* Additional Author Details Styles */
 .author-details p {
-    margin: 5px 0; /* Spacing for paragraphs */
-    font-size: var(--font-size-small); /* Smaller font size for details */
-    color: var(--light-text-color); /* Lighter color for text */
+    margin: 5px 0;
+    /* Spacing for paragraphs */
+    font-size: var(--font-size-small);
+    /* Smaller font size for details */
+    color: var(--light-text-color);
+    /* Lighter color for text */
 }
 
 /* Footer */
@@ -143,102 +188,152 @@ footer p {
     border-radius: var(--border-radius);
     font-size: var(--font-size-large);
     transition: background-color 0.3s, transform 0.2s;
-    display: inline-block; /* Ensures button shape */
+    display: inline-block;
+    /* Ensures button shape */
 }
 
 .button a:hover {
     background-color: var(--primary-light);
-    transform: scale(1.05); /* Slightly enlarge the button */
+    transform: scale(1.05);
+    /* Slightly enlarge the button */
 }
 
 /* Keywords Section Styling */
 .keywords {
-    display: flex; /* Use flexbox for layout */
-    flex-wrap: wrap; /* Allow wrapping of keywords */
-    list-style-type: none; /* Remove default list styling */
-    padding: 0; /* Remove default padding */
-    margin: 10px 0; /* Space above and below */
+    display: flex;
+    /* Use flexbox for layout */
+    flex-wrap: wrap;
+    /* Allow wrapping of keywords */
+    list-style-type: none;
+    /* Remove default list styling */
+    padding: 0;
+    /* Remove default padding */
+    margin: 10px 0;
+    /* Space above and below */
 }
 
 .keywords li {
-    background-color: var(--primary-light); /* Background color for keywords */
-    color: white; /* Text color */
-    padding: 8px 15px; /* Padding for keyword items */
-    margin: 5px; /* Margin around keyword items */
-    border-radius: var(--border-radius); /* Rounded corners */
-    font-size: var(--font-size-small); /* Font size */
-    transition: background-color 0.3s, transform 0.2s; /* Transition for hover effects */
-    cursor: pointer; /* Pointer cursor on hover */
+    background-color: var(--primary-light);
+    /* Background color for keywords */
+    color: white;
+    /* Text color */
+    padding: 8px 15px;
+    /* Padding for keyword items */
+    margin: 5px;
+    /* Margin around keyword items */
+    border-radius: var(--border-radius);
+    /* Rounded corners */
+    font-size: var(--font-size-small);
+    /* Font size */
+    transition: background-color 0.3s, transform 0.2s;
+    /* Transition for hover effects */
+    cursor: pointer;
+    /* Pointer cursor on hover */
 }
 
 .keywords li:hover {
-    background-color: var(--primary-color); /* Darken background on hover */
-    transform: scale(1.05); /* Slightly enlarge on hover */
+    background-color: var(--primary-color);
+    /* Darken background on hover */
+    transform: scale(1.05);
+    /* Slightly enlarge on hover */
 }
 
 /* Links Section Styling */
 .links {
-    list-style-type: none; /* Remove default list styling */
-    padding: 0; /* Remove default padding */
-    margin: 20px 0; /* Space above and below */
-    display: grid; /* Use grid layout for better organization */
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); /* Responsive grid */
-    gap: 20px; /* Space between links */
+    list-style-type: none;
+    /* Remove default list styling */
+    padding: 0;
+    /* Remove default padding */
+    margin: 10px 0;
+    /* Space above and below */
+    display: grid;
+    /* Use grid layout for better organization */
+    grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+    /* Reduce minimum width */
+    gap: 5px;
+    /* Space between links */
 }
 
 .links li {
-    background: linear-gradient(135deg, var(--primary-light) 30%, var(--primary-dark) 90%); /* Gradient background */
-    color: white; /* Text color */
-    border-radius: var(--border-radius); /* Rounded corners */
-    padding: 20px; /* Padding for link items */
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15); /* Shadow for depth */
-    transition: transform 0.3s, box-shadow 0.3s; /* Transition effects */
-    overflow: hidden; /* Prevent overflow for smoother effect */
+    background: linear-gradient(135deg, var(--primary-light) 30%, var(--primary-color) 90%);
+    /* Gradient background */
+    color: white;
+    /* Text color */
+    border-radius: var(--border-radius);
+    /* Rounded corners */
+    padding: 8px;
+    /* Reduced padding for link items */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+    /* Less shadow for depth */
+    transition: transform 0.3s, box-shadow 0.3s;
+    /* Transition effects */
+    overflow: hidden;
+    /* Prevent overflow for smoother effect */
+    min-height: 60px;
+    /* Set a smaller minimum height for link boxes */
+    display: flex;
+    /* Use flexbox for alignment */
+    flex-direction: column;
+    /* Stack content vertically */
+    justify-content: center;
+    /* Center content vertically */
+    align-items: center;
+    /* Center content horizontally */
 }
 
 .links li a {
-    color: white; /* Link text color */
-    text-decoration: none; /* Remove underline from links */
-    display: block; /* Make the entire item clickable */
-    font-weight: bold; /* Bold font for emphasis */
-    font-size: 16px; /* Font size */
+    color: white;
+    /* Link text color */
+    text-decoration: none;
+    /* Remove underline from links */
+    display: block;
+    /* Make the entire item clickable */
+    font-weight: bold;
+    /* Bold font for emphasis */
+    font-size: var(--font-size-small);
+    /* Use a smaller font size */
+    text-align: center;
+    /* Center text */
 }
 
-.links li:hover {
-    transform: translateY(-5px); /* Lift effect on hover */
-    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2); /* Enhance shadow on hover */
+/* Link Icon Styling */
+.link-icon {
+    width: 36px;
+    /* Keep icon size unchanged */
+    height: 36px;
+    /* Keep icon size unchanged */
+    margin-bottom: 5px;
+    /* Space below the icon */
+    fill: white;
+    /* Change color if needed */
 }
-
-/* Adding Icons */
-.links li:before {
-    content: '🔗'; /* Use an icon or emoji */
-    font-size: 24px; /* Size of the icon */
-    display: block; /* Make icon a block element */
-    margin-bottom: 10px; /* Space below the icon */
-    text-align: center; /* Center the icon */
-}
-
 
 /* Responsive Design */
 @media (max-width: 768px) {
     .authors {
-        flex-direction: column; /* Stack authors vertically */
+        flex-direction: column;
+        /* Stack authors vertically */
     }
 
     .authors li {
-        flex: 1 1 100%; /* Ensure full width on small screens */
+        flex: 1 1 100%;
+        /* Ensure full width on small screens */
     }
 
     .article {
-        padding: 10px; /* Reduced padding for small screens */
+        padding: 10px;
+        /* Reduced padding for small screens */
     }
 
     .keywords li {
-        flex: 1 1 100%; /* Full width on small screens */
-        text-align: center; /* Center text */
+        flex: 1 1 100%;
+        /* Full width on small screens */
+        text-align: center;
+        /* Center text */
     }
 
     .links {
-        grid-template-columns: 1fr; /* Stack links vertically on small screens */
+        grid-template-columns: 1fr;
+        /* Stack links vertically on small screens */
     }
 }
