@@ -5,9 +5,9 @@ from marshmallow import ValidationError
 
 from app.decorator import checkBlueprintRouteFlag, verify_SUPERADMIN_role, verify_USER_role, verify_body, verify_internal_api_id, verify_session
 from app.extension import db,scheduler
-from app.models.article import Article
-from app.schema import ArticleSchema
-from app.util import download_xml, fileReader,  parse_pubmed_xml
+from app.models.article import Article, ArticlePublicationType, PublicationType
+from app.schema import ArticleSchema, AuthorSchema, KeywordSchema, LinkSchema, PublicationTypeSchema
+from app.util import download_xml, fileReader, find_full_row_match,  parse_pubmed_xml
 from . import article_bp
 
 @article_bp.route("/")
@@ -71,10 +71,32 @@ def upload_ris(session):
 		# Save the file
 		file.save(file_path)
 		
-		myjson = fileReader(filepath=file_path)
-
+		myjsons = fileReader(filepath=file_path)
+		articleSchema = ArticleSchema()
+		authorSchema = AuthorSchema()
+		keywordSchema = KeywordSchema()
+		linkSchema = LinkSchema()
+		publicationTypeSchema = PublicationTypeSchema()
 		
-		schema = ArticleSchema(many=True)
+		for myjson in myjsons:
+			publication_types = myjson.pop('publication_types')
+			keywords = myjson.pop('keywords')
+			authors = myjson.pop('authors')
+			links = myjson.pop('links')
+			newArticle = articleSchema.load(myjson)
+			db.session.add(newArticle)
+			
+			for pub_type in publication_types:
+				new_publication_type = publicationTypeSchema.load(pub_type)
+				old_pub_type = find_full_row_match(PublicationType,new_publication_type)
+				if old_pub_type:
+					new_article_pub_type = ArticlePublicationType(article=newArticle, publication_type=old_pub_type)
+				else:
+					db.session.add(new_publication_type)
+					new_article_pub_type = ArticlePublicationType(article=newArticle, publication_type=new_publication_type)
+				db.session.add(new_article_pub_type)
+
+
 		objects = schema.load(myjson)
 		for object in objects:
 			db.session.add(object)

@@ -150,6 +150,16 @@ def decipher(salt: str):
 	
 	return decode
 
+
+def find_full_row_match(cls,instance):
+    # Create a filter expression dynamically based on the instance's attributes
+    filters = {column.name: getattr(instance, column.name) for column in cls.__table__.columns}
+
+    # Query to find the user with matching attributes
+    matched_object = cls.query.filter_by(**filters).first()
+
+    return matched_object
+
 # Example function to decode text
 def decode_text(salt: str, encoded: str) -> str:
 	decode_function = decipher(salt)

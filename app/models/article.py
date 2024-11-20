@@ -7,11 +7,10 @@ class Author(db.Model):
     fullName = db.Column(db.Text, nullable=False)
     author_abbreviated = db.Column(db.Text, nullable=True)
     affiliations = db.Column(db.JSON, nullable=True) 
-    sequence_number = db.Column(db.Integer, nullable=False)
     employee_id = db.Column(db.Text, nullable=True)
 
-    # Establish a many-to-many relationship with Article
-    articles = db.relationship('Article', secondary='article_authors', back_populates='authors')
+    # Establish a many-to-many relationship with Article through the ArticleAuthor association
+    articles = db.relationship('ArticleAuthor', back_populates='author')
 
     def __repr__(self):
         return f"<Author(id={self.id}, fullName='{self.fullName}')>"
@@ -20,7 +19,7 @@ class Article(db.Model):
     __tablename__ = "articles"
     id = db.Column(db.Integer, primary_key=True)
     uuid = db.Column(db.Text, nullable=False)
-    
+
     # Many-to-Many relationship with PublicationType
     publication_types = db.relationship(
         "PublicationType",
@@ -35,8 +34,8 @@ class Article(db.Model):
         back_populates="articles"
     )
     
-    # Many-to-Many relationship with Author
-    authors = db.relationship('Author', secondary='article_authors', back_populates='articles')
+    # Many-to-Many relationship with Author through the ArticleAuthor association
+    authors = db.relationship('ArticleAuthor', back_populates='article')
     
     title = db.Column(db.Text, nullable=False)
     abstract = db.Column(db.Text, nullable=True)
@@ -49,7 +48,7 @@ class Article(db.Model):
     journal_volume = db.Column(db.Text, nullable=True)
     journal_issue = db.Column(db.Text, nullable=True)
 
-    # identifiers
+    # Identifiers
     pubmed_id = db.Column(db.Text, nullable=True)
     pmc_id = db.Column(db.Text, nullable=True)
     pii = db.Column(db.Text, nullable=True)
@@ -61,7 +60,6 @@ class Article(db.Model):
 
     links = relationship("Link", back_populates="article")
     assets = relationship("Asset", back_populates="article")
-
 
     def __repr__(self):
         return f"<Article(id={self.id}, title='{self.title}')>"
@@ -87,6 +85,10 @@ class ArticleAuthor(db.Model):
     __tablename__ = 'article_authors'
     article_id = db.Column(db.Integer, db.ForeignKey('articles.id'), primary_key=True)
     author_id = db.Column(db.Integer, db.ForeignKey('authors.id'), primary_key=True)
+    sequence_number = db.Column(db.Integer, nullable=False)  # New field for sequence number
+
+    author = relationship("Author", back_populates="articles")
+    article = relationship("Article", back_populates="authors")
 
 class PublicationType(db.Model):
     __tablename__ = 'publication_types'
