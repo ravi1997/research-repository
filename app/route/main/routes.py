@@ -8,7 +8,7 @@ from app.models import Client
 from app.extension import db
 from app.models.article import Article
 from app.schema import ArticleSchema
-from app.util import setCookie
+from app.util import get_base_url, setCookie
 from . import main_bp
 from flask import current_app as app
 
@@ -78,8 +78,13 @@ def repositoryPage(session):
     page = request.args.get('page', 1, type=int)
     entry = request.args.get('entry', 10, type=int)
 
-    server_url = request.host_url.rstrip("/")
+
+    
+
+    server_url = get_base_url()
+    # server_url = "http://127.0.0.1:5012"
     url = f"{server_url}/researchrepository/api/article/table"
+    
     headers = {
         "API-ID":app.config.get('API_ID')
     }
@@ -96,11 +101,6 @@ def repositoryPage(session):
         data =  response.json()
         articles = data["data"]
         total_pages = data["total_pages"]
-        for article_data in articles:
-            if article_data.get("publication_date"):
-                article_data["publication_date"] = datetime.strptime(
-                    article_data["publication_date"], "%Y-%m-%dT%H:%M:%S"
-                ).strftime("%Y-%m-%d")
         
         response = make_response(render_template('repository.html',articles=articles,current_page=page,entry=entry,total_pages = total_pages))
         response.set_cookie('Session-ID', session.client_session_id, httponly=True, max_age=app.config['COOKIE_AGE'], secure = True, samesite='None')  # expires in 1 day
@@ -113,7 +113,7 @@ def repositoryPage(session):
 @main_bp.route('/article/<string:id>')
 @verify_session
 def articlePage(session,id):
-    server_url = request.host_url.rstrip("/")
+    server_url = get_base_url()
     url = f"{server_url}/researchrepository/api/article/{id}"
     headers = {
         "API-ID":app.config.get('API_ID')
@@ -124,13 +124,8 @@ def articlePage(session,id):
     response = requests.get(url, headers=headers, cookies=cookies)  # Use `requests.get`
 
     if response.status_code==200:
-        
         article_data = response.json()
-        # Format the publication date
-        if article_data.get("publication_date"):
-            article_data["publication_date"] = datetime.strptime(
-                article_data["publication_date"], "%Y-%m-%dT%H:%M:%S"
-            ).strftime("%Y-%m-%d")
+
         
         response = make_response(render_template('article.html',article=article_data))
         response.set_cookie('Session-ID', session.client_session_id, httponly=True, max_age=app.config['COOKIE_AGE'], secure = True, samesite='None')  # expires in 1 day

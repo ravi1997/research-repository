@@ -1,6 +1,6 @@
 		
 # UTILS
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from functools import reduce
 import random
 import string
@@ -99,6 +99,17 @@ def getNewSalt(length: int = 16) -> str:
 	salt = ''.join(secrets.choice(characters) for _ in range(length))
 	return salt
 
+def get_base_url():
+    # Get the host and port from the app's configuration
+    host = "127.0.0.1" # Default to localhost if not set
+    port = app.config.get("PORT", 5000)  # Default port is 5000
+
+    # Determine the scheme based on whether the app is running in debug mode or not
+    scheme = "http"
+    
+    # Construct the base URL
+    base_url = f"{scheme}://{host}:{port}/"
+    return base_url
 
 def setCookie(response,name,value,httponly=True):
 	response.set_cookie(name,value, httponly=httponly, max_age=app.config['COOKIE_AGE'], secure = True, samesite='None')  
@@ -147,7 +158,7 @@ def risFileReader(filepath):
 
 		for entry in entries:
 			
-			publication_type = ['JOURNAL']
+			publication_type = [{'publication_type':'Journal Article'}]
 			keyword_list = entry.get('keywords',None) or []
 			keywords = []
 			keywords += ({"keyword":keyword} for keyword in keyword_list)
@@ -175,7 +186,7 @@ def risFileReader(filepath):
 				year = int(dateSplit[0])
 				month = int(dateSplit[1]) if dateSplit[1] != '' else 1
 				day = int(dateSplit[2]) if dateSplit[2] != '' else 1
-				publication_date = datetime(year,month,day,0,0)
+				publication_date = date(year,month,day)
 			elif publication_year:
 				dateSplit = publication_year.split('/')
 				# print(dateSplit)
@@ -186,7 +197,7 @@ def risFileReader(filepath):
 					month = int(dateSplit[1]) if dateSplit[1] != '' else 1
 				if len(dateSplit)>2:
 					day = int(dateSplit[2]) if dateSplit[2] != '' else 1
-				publication_date = datetime(year,month,day,0,0)
+				publication_date = date(year,month,day)
 				
 			
 			start_page = entry.get('start_page',None)
@@ -239,6 +250,7 @@ def risFileReader(filepath):
 				
 				article = {
 					"uuid":str(uuid.uuid4()),
+					"publication_types":publication_type,
 					"keywords":keywords,
 					"authors":authors,
 					"title":title,

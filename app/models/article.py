@@ -1,6 +1,5 @@
 from app.extension import db
 from sqlalchemy.orm import relationship
-from sqlalchemy import DateTime
 
 class Author(db.Model):
     __tablename__ = "authors"
@@ -44,8 +43,8 @@ class Article(db.Model):
     place_of_publication = db.Column(db.Text, nullable=True)
     journal = db.Column(db.Text, nullable=True)
     journal_abrevated = db.Column(db.Text, nullable=True)
-    publication_date = db.Column(DateTime, nullable=True)
-    electronic_publication_date = db.Column(DateTime, nullable=True)
+    publication_date = db.Column(db.Date, nullable=True)
+    electronic_publication_date = db.Column(db.Date, nullable=True)
     pages = db.Column(db.Text, nullable=True)
     journal_volume = db.Column(db.Text, nullable=True)
     journal_issue = db.Column(db.Text, nullable=True)
