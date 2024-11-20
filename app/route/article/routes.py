@@ -21,19 +21,18 @@ def index(session):
 @verify_internal_api_id
 def generateTable(session):
 	page = request.args.get('page', 1, type=int)
-	per_page = 10  # Number of items per page
-	articles_schema = ArticleSchema(many=True)
-	articles = Article.query.order_by(Article.publication_date.desc()).all()
-	data = articles_schema.dump(articles)
-	# Implement pagination logic
+	per_page = request.args.get('entry', 10, type=int)
 	start = (page - 1) * per_page
-	end = start + per_page
-	paginated_data = data[start:end]
+	
+	total = Article.query.count()
+	articles_schema = ArticleSchema(many=True)
+	articles = Article.query.order_by(Article.publication_date.desc()).offset(start).limit(per_page).all()
+	data = articles_schema.dump(articles)
 	
 	return jsonify({
-		'data': paginated_data,
+		'data': data,
 		'page': page,
-		'total_pages': len(data) // per_page + (1 if len(data) % per_page > 0 else 0)
+		'total_pages': total // per_page + (1 if total % per_page > 0 else 0)
 	})
 
 @article_bp.route("/<string:id>")

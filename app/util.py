@@ -22,6 +22,13 @@ from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.backends import default_backend
 import xml.etree.ElementTree as ET
 
+from urllib.parse import urlparse
+
+def is_valid_url(url):
+    parsed = urlparse(url)
+    return all([parsed.scheme, parsed.netloc])
+
+
 def generate_otp(length=6):
 	"""Generate a random OTP of specified length."""
 	digits = '0123456789'
@@ -225,6 +232,18 @@ def fileReader(filepath):
 			publication_type_list = entry.get('publication_types', None) or []
 			publication_type_t = entry.get('type_of_reference', None)
 
+			pub_date = entry.get('date', None) or entry.get('publication_date', None)
+			publication_date = parse_date(pub_date) if pub_date else None
+			
+
+			if 'Journal Article' not in publication_type_list and publication_type_t != "JOUR":
+				# Handle missing essential fields
+				if  not publication_date:
+					print(f"publication_type_t : {publication_type_t}")
+					print(f"publication_date : {publication_date}")
+					print(f"publication_type_list : {publication_type_list}")
+					print(f"Skipping entry due to missing journal or publication date: {title}")
+					continue
 
 			publication_type = [{'publication_type': 'Journal Article'}]
 			if is_ris:
@@ -250,19 +269,8 @@ def fileReader(filepath):
 			abstract = entry.get('abstract', None)
 			journal = entry.get('journal', None) or entry.get('journal_name', None) or entry.get('secondary_title', None)
 			journal_abrevated = entry.get('alternate_title1', None) if is_ris else entry.get('journal_abbreviated', None)
-			pub_date = entry.get('date', None) or entry.get('publication_date', None)
-			publication_date = parse_date(pub_date) if pub_date else None
+
 			
-
-			if 'Journal Article' not in publication_type_list and not publication_type_t:
-				# Handle missing essential fields
-				if  not publication_date:
-					print(f"publication_type_t : {publication_type_t}")
-					print(f"publication_date : {publication_date}")
-					print(f"publication_type_list : {publication_type_list}")
-					print(f"Skipping entry due to missing journal or publication date: {title}")
-					continue
-
 			pages = f"{entry.get('start_page', '')}-{entry.get('end_page', '')}" if entry.get('start_page') and entry.get('end_page') else None
 			journal_volume = entry.get('volume', None)
 			journal_issue = entry.get('number', None)
@@ -272,12 +280,31 @@ def fileReader(filepath):
 			doi = entry.get('doi', None)
 			issn = entry.get('print_issn', None) or entry.get('issn', None)
 			
-			# Extract file attachments and URLs with null checks
 			links = []
-			for attachment_key in ['file_attachments1', 'file_attachments2', 'urls']:
-				if entry.get(attachment_key):
-					links.extend([{"link": link} for link in entry[attachment_key]] if isinstance(entry.get(attachment_key), list) else [{"link": entry[attachment_key]}])
+			file_attachments1 = entry.get('file_attachments1',None)
+			file_attachments2 = entry.get('file_attachments2',None)
+			urls = entry.get('urls',None)
+			if file_attachments1 is not None:
+				# print(file_attachments1)
+				links.append(
+					{
+						"link":file_attachments1                        
+					}
+					
+					)
 
+			if file_attachments2 is not None:
+				links.append(                    {
+						"link":file_attachments2                        
+					})
+
+			if urls:
+				for link in urls:
+					if is_valid_url(link):
+						# print(f"link : {link}")
+						links.append({"link": link})
+
+			# print(f"links : {links}")
 			# Create the article dictionary
 			article = {
 				"uuid": str(uuid.uuid4()),
