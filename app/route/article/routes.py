@@ -1,4 +1,5 @@
 import os
+from pprint import pprint
 from flask import jsonify,current_app as app, request
 from marshmallow import ValidationError
 
@@ -6,7 +7,7 @@ from app.decorator import checkBlueprintRouteFlag, verify_SUPERADMIN_role, verif
 from app.extension import db,scheduler
 from app.models.article import Article
 from app.schema import ArticleSchema
-from app.util import download_xml, nbibFileReader, parse_pubmed_xml, risFileReader
+from app.util import download_xml, fileReader,  parse_pubmed_xml
 from . import article_bp
 
 @article_bp.route("/")
@@ -71,7 +72,7 @@ def upload_ris(session):
 		# Save the file
 		file.save(file_path)
 		
-		myjson = risFileReader(filepath=file_path)
+		myjson = fileReader(filepath=file_path)
 
 		
 		schema = ArticleSchema(many=True)
@@ -109,8 +110,8 @@ def upload_nbib(session):
 		# Save the file
 		file.save(file_path)
 		
-		myjson = nbibFileReader(filepath=file_path)
-		
+		myjson = fileReader(filepath=file_path)
+		# pprint(myjson)
 		schema = ArticleSchema(many=True)
 		objects = schema.load(myjson)
 		for object in objects:
@@ -138,6 +139,8 @@ def pubmedFectch(data,session):
 		myjson = parse_pubmed_xml(filename)
 		
 		schema = ArticleSchema()
+		# pprint(myjson)
+
 		object = schema.load(myjson)
 		db.session.add(object)
 		db.session.commit()

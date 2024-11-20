@@ -35,9 +35,6 @@ def otp_generation_set(data,session):
 	return jsonify({"message":"value is updated"}),200
 
 
-
-
-
 @superadmin_bp.route("/dbFetch")
 @verify_SUPERADMIN_role
 def dbFetch(session):

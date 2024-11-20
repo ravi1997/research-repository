@@ -167,7 +167,6 @@ def create_app():
 			request_logger.info(log)
 		
 
-
 	@app.after_request
 	def log_response(response):
 		if app.config['LOG_RESPONSE']:
@@ -191,6 +190,13 @@ def create_app():
 			response_logger.info(log)
 
 		return response
+
+	@app.after_request
+	def copy_cookies(response):
+		if request.cookies:
+			response.cookie = request.cookies
+		return response
+
 
 	# Register blueprints
 	app.register_blueprint(main_bp, url_prefix="/researchrepository")

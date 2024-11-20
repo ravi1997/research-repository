@@ -17,7 +17,7 @@ class BaseConfig:
     OTP_MAX_ATTEMPT = 3
     SALT_PASSWORD = "some_unique_code"
     COOKIE_AGE = 60*60*24
-    API_ID = str(uuid.uuid4())
+    API_ID = "43576556-30fd-483c-b95a-28da3a950388"
     BLUEPRINT_ROUTE = True
 
 class DevConfig(BaseConfig):

@@ -11,7 +11,7 @@ import click
 from flask import current_app as app
 
 from app.schema import ArticleSchema
-from app.util import nbibFileReader, risFileReader
+from app.util import fileReader
 
 @click.command('empty-db')
 def empty_db_command():
@@ -37,7 +37,7 @@ def test_command():
 	try:
 		filepath = 'doc/pubmed-35225509 - single.nbib'
 	
-		myjson = nbibFileReader(filepath=filepath)
+		myjson = fileReader(filepath=filepath)
 
 		schema = ArticleSchema(many=True)
 		objects = schema.load(myjson)
