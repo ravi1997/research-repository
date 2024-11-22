@@ -24,9 +24,20 @@ import xml.etree.ElementTree as ET
 
 from urllib.parse import urlparse
 
+
 def is_valid_url(url):
-    parsed = urlparse(url)
-    return all([parsed.scheme, parsed.netloc])
+	parsed = urlparse(url)
+	return all([parsed.scheme, parsed.netloc])
+
+
+def getIP(request):
+	x_forwarded_for = request.headers.get('X-Forwarded-For')
+	if x_forwarded_for:
+		# Take the first IP if there are multiple IPs listed
+		client_ip = x_forwarded_for.split(',')[0]
+	else:
+		client_ip = request.remote_addr
+	client = request.args.get('ip', client_ip, type=str)
 
 
 def generate_otp(length=6):
@@ -152,13 +163,15 @@ def decipher(salt: str):
 
 
 def find_full_row_match(cls,instance):
-    # Create a filter expression dynamically based on the instance's attributes
-    filters = {column.name: getattr(instance, column.name) for column in cls.__table__.columns}
+	# Create a filter expression dynamically based on the instance's attributes
+	filters = {column.name: getattr(instance, column.name) for column in cls.__table__.columns}
 
-    # Query to find the user with matching attributes
-    matched_object = cls.query.filter_by(**filters).first()
+	filters.pop('id')
 
-    return matched_object
+	# Query to find the user with matching attributes
+	matched_object = cls.query.filter_by(**filters).first()
+
+	return matched_object
 
 # Example function to decode text
 def decode_text(salt: str, encoded: str) -> str:
@@ -249,10 +262,6 @@ def fileReader(filepath):
 			if 'Journal Article' not in publication_type_list and publication_type_t != "JOUR":
 				# Handle missing essential fields
 				if  not publication_date:
-					print(f"publication_type_t : {publication_type_t}")
-					print(f"publication_date : {publication_date}")
-					print(f"publication_type_list : {publication_type_list}")
-					print(f"Skipping entry due to missing journal or publication date: {title}")
 					continue
 
 			publication_type = [{'publication_type': 'Journal Article'}]
@@ -263,7 +272,7 @@ def fileReader(filepath):
 				keywords += ({"keyword":keyword} for keyword in keyword_list)
 								
 				author_list = (entry.get('authors',None) or [])+(entry.get('first_authors',None) or [])
-				authors = [{"fullName": author,"sequence_number":idx+1} for idx, author in enumerate(author_list)]
+				authors = [{"fullName": author} for author in author_list]
 			
 			elif is_nbib:
 				# For NBIB files, authors might be under 'authors' or 'first_authors' (or both)
@@ -272,7 +281,7 @@ def fileReader(filepath):
 				keywords += ({"keyword":keyword['descriptor']} for keyword in keyword_list)
 				author_list = (entry.get('authors', None) or [])
 				
-				authors = [{"fullName": author['author'], "author_abbreviated": author['author_abbreviated'], "affiliations": author['affiliations'], "sequence_number":idx + 1} for idx, author in enumerate(author_list)]
+				authors = [{"fullName": author['author'], "author_abbreviated": author['author_abbreviated'], "affiliations": author['affiliations']} for author in author_list]
 		
 			
 			title = entry.get('title', None) or entry.get('primary_title', None)
@@ -366,124 +375,123 @@ def download_xml(pmid, filename):
 	
 
 def parse_pubmed_xml(file_path):
-    article_data = {}
-    
-    try:
-        tree = ET.parse(file_path)
-        root = tree.getroot()
+	article_data = {}
+	
+	try:
+		tree = ET.parse(file_path)
+		root = tree.getroot()
 
-        article = root.find("PubmedArticle")
-        if article is None:
-            raise ValueError("PubmedArticle not found in the XML.")
-        
-        article_data["uuid"] = str(uuid.uuid4())
-        
-        # Extract Publication Types (handling None)
-        publication_types = article.findall(".//PublicationTypeList/PublicationType")
-        article_data["publication_types"] = [{"publication_type": pubType.text} for pubType in publication_types if pubType.text]
+		article = root.find("PubmedArticle")
+		if article is None:
+			raise ValueError("PubmedArticle not found in the XML.")
+		
+		article_data["uuid"] = str(uuid.uuid4())
+		
+		# Extract Publication Types (handling None)
+		publication_types = article.findall(".//PublicationTypeList/PublicationType")
+		article_data["publication_types"] = [{"publication_type": pubType.text} for pubType in publication_types if pubType.text]
 
-        # Extract Keywords (handling None)
-        keywords = article.findall(".//Keyword")
-        article_data["keywords"] = [{"keyword": keyword.text} for keyword in keywords if keyword.text]
+		# Extract Keywords (handling None)
+		keywords = article.findall(".//Keyword")
+		article_data["keywords"] = [{"keyword": keyword.text} for keyword in keywords if keyword.text]
 
-        # Extract Authors (handling None and empty elements)
-        authors = []
-        for idx, author in enumerate(article.findall(".//Author")):
-            last_name = author.find("LastName")
-            fore_name = author.find("ForeName")
-            initials = author.find("Initials")
-            affiliations = author.findall(".//AffiliationInfo/Affiliation")
-            
-            # Safeguard against missing author fields
-            last_name_text = last_name.text if last_name is not None else ""
-            fore_name_text = fore_name.text if fore_name is not None else ""
-            initials_text = initials.text if initials is not None else ""
-            affiliations_text = [affiliation.text for affiliation in affiliations if affiliation.text]
+		# Extract Authors (handling None and empty elements)
+		authors = []
+		for author in article.findall(".//Author"):
+			last_name = author.find("LastName")
+			fore_name = author.find("ForeName")
+			initials = author.find("Initials")
+			affiliations = author.findall(".//AffiliationInfo/Affiliation")
+			
+			# Safeguard against missing author fields
+			last_name_text = last_name.text if last_name is not None else ""
+			fore_name_text = fore_name.text if fore_name is not None else ""
+			initials_text = initials.text if initials is not None else ""
+			affiliations_text = [affiliation.text for affiliation in affiliations if affiliation.text]
 
-            authors.append(
-                {
-                    'fullName': f"{last_name_text}, {fore_name_text}".strip(", "),
-                    'author_abbreviated': f"{last_name_text} {initials_text}".strip(),
-                    'affiliations': affiliations_text,
-                    "sequence_number": idx + 1
-                }
-            )
-        article_data["authors"] = authors
+			authors.append(
+				{
+					'fullName': f"{last_name_text}, {fore_name_text}".strip(", "),
+					'author_abbreviated': f"{last_name_text} {initials_text}".strip(),
+					'affiliations': affiliations_text,
+				}
+			)
+		article_data["authors"] = authors
 
-        # Extract Title
-        title = article.find(".//ArticleTitle")
-        article_data["title"] = title.text if title is not None else "No title available"
+		# Extract Title
+		title = article.find(".//ArticleTitle")
+		article_data["title"] = title.text if title is not None else "No title available"
 
-        # Extract Abstract
-        abstract = article.find(".//Abstract/AbstractText")
-        article_data["abstract"] = abstract.text if abstract is not None else "No abstract available"
+		# Extract Abstract
+		abstract = article.find(".//Abstract/AbstractText")
+		article_data["abstract"] = abstract.text if abstract is not None else "No abstract available"
 
-        # Extract Publication Date (handling None)
-        pub_date = article.find(".//PubDate")
-        pub_year = pub_date.find("Year").text if pub_date is not None else None
-        pub_month = pub_date.find("Month").text if pub_date is not None else None
-        if pub_year and pub_month:
-            article_data["publication_date"] = date(int(pub_year), datetime.strptime(pub_month, "%b").month, 1).isoformat()
-        else:
-            article_data["publication_date"] = None  # If year or month is missing, set to None
+		# Extract Publication Date (handling None)
+		pub_date = article.find(".//PubDate")
+		pub_year = pub_date.find("Year").text if pub_date is not None else None
+		pub_month = pub_date.find("Month").text if pub_date is not None else None
+		if pub_year and pub_month:
+			article_data["publication_date"] = date(int(pub_year), datetime.strptime(pub_month, "%b").month, 1).isoformat()
+		else:
+			article_data["publication_date"] = None  # If year or month is missing, set to None
 
-        # Extract Place of Publication
-        place_of_publication = article.find(".//MedlineJournalInfo/Country")
-        article_data["place_of_publication"] = place_of_publication.text if place_of_publication is not None else "Unknown"
+		# Extract Place of Publication
+		place_of_publication = article.find(".//MedlineJournalInfo/Country")
+		article_data["place_of_publication"] = place_of_publication.text if place_of_publication is not None else "Unknown"
 
-        # Extract Journal Details
-        journal_title = article.find(".//Journal/Title")
-        article_data["journal"] = journal_title.text if journal_title is not None else "Unknown"
-        journal_abbrev = article.find(".//ISOAbbreviation")
-        article_data["journal_abrevated"] = journal_abbrev.text if journal_abbrev is not None else "Unknown"
+		# Extract Journal Details
+		journal_title = article.find(".//Journal/Title")
+		article_data["journal"] = journal_title.text if journal_title is not None else "Unknown"
+		journal_abbrev = article.find(".//ISOAbbreviation")
+		article_data["journal_abrevated"] = journal_abbrev.text if journal_abbrev is not None else "Unknown"
 
-        # Extract Pagination (Pages)
-        pagination = article.find(".//Pagination/MedlinePgn")
-        article_data["pages"] = pagination.text if pagination is not None else "N/A"
+		# Extract Pagination (Pages)
+		pagination = article.find(".//Pagination/MedlinePgn")
+		article_data["pages"] = pagination.text if pagination is not None else "N/A"
 
-        # Extract Journal Volume and Issue
-        journal_volume = article.find(".//JournalIssue/Volume")
-        article_data["journal_volume"] = journal_volume.text if journal_volume is not None else "N/A"
-        journal_issue = article.find(".//JournalIssue/Issue")
-        article_data["journal_issue"] = journal_issue.text if journal_issue is not None else "N/A"
+		# Extract Journal Volume and Issue
+		journal_volume = article.find(".//JournalIssue/Volume")
+		article_data["journal_volume"] = journal_volume.text if journal_volume is not None else "N/A"
+		journal_issue = article.find(".//JournalIssue/Issue")
+		article_data["journal_issue"] = journal_issue.text if journal_issue is not None else "N/A"
 
-        # Extract PubMed ID
-        pubmed_id = article.find(".//PMID")
-        article_data["pubmed_id"] = pubmed_id.text if pubmed_id is not None else "N/A"
+		# Extract PubMed ID
+		pubmed_id = article.find(".//PMID")
+		article_data["pubmed_id"] = pubmed_id.text if pubmed_id is not None else "N/A"
 
-        # Extract Article IDs (DOI, PMC, PII)
-        for article_id in article.findall(".//ArticleId"):
-            id_type = article_id.get("IdType")
-            if id_type == "doi":
-                article_data["doi"] = article_id.text
-            elif id_type == "pmc":
-                article_data["pmc_id"] = article_id.text
-            elif id_type == "pii":
-                article_data["pii"] = article_id.text
+		# Extract Article IDs (DOI, PMC, PII)
+		for article_id in article.findall(".//ArticleId"):
+			id_type = article_id.get("IdType")
+			if id_type == "doi":
+				article_data["doi"] = article_id.text
+			elif id_type == "pmc":
+				article_data["pmc_id"] = article_id.text
+			elif id_type == "pii":
+				article_data["pii"] = article_id.text
 
-        # Extract ISSNs (handling None)
-        issn = article.find(".//Journal/ISSN")
-        if issn is not None:
-            IssnType = issn.get("IssnType")
-            if IssnType == "Electronic":
-                article_data["electronic_issn"] = issn.text
-        else:
-            article_data["electronic_issn"] = "N/A"
+		# Extract ISSNs (handling None)
+		issn = article.find(".//Journal/ISSN")
+		if issn is not None:
+			IssnType = issn.get("IssnType")
+			if IssnType == "Electronic":
+				article_data["electronic_issn"] = issn.text
+		else:
+			article_data["electronic_issn"] = "N/A"
 
-        # Extract Linking ISSN
-        linking_issn = article.find(".//ISSNLinking")
-        article_data["linking_issn"] = linking_issn.text if linking_issn is not None else "N/A"
+		# Extract Linking ISSN
+		linking_issn = article.find(".//ISSNLinking")
+		article_data["linking_issn"] = linking_issn.text if linking_issn is not None else "N/A"
 
-        # Extract NLM Journal ID
-        nlm_journal_id = article.find(".//NlmUniqueID")
-        article_data["nlm_journal_id"] = nlm_journal_id.text if nlm_journal_id is not None else "N/A"
+		# Extract NLM Journal ID
+		nlm_journal_id = article.find(".//NlmUniqueID")
+		article_data["nlm_journal_id"] = nlm_journal_id.text if nlm_journal_id is not None else "N/A"
 
-        # Links (if available)
-        article_data["links"] = []
+		# Links (if available)
+		article_data["links"] = []
 
-    except Exception as e:
-        print(f"Error while parsing the PubMed XML: {e}")
-        return None
-    
-    return article_data
+	except Exception as e:
+		print(f"Error while parsing the PubMed XML: {e}")
+		return None
+	
+	return article_data
 

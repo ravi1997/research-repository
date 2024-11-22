@@ -193,8 +193,10 @@ def create_app():
 
 	@app.after_request
 	def copy_cookies(response):
-		if request.cookies:
-			response.cookie = request.cookies
+		if request.cookies and len(response.headers.getlist('Set-Cookie')) == 0:
+			cookies = request.cookies.to_dict()
+			response.set_cookie('Session-ID', cookies['Session-ID'], httponly=True, max_age=app.config['COOKIE_AGE'], secure = True, samesite='None')  # expires in 1 day
+			response.set_cookie('Session-SALT', cookies['Session-SALT'],  max_age=app.config['COOKIE_AGE'], secure = True, samesite='None')     
 		return response
 
 

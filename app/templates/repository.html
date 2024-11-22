@@ -40,7 +40,9 @@
                     {% for article in articles %}
                     <tr>
                         <td>{{ article.title }}</td>
-                        <td>{{ article.authors | map(attribute='fullName') | join('; ') }}</td>
+                        <td>{% for author in article.authors %}
+                        {{ author.fullName }}{% if not loop.last %}; {% endif %}
+                        {% endfor %}</td>
                         <td>{{ article.publication_date or '' }}</td>
                         <td>{{ article.journal or '' }}</td>
                         <td>{{ article.journal_issue or '' }}</td>

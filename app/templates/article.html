@@ -19,6 +19,16 @@
         </nav>
     </header>
 
+    {% if edit %}
+    <div class="floating-button">
+        <a href="/researchrepository/article/edit/{{ article.uuid }}" title="Edit Article">
+            edit
+        </a>
+    </div>
+    {% endif %}
+
+
+
     <main class="article">
         <h1>{{ article.title }}</h1>
 

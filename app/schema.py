@@ -2,7 +2,7 @@ from flask_marshmallow import Marshmallow
 from marshmallow import fields, EXCLUDE,validate
 
 from app.models import OTP, Client, User, Article,Author
-from app.models.article import Keyword, Link, PublicationType
+from app.models.article import ArticleAuthor, Keyword, Link, PublicationType
 
 ma = Marshmallow()
 
@@ -50,6 +50,17 @@ class AuthorSchema(ma.SQLAlchemyAutoSchema):
         include_fk = True  # Include foreign keys
     articles = fields.Nested("ArticleSchema",many=True,exclude=('authors',))
 
+
+class ArticleAuthorSchema(ma.SQLAlchemyAutoSchema):
+    class Meta:
+        model = ArticleAuthor
+        load_instance = True
+        include_fk = True  # Include foreign keys
+
+    author = fields.Nested(AuthorSchema)  # Include full Author object
+
+
+
 class KeywordSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = Keyword
@@ -57,6 +68,12 @@ class KeywordSchema(ma.SQLAlchemyAutoSchema):
         include_fk = True  # Include foreign keys
     articles = fields.Nested("ArticleSchema",many=True,exclude=('keywords',))
 
+    def get_authors(self, obj):
+        if not obj.authors:
+            return []
+        return AuthorSchema(many=True).dump(
+            [article_author.author for article_author in obj.authors]
+        )
 
 class LinkSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
@@ -70,8 +87,15 @@ class PublicationTypeSchema(ma.SQLAlchemyAutoSchema):
         model = PublicationType
         load_instance = True
         include_fk = True  # Include foreign keys
-    articles = fields.Nested("ArticleSchema",exclude=('publication_types',))
-
+    articles = fields.Method("get_articles") 
+    
+    def get_articles(self, obj):
+        if not obj.articles:
+            return []
+        # Exclude the 'authors' field from the ArticleSchema
+        return ArticleSchema(many=True, exclude=("authors",)).dump(
+            [article_author.article for article_author in obj.articles]
+        )
 
 class ArticleSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
@@ -79,7 +103,17 @@ class ArticleSchema(ma.SQLAlchemyAutoSchema):
         load_instance = True
         include_fk = True
 
-    authors = fields.Nested(AuthorSchema,many=True,exclude=('articles',))  # Avoid circular dependency
+    authors = fields.Method("get_authors")  # Use a custom method to serialize authors
+
+    def get_authors(self, obj):
+        if not obj.authors:
+            return []
+        return AuthorSchema(many=True, exclude=("articles",)).dump(
+            [article_author.author for article_author in obj.authors]
+        )
+
+    
+    
     keywords = fields.Nested(KeywordSchema,many=True,exclude=('articles',))  # Avoid circular dependency
     links = fields.Nested(LinkSchema,many=True,validate=validate.Length(min=0),exclude=('article',))  # Avoid circular dependency
     publication_types= fields.Nested(PublicationTypeSchema,many=True,validate=validate.Length(min=1),exclude=('articles',))  # Avoid circular dependency

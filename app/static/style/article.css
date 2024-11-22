@@ -166,6 +166,44 @@ header h1 {
     /* Lighter color for text */
 }
 
+.floating-button {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+    background-color: #007bff;
+    /* Button background color */
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: all 0.3s ease;
+}
+
+.floating-button:hover {
+    background-color: #0056b3;
+    /* Hover background color */
+    transform: scale(1.1);
+    /* Slight scale-up on hover */
+}
+
+.floating-button a {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+}
+
+.floating-button img {
+    width: 50%;
+    height: 50%;
+}
+
+
 /* Footer */
 footer {
     text-align: center;
