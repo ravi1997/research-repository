@@ -2,6 +2,7 @@
 # UTILS
 from datetime import date, datetime, timedelta
 from functools import reduce
+import json
 import random
 import string
 import requests
@@ -24,6 +25,20 @@ import xml.etree.ElementTree as ET
 
 from urllib.parse import urlparse
 
+
+def getUnique(data):
+    # Create a set to store unique JSON objects
+	unique_json_set = set()
+
+	# Convert the dictionaries to JSON strings (serialization) and store in a set
+	for item in data:
+		# Convert the dictionary to a JSON string
+		json_str = json.dumps(item, sort_keys=True)
+		unique_json_set.add(json_str)
+
+	# Convert back to list of JSON objects (dictionaries)
+	unique_json_list = [json.loads(json_str) for json_str in unique_json_set]
+	return unique_json_list
 
 def is_valid_url(url):
 	parsed = urlparse(url)

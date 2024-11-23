@@ -7,7 +7,7 @@ from app.decorator import checkBlueprintRouteFlag, verify_SUPERADMIN_role, verif
 from app.extension import db,scheduler
 from app.models.article import Article, ArticleAuthor, ArticleKeyword, ArticlePublicationType, Author, Keyword, PublicationType
 from app.schema import ArticleSchema, AuthorSchema, KeywordSchema, LinkSchema, PublicationTypeSchema
-from app.util import download_xml, fileReader, find_full_row_match,  parse_pubmed_xml
+from app.util import download_xml, fileReader, find_full_row_match, getUnique,  parse_pubmed_xml
 from . import article_bp
 
 @article_bp.route("/")
@@ -85,20 +85,32 @@ def upload(session, request, ALLOWED_EXTENSIONS):
 				db.session.add(newArticle)
 
 				for pub_type in publication_types:
-					new_publication_type = publicationTypeSchema.load(pub_type)
-					old_pub_type = find_full_row_match(PublicationType, new_publication_type)
+					new_pub_type = publicationTypeSchema.load(pub_type)
+	
+					old_pub_type = PublicationType.query.filter_by(
+						publication_type = new_pub_type.publication_type
+					).first()
 					if old_pub_type:
-						newArticle.publication_types.append(old_pub_type)
+						new_article_pub_type = ArticlePublicationType(article_id=newArticle.id, publication_type_id=old_pub_type.id)
 					else:
-						newArticle.publication_types.append(new_publication_type)
+						db.session.add(new_pub_type)
+						db.session.commit()
+						new_article_pub_type = ArticlePublicationType(article_id=newArticle.id, publication_type_id=new_pub_type.id)
+					db.session.add(new_article_pub_type)
 
-				for keyword in keywords:
+				for keyword in getUnique(keywords):
 					new_keyword = keywordSchema.load(keyword)
-					old_keyword = find_full_row_match(Keyword, new_keyword)
+	
+					old_keyword = Keyword.query.filter_by(
+						keyword = new_keyword.keyword
+					).first()
 					if old_keyword:
-						newArticle.keywords.append(old_keyword)
+						new_article_keyword = ArticleKeyword(article_id=newArticle.id, keyword_id=old_keyword.id)
 					else:
-						newArticle.keywords.append(new_keyword)
+						db.session.add(new_keyword)
+						db.session.commit()
+						new_article_keyword = ArticleKeyword(article_id=newArticle.id, keyword_id=new_keyword.id)
+					db.session.add(new_article_keyword)
 
 				for link in links:
 					newArticle.links.append(linkSchema.load(link))
@@ -171,20 +183,32 @@ def pubmedFectch(data,session):
 		db.session.add(newArticle)
 
 		for pub_type in publication_types:
-			new_publication_type = publicationTypeSchema.load(pub_type)
-			old_pub_type = find_full_row_match(PublicationType, new_publication_type)
-			if old_pub_type:
-				newArticle.publication_types.append(old_pub_type)
-			else:
-				newArticle.publication_types.append(new_publication_type)
+			new_pub_type = publicationTypeSchema.load(pub_type)
 
-		for keyword in keywords:
-			new_keyword = keywordSchema.load(keyword)
-			old_keyword = find_full_row_match(Keyword, new_keyword)
-			if old_keyword:
-				newArticle.keywords.append(old_keyword)
+			old_pub_type = PublicationType.query.filter_by(
+				publication_type = new_pub_type.publication_type
+			).first()
+			if old_pub_type:
+				new_article_pub_type = ArticlePublicationType(article_id=newArticle.id, publication_type_id=old_pub_type.id)
 			else:
-				newArticle.keywords.append(new_keyword)
+				db.session.add(new_pub_type)
+				db.session.commit()
+				new_article_pub_type = ArticlePublicationType(article_id=newArticle.id, publication_type_id=new_pub_type.id)
+			db.session.add(new_article_pub_type)
+
+		for keyword in getUnique(keywords):
+			new_keyword = keywordSchema.load(keyword)
+
+			old_keyword = Keyword.query.filter_by(
+				keyword = new_keyword.keyword
+			).first()
+			if old_keyword:
+				new_article_keyword = ArticleKeyword(article_id=newArticle.id, keyword_id=old_keyword.id)
+			else:
+				db.session.add(new_keyword)
+				db.session.commit()
+				new_article_keyword = ArticleKeyword(article_id=newArticle.id, keyword_id=new_keyword.id)
+			db.session.add(new_article_keyword)
 
 		for link in links:
 			newArticle.links.append(linkSchema.load(link))
@@ -207,7 +231,6 @@ def pubmedFectch(data,session):
 				db.session.commit()
 				new_article_author = ArticleAuthor(article_id=newArticle.id, author_id=new_author.id, sequence_number=idx+1)
 			db.session.add(new_article_author)
-
 
 		db.session.commit()
 
