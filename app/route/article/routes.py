@@ -1,3 +1,4 @@
+from datetime import date
 import os
 from pprint import pprint
 from flask import jsonify,current_app as app, request
@@ -117,20 +118,9 @@ def upload(session, request, ALLOWED_EXTENSIONS):
 
 				for idx, author in enumerate(authors):
 					new_author = authorSchema.load(author)
-	
-					old_author = None
-					if new_author.affiliations:
-						old_author = Author.query.filter_by(
-							fullName = new_author.fullName,
-							author_abbreviated = new_author.author_abbreviated,
-							affiliations = new_author.affiliations
-						).first()
-					if old_author:
-						new_article_author = ArticleAuthor(article_id=newArticle.id, author_id=old_author.id, sequence_number=idx+1)
-					else:
-						db.session.add(new_author)
-						db.session.commit()
-						new_article_author = ArticleAuthor(article_id=newArticle.id, author_id=new_author.id, sequence_number=idx+1)
+					db.session.add(new_author)
+					db.session.commit()
+					new_article_author = ArticleAuthor(article_id=newArticle.id, author_id=new_author.id, sequence_number=idx+1)
 					db.session.add(new_article_author)
 
 
@@ -215,21 +205,11 @@ def pubmedFectch(data,session):
 
 		for idx, author in enumerate(authors):
 			new_author = authorSchema.load(author)
-
-			old_author = None
-			if new_author.affiliations:
-				old_author = Author.query.filter_by(
-					fullName = new_author.fullName,
-					author_abbreviated = new_author.author_abbreviated,
-					affiliations = new_author.affiliations
-				).first()
-			if old_author:
-				new_article_author = ArticleAuthor(article_id=newArticle.id, author_id=old_author.id, sequence_number=idx+1)
-			else:
-				db.session.add(new_author)
-				db.session.commit()
-				new_article_author = ArticleAuthor(article_id=newArticle.id, author_id=new_author.id, sequence_number=idx+1)
+			db.session.add(new_author)
+			db.session.commit()
+			new_article_author = ArticleAuthor(article_id=newArticle.id, author_id=new_author.id, sequence_number=idx+1)
 			db.session.add(new_article_author)
+
 
 		db.session.commit()
 
@@ -245,10 +225,57 @@ def pubmedFectch(data,session):
 @verify_body
 def updateSingle_article(data,session,id):
 	article = Article.query.filter_by(uuid=id).first()
-	if article and article.id == data['id']:
-		for key, value in data.items():
-			if hasattr(article, key) and key !="id":  # Check if the object has the attribute
-				setattr(article, key, value)
+	if article and article.uuid == data['uuid']:
+		
+		article.title = data['title'] 
+		article.abstract = data['abstract'] if 'abstract' in data else article.abstract
+		article.place_of_publication = data['place_of_publication'] if 'place_of_publication' in data else article.place_of_publication
+		article.journal = data['journal'] if 'journal' in data else article.journal
+		article.journal_abrevated = data['journal_abrevated'] if 'journal_abrevated' in data else article.journal_abrevated
+		article.publication_date = date.fromisoformat(data['publication_date']) if 'publication_date' in data else article.publication_date
+		article.electronic_publication_date = date.fromisoformat(data['electronic_publication_date']) if 'electronic_publication_date' in data else article.electronic_publication_date
+		article.pages = data['pages'] if 'pages' in data else article.pages
+		article.journal_volume = data['journal_volume'] if 'journal_volume' in data else article.journal_volume
+		article.journal_issue = data['journal_issue'] if 'journal_issue' in data else article.journal_issue
+
+		# Identifiers
+		article.pubmed_id = data['pubmed_id'] if 'pubmed_id' in data else article.pubmed_id
+		article.pmc_id = data['pmc_id'] if 'pmc_id' in data else article.pmc_id
+		article.pii = data['pii'] if 'pii' in data else article.pii
+		article.doi = data['doi'] if 'doi' in data else article.doi
+		article.print_issn = data['print_issn'] if 'print_issn' in data else article.print_issn
+		article.electronic_issn = data['electronic_issn'] if 'electronic_issn' in data else article.electronic_issn
+		article.linking_issn = data['linking_issn'] if 'linking_issn' in data else article.linking_issn
+		article.nlm_journal_id = data['nlm_journal_id'] if 'nlm_journal_id' in data else article.nlm_journal_id
+
+
+
+		for art_auth in ArticleAuthor.query.filter_by(article_id=article.id).all():
+			db.session.delete(art_auth)
+		db.session.commit()
+  
+		for author in data['authors']:
+			if 'id' in author and author['id'] != "None-Type":
+				articleAuthor = ArticleAuthor(article_id=article.id,author_id=author['id'])
+				articleAuthor.sequence_number = author['sequence_number']
+				db.session.add(articleAuthor)
+				auth_obj = Author.query.filter_by(id=author['id']).first()
+				auth_obj.fullName = author['fullName'] if 'fullName' in author else auth_obj.fullName
+				auth_obj.author_abbreviated = author['author_abbreviated'] if 'author_abbreviated' in author else auth_obj.author_abbreviated
+				auth_obj.affiliations = author['affiliations'] if 'affiliations' in author else auth_obj.affiliations
+			else:
+				fullName = author['fullName']
+				author_abbreviated = author['author_abbreviated'] if 'author_abbreviated' in author else None
+				affiliations = author['affiliations'] if 'affiliations' in author else None
+
+				auth_obj = Author(fullName=fullName,author_abbreviated=author_abbreviated,affiliations=affiliations)
+				db.session.add(auth_obj)
+				db.session.commit()
+				articleAuthor = ArticleAuthor(article_id=article.id,author_id=auth_obj.id)
+				articleAuthor.sequence_number = author['sequence_number']
+				db.session.add(articleAuthor)
+  
+  
 		db.session.commit()
 		return jsonify({"message":"Updated Successfully"}),200
 	else:

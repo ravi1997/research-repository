@@ -21,7 +21,8 @@
     <main class="container">
         <div class="card">
             <h2 class="title">Edit Article</h2>
-            <form action="/researchrepository/api/article/{{ article.id }}" method="POST" class="form">
+            <form id="edit-form" action="/researchrepository/api/article/{{ article.uuid }}" method="POST" class="form"
+                onsubmit="submitForm(event)">
                 <div class="form-group">
                     <label for="title">Title</label>
                     <input type="text" id="title" name="title" value="{{ article.title }}" required>
@@ -38,6 +39,7 @@
                     <table class="table" id="authors-table">
                         <thead>
                             <tr>
+                                <th style="display:none;">Author Id</th>
                                 <th>Full Name</th>
                                 <th>Affiliation</th>
                                 <th>Abbreviation</th>
@@ -48,6 +50,8 @@
                             {% for author in article.authors %}
                             <tr draggable="true" ondragstart="onDragStart(event)" ondragover="onDragOver(event)"
                                 ondrop="onDrop(event)">
+                                <td style="display:none;"><input type="text" name="authors[{{ loop.index }}][id]"
+                                        value="{{ author.id }}" required></td>
                                 <td><input type="text" name="authors[{{ loop.index }}][fullName]"
                                         value="{{ author.fullName }}" required></td>
                                 <td><input type="text" name="authors[{{ loop.index }}][affiliation]"
@@ -60,7 +64,7 @@
                             {% endfor %}
                         </tbody>
                     </table>
-                    <button type="button" class="btn btn-primary" onclick="addRow('authors-table')">+ Add
+                    <button type="button" class="btn btn-primary" onclick="addAuthor()">+ Add
                         Author</button>
                 </div>
 
@@ -136,6 +140,7 @@
                     <table class="table" id="keywords-table">
                         <thead>
                             <tr>
+                                <th style="display:none;">Keyword Id</th>
                                 <th>Keyword</th>
                                 <th>Actions</th>
                             </tr>
@@ -144,15 +149,15 @@
                             {% for keyword in article.keywords %}
                             <tr draggable="true" ondragstart="onDragStart(event)" ondragover="onDragOver(event)"
                                 ondrop="onDrop(event)">
-                                <td><input type="text" name="keywords[{{ loop.index }}][keyword]"
-                                        value="{{ keyword.keyword }}" required></td>
+                                <td><input type="text" name="keywords[{{ loop.index }}][id]" value="{{ keyword.id }}" required></td>
+                                <td><input type="text" name="keywords[{{ loop.index }}][keyword]" value="{{ keyword.keyword }}" required></td>
                                 <td><button type="button" class="btn btn-sm btn-danger"
                                         onclick="removeRow(this)">Remove</button></td>
                             </tr>
                             {% endfor %}
                         </tbody>
                     </table>
-                    <button type="button" class="btn btn-primary" onclick="addRow('keywords-table')">+ Add
+                    <button type="button" class="btn btn-primary" onclick="addkeyword()">+ Add
                         Keyword</button>
                 </div>
 
@@ -196,8 +201,17 @@
         <p>&copy; 2024 AIIMS Research Repository. All Rights Reserved.</p>
     </footer>
 
+    <script>
+        const article_uuid = "{{ article.uuid }}";
+
+
+    </script>
     <script src="/researchrepository/constant/js/common.js"></script>
     <script src="/researchrepository/constant/js/edit.js"></script>
+
+
+
+
 </body>
 
 </html>

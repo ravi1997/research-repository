@@ -48,7 +48,8 @@ def verify_body(f):
 		
 		session_id = request.cookies.get('Session-ID')
 		session = Client.query.filter_by(client_session_id=session_id).first()
-		data_str = decode_text(session.salt,request_data['data'].encode('UTF-8'))
+		data_str = decode_text(session.salt,request_data['data'].encode('UTF-8')).replace("\t", "\\t").replace("\n", "\\n").replace("\r", "\\r")
+
 		data = json.loads(data_str)
 		return f(data,*args, **kwargs)
 	return decorated_function
