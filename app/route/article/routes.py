@@ -115,7 +115,6 @@ def upload(session, request, ALLOWED_EXTENSIONS):
 				for link in links:
 					newArticle.links.append(linkSchema.load(link))
 
-
 				for idx, author in enumerate(authors):
 					new_author = authorSchema.load(author)
 	
@@ -233,7 +232,6 @@ def pubmedFectch(data,session):
 			db.session.add(new_article_author)
 
 		db.session.commit()
-
 
 		app.logger.info("1 item added in the db")  
 			

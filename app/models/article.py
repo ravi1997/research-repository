@@ -15,9 +15,6 @@ class Author(db.Model):
     def __repr__(self):
         return f"<Author(id={self.id}, fullName='{self.fullName}')>"
 
-
-
-
 class Article(db.Model):
     __tablename__ = "articles"
     id = db.Column(db.Integer, primary_key=True)
