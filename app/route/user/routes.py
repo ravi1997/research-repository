@@ -4,7 +4,7 @@ from app.decorator import checkBlueprintRouteFlag, verify_SUPERADMIN_role, verif
 from app.models import User
 from app.extension import db
 
-from app.models.user import UserRole
+from app.models.user import UserRole, UserRoles
 from app.schema import UserSchema
 from . import user_bp
 
@@ -26,15 +26,15 @@ def getAll_users(session):
 @verify_user
 @verify_body
 def createUser(data,session):
-    
-    
+    userSchema = UserSchema()
     if session.user.has_role(UserRole.SUPERADMIN):
-        
-        
-        
-        return jsonify({"message":""}),200
+        user = userSchema.loads(data)
+        user.roles.append(UserRoles(role=UserRole.LIBRARYMANAGER))
+        return jsonify({"message":"User created successfully"}),200
     
     if session.user.has_role(UserRole.LIBRARYMANAGER):
-        return jsonify({"message":""}),200
+        user = userSchema.loads(data)
+        user.roles.append(UserRoles(role=UserRole.FACULTY),UserRoles(role=UserRole.RESIDENT))
+        return jsonify({"message":"User created successfully"}),200
     
     return jsonify({"message":"Unauthorized User"}),401
