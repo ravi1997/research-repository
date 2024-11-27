@@ -308,8 +308,8 @@ def fileReader(filepath):
 			pages = f"{entry.get('start_page', '')}-{entry.get('end_page', '')}" if entry.get('start_page') and entry.get('end_page') else None
 			journal_volume = entry.get('volume', None)
 			journal_issue = entry.get('number', None)
-			pubmed_id = str(entry.get('pubmed_id', None))
-			pmc_id = str(entry.get('pmcid', None))
+			pubmed_id = str(entry.get('pubmed_id', None)) if entry.get('pubmed_id', None) else None
+			pmc_id = str(entry.get('pmcid', None)) if str(entry.get('pmcid', None)) else None
 			pii = entry.get('pii', None)
 			doi = entry.get('doi', None)
 			issn = entry.get('print_issn', None) or entry.get('issn', None)

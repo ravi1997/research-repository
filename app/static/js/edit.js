@@ -88,6 +88,29 @@ function addKeyword() {
 }
 
 
+function addLink() {
+    const table = document.getElementById('links-table');
+    const tbody = table.querySelector('tbody');
+    const index = tbody.rows.length + 1; // Dynamically determine the row index
+    const newRow = tbody.insertRow();
+
+    // Set attributes for dragging functionality
+    newRow.setAttribute("draggable", "true");
+    newRow.setAttribute("ondragstart", "onDragStart(event)");
+    newRow.setAttribute("ondragover", "onDragOver(event)");
+    newRow.setAttribute("ondrop", "onDrop(event)");
+
+    // Create cells
+    const cell1 = newRow.insertCell();
+    const cell2 = newRow.insertCell();
+    const cell3 = newRow.insertCell();
+
+    // Set cell content
+    cell1.style.display = "none";
+    cell1.innerHTML = `<input type="text" name="links[${index}][id]" value="None-Type">`; // Use template literals
+    cell2.innerHTML = `<input type="text" name="links[${index}][link]" value="" required>`;
+    cell3.innerHTML = `<button type="button" class="btn btn-sm btn-danger" onclick="removeRow(this)">Remove</button>`;
+}
 
 function addRow(tableId) {
     const table = document.getElementById(tableId);
@@ -178,8 +201,39 @@ async function submitForm(event) {
         }
     });
 
-    formDataJson['keywords'] = keywords;
 
+    
+
+    const linkTable = document.querySelector("#links-table");
+
+    // Get the current order of rows in the table
+    const linkRows = Array.from(linkTable.querySelectorAll("tr")); // Select all rows in the table
+    const links = []; // Initialize an array to store authors
+
+    linkRows.forEach((row, index) => {
+        const inputs = row.querySelectorAll("input"); // Get all inputs in the current row
+        const link = {}; // Assign sequence number based on current row order
+
+        inputs.forEach(input => {
+            const match = input.name.match(/^links\[\d+\]\[(\w+)\]$/); // Match the field name (e.g., fullName, affiliation)
+            if (match) {
+                const field = match[1];
+                link[field] = input.value; // Add the field and value to the author object
+                delete formDataJson[input.name];
+            }
+        });
+
+        // Only add the author if it has relevant fields
+        if (Object.keys(link).length > 1) {
+            links.push(link);
+        }
+    });
+
+
+
+    formDataJson['links'] = links;
+
+    formDataJson['keywords'] = keywords;
     formDataJson['authors'] = authors;
     formDataJson['uuid'] = article_uuid;
 
@@ -210,3 +264,22 @@ async function submitForm(event) {
         console.error("An error occurred:", error);
     }
 }
+
+async function logout() {
+    try {
+        const response = await fetch("../researchrepository/api/auth/logout", {
+            method: "GET",
+        });
+
+        if (response.ok) {
+            window.location.href = "../researchrepository/login";
+        } else {
+            const error = await response.json()["message"];
+            showAlert(error, false);
+        }
+    } catch (error) {
+        console.error(error);
+        showAlert(error, false);
+    }
+}
+

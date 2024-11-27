@@ -13,9 +13,9 @@
 <body>
     <header class="header">
         <h1>AIIMS Research Repository</h1>
-        <nav>
-            <a href="/researchrepository/login" class="btn btn-secondary">Login</a>
-        </nav>
+        <div class="button" onclick="logout()">
+            Logout
+        </div>
     </header>
 
     <main class="container">
@@ -25,12 +25,13 @@
                 onsubmit="submitForm(event)">
                 <div class="form-group">
                     <label for="title">Title</label>
-                    <input type="text" id="title" name="title" value="{{ article.title }}" required>
+                    <input type="text" id="title" name="title" value="{{ article.title or '' }}" required>
+
                 </div>
 
                 <div class="form-group">
                     <label for="abstract">Abstract</label>
-                    <textarea id="abstract" name="abstract" rows="4" required>{{ article.abstract }}</textarea>
+                    <textarea id="abstract" name="abstract" rows="4" required>{{ article.abstract or '' }}</textarea>
                 </div>
 
                 <!-- Authors Section -->
@@ -74,62 +75,62 @@
                     <div class="grid-form">
                         <div class="form-group">
                             <label for="journal">Journal</label>
-                            <input type="text" id="journal" name="journal" value="{{ article.journal }}"
+                            <input type="text" id="journal" name="journal" value="{{ article.journal or '' }}"
                                 placeholder="Journal" required>
                         </div>
                         <div class="form-group">
                             <label for="journal_abbreviation">Journal Abbreviation</label>
                             <input type="text" id="journal_abbreviation" name="journal_abrevated"
-                                value="{{ article.journal_abrevated }}" placeholder="Abbreviation" required>
+                                value="{{ article.journal_abrevated or ''}}" placeholder="Abbreviation" required>
                         </div>
                         <div class="form-group">
                             <label for="volume">Volume</label>
-                            <input type="text" id="volume" name="journal_volume" value="{{ article.journal_volume }}"
+                            <input type="text" id="volume" name="journal_volume" value="{{ article.journal_volume or ''}}"
                                 placeholder="Volume" required>
                         </div>
                         <div class="form-group">
                             <label for="issue">Issue</label>
-                            <input type="text" id="issue" name="journal_issue" value="{{ article.journal_issue }}"
+                            <input type="text" id="issue" name="journal_issue" value="{{ article.journal_issue or ''}}"
                                 placeholder="Issue" required>
                         </div>
                         <div class="form-group">
                             <label for="pages">Pages</label>
-                            <input type="text" id="pages" name="pages" value="{{ article.pages }}" placeholder="Pages"
+                            <input type="text" id="pages" name="pages" value="{{ article.pages or ''}}" placeholder="Pages"
                                 required>
                         </div>
                         <div class="form-group">
                             <label for="publication_date">Published Date</label>
                             <input type="date" id="publication_date" name="publication_date"
-                                value="{{ article.publication_date }}" required>
+                                value="{{ article.publication_date or '' }}" required>
                         </div>
                         <div class="form-group">
                             <label for="print_issn">Print ISSN</label>
-                            <input type="text" id="print_issn" name="print_issn" value="{{ article.print_issn }}"
+                            <input type="text" id="print_issn" name="print_issn" value="{{ article.print_issn or '' }}"
                                 placeholder="Print ISSN" required>
                         </div>
                         <div class="form-group">
                             <label for="electronic_issn">Electronic ISSN</label>
                             <input type="text" id="electronic_issn" name="electronic_issn"
-                                value="{{ article.electronic_issn }}" placeholder="Electronic ISSN">
+                                value="{{ article.electronic_issn or '' }}" placeholder="Electronic ISSN">
                         </div>
                         <div class="form-group">
                             <label for="place_of_publication">Place of Publication</label>
                             <input type="text" id="place_of_publication" name="place_of_publication"
-                                value="{{ article.place_of_publication }}" placeholder="Place of Publication">
+                                value="{{ article.place_of_publication or '' }}" placeholder="Place of Publication">
                         </div>
                         <div class="form-group">
                             <label for="pmc_id">PMC ID</label>
-                            <input type="text" id="pmc_id" name="pmc_id" value="{{ article.pmc_id }}"
+                            <input type="text" id="pmc_id" name="pmc_id" value="{{ article.pmc_id or '' }}"
                                 placeholder="PMC ID">
                         </div>
                         <div class="form-group">
                             <label for="pubmed_id">PubMed ID</label>
-                            <input type="text" id="pubmed_id" name="pubmed_id" value="{{ article.pubmed_id }}"
+                            <input type="text" id="pubmed_id" name="pubmed_id" value="{{ article.pubmed_id or '' }}"
                                 placeholder="PubMed ID">
                         </div>
                         <div class="form-group">
                             <label for="pii">PII</label>
-                            <input type="text" id="pii" name="pii" value="{{ article.pii }}" placeholder="PII">
+                            <input type="text" id="pii" name="pii" value="{{ article.pii or '' }}" placeholder="PII">
                         </div>
                     </div>
                 </div>
@@ -149,15 +150,15 @@
                             {% for keyword in article.keywords %}
                             <tr draggable="true" ondragstart="onDragStart(event)" ondragover="onDragOver(event)"
                                 ondrop="onDrop(event)">
-                                <td><input type="text" name="keywords[{{ loop.index }}][id]" value="{{ keyword.id }}" required></td>
-                                <td><input type="text" name="keywords[{{ loop.index }}][keyword]" value="{{ keyword.keyword }}" required></td>
+                                <td style="display:none;"><input type="text" name="keywords[{{ loop.index }}][id]" value="{{ keyword.id or '' }}" required></td>
+                                <td><input type="text" name="keywords[{{ loop.index }}][keyword]" value="{{ keyword.keyword or '' }}" required></td>
                                 <td><button type="button" class="btn btn-sm btn-danger"
                                         onclick="removeRow(this)">Remove</button></td>
                             </tr>
                             {% endfor %}
                         </tbody>
                     </table>
-                    <button type="button" class="btn btn-primary" onclick="addkeyword()">+ Add
+                    <button type="button" class="btn btn-primary" onclick="addKeyword()">+ Add
                         Keyword</button>
                 </div>
 
@@ -167,6 +168,7 @@
                     <table class="table" id="links-table">
                         <thead>
                             <tr>
+                                <th style="display:none;">Link Id</th>
                                 <th>Link</th>
                                 <th>Actions</th>
                             </tr>
@@ -175,7 +177,8 @@
                             {% for link in article.links %}
                             <tr draggable="true" ondragstart="onDragStart(event)" ondragover="onDragOver(event)"
                                 ondrop="onDrop(event)">
-                                <td><input type="url" name="links[{{ loop.index }}][link]" value="{{ link.link }}"
+                                <td style="display:none;"><input type="text" name="links[{{ loop.index }}][id]" value="{{ link.id or '' }}" required></td>
+                                <td><input type="url" name="links[{{ loop.index }}][link]" value="{{ link.link or '' }}"
                                         placeholder="Link" required></td>
                                 <td><button type="button" class="btn btn-sm btn-danger"
                                         onclick="removeRow(this)">Remove</button></td>
@@ -183,7 +186,7 @@
                             {% endfor %}
                         </tbody>
                     </table>
-                    <button type="button" class="btn btn-primary" onclick="addRow('links-table')">+ Add Link</button>
+                    <button type="button" class="btn btn-primary" onclick="addLink()">+ Add Link</button>
                 </div>
 
 

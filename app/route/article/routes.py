@@ -4,9 +4,11 @@ from pprint import pprint
 from flask import jsonify,current_app as app, request
 from marshmallow import ValidationError
 
-from app.decorator import checkBlueprintRouteFlag, verify_SUPERADMIN_role, verify_USER_role, verify_body, verify_internal_api_id, verify_session
+from sqlalchemy import func
+from collections import defaultdict
+from app.decorator import checkBlueprintRouteFlag, verify_LIBRARYMANAGER_role, verify_SUPERADMIN_role, verify_USER_role, verify_body, verify_internal_api_id, verify_session
 from app.extension import db,scheduler
-from app.models.article import Article, ArticleAuthor, ArticleKeyword, ArticlePublicationType, Author, Keyword, PublicationType
+from app.models.article import Article, ArticleAuthor, ArticleKeyword, ArticlePublicationType, Author, Keyword, Link, PublicationType
 from app.schema import ArticleSchema, AuthorSchema, KeywordSchema, LinkSchema, PublicationTypeSchema
 from app.util import download_xml, fileReader, find_full_row_match, getUnique,  parse_pubmed_xml
 from . import article_bp
@@ -43,7 +45,6 @@ def getSingle_article(session,id):
 	article = Article.query.filter_by(uuid=id).first()
 	if article:
 		article_schema = ArticleSchema()
-		author_schema = AuthorSchema()
 		
 		return article_schema.dump(article)
 	else:
@@ -137,6 +138,8 @@ def upload(session, request, ALLOWED_EXTENSIONS):
 
 	else:
 		return jsonify({"error": "Invalid file type. Only .ris files are allowed."}), 401
+
+
 @article_bp.route('/upload_ris', methods=['POST'])
 @verify_USER_role
 def upload_ris(session):
@@ -249,20 +252,22 @@ def updateSingle_article(data,session,id):
 		article.nlm_journal_id = data['nlm_journal_id'] if 'nlm_journal_id' in data else article.nlm_journal_id
 
 
-
 		for art_auth in ArticleAuthor.query.filter_by(article_id=article.id).all():
 			db.session.delete(art_auth)
 		db.session.commit()
   
 		for author in data['authors']:
 			if 'id' in author and author['id'] != "None-Type":
-				articleAuthor = ArticleAuthor(article_id=article.id,author_id=author['id'])
-				articleAuthor.sequence_number = author['sequence_number']
-				db.session.add(articleAuthor)
 				auth_obj = Author.query.filter_by(id=author['id']).first()
 				auth_obj.fullName = author['fullName'] if 'fullName' in author else auth_obj.fullName
 				auth_obj.author_abbreviated = author['author_abbreviated'] if 'author_abbreviated' in author else auth_obj.author_abbreviated
 				auth_obj.affiliations = author['affiliations'] if 'affiliations' in author else auth_obj.affiliations
+	
+				articleAuthor = ArticleAuthor(article_id=article.id,author_id=auth_obj.id)
+				articleAuthor.sequence_number = author['sequence_number']
+				db.session.add(articleAuthor)
+	
+	
 			else:
 				fullName = author['fullName']
 				author_abbreviated = author['author_abbreviated'] if 'author_abbreviated' in author else None
@@ -275,8 +280,89 @@ def updateSingle_article(data,session,id):
 				articleAuthor.sequence_number = author['sequence_number']
 				db.session.add(articleAuthor)
   
+		for art_keyword in ArticleKeyword.query.filter_by(article_id=article.id).all():
+			db.session.delete(art_keyword)
+		db.session.commit()
   
+		for keyword in data['keywords']:
+			if 'id' in keyword and keyword['id'] != "None-Type":
+				keyword_obj = Keyword.query.filter_by(id=keyword['id']).first()
+				keyword_obj.keyword = keyword['keyword'] if 'keyword' in keyword else keyword_obj.keyword
+				keywordAuthor = ArticleKeyword(article_id=article.id,keyword_id=keyword_obj.id)
+				db.session.add(keywordAuthor)
+			else:
+				keyword_val = keyword['keyword']
+				keyword_obj = Keyword(keyword = keyword_val)
+				db.session.add(keyword_obj)
+				db.session.commit()
+				keywordAuthor = ArticleKeyword(article_id=article.id,keyword_id=keyword_obj.id)
+				db.session.add(keywordAuthor)  
+
+
+		for art_link in Link.query.filter_by(article_id=article.id).all():
+			db.session.delete(art_link)
+		db.session.commit()
+  
+		for link in data['links']:
+			link_val = link['link']
+			link_obj = Link(link = link_val,article_id=article.id)
+			db.session.add(link_obj)
+
 		db.session.commit()
 		return jsonify({"message":"Updated Successfully"}),200
 	else:
 		return jsonify({"message":f"Article id {id} not found"}),404
+
+def find_duplicates(model, fields):
+	"""
+	Find duplicates in the database based on specified fields.
+
+	Args:
+		model: SQLAlchemy model class.
+		fields: List of fields to check for duplicates (e.g., ['title', 'pmid']).
+
+	Returns:
+		dict: Dictionary where keys are fields and values are lists of duplicate groups.
+	"""
+	duplicates = {}
+	article_schema = ArticleSchema()
+	
+	for field in fields:
+		# Dynamically construct the query for duplicates
+		field_attr = getattr(model, field)
+		duplicate_groups = (
+			db.session.query(field_attr, func.group_concat(model.id).label("ids"))
+			.group_by(field_attr)
+			.having(func.count(field_attr) > 1)
+			.all()
+		)
+		
+		# Parse results into groups of duplicates
+		duplicate_records = []
+		for _, ids in duplicate_groups:
+			article_ids = list(map(int, ids.split(',')))
+			duplicate_records.append(
+				article_schema.dump(model) for model in model.query.filter(model.id.in_(article_ids)).all()
+			)
+		
+		duplicates[field] = duplicate_records
+
+	return duplicates
+
+@article_bp.route("/duplicates",methods=['GET'])
+@verify_internal_api_id
+@verify_LIBRARYMANAGER_role
+def find_duplicate_groups(session):
+	fields = request.args.getlist('field')
+	if fields == []:
+		fields = ['pubmed_id','doi','title','pubmed_id']
+	duplicates = find_duplicates(Article, fields)
+
+	result = {}
+
+	for field, groups in duplicates.items():
+		result[field] = []
+		for group in groups:
+			result[field].append([article for article in group])
+
+	return jsonify(result),200
