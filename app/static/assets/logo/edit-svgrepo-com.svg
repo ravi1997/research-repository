@@ -1,0 +1,21 @@
+
+<svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="800px"
+    height="800px"
+    viewBox="0 0 1024 1024"
+    class="icon"
+    version="1.1">
+    <!-- Background Shape -->
+    <circle cx="512" cy="512" r="500" fill="#e0e0e0" />
+    
+    <!-- Pencil Body -->
+    <path d="M350 650 L750 250 L800 300 L400 700 Z" fill="#FFD700" />
+    
+    <!-- Pencil Tip -->
+    <path d="M400 700 L430 720 L350 650 Z" fill="#D2691E" />
+    <path d="M430 720 L450 740 L350 650 Z" fill="#A0522D" />
+    
+    <!-- Pencil Band -->
+    <rect x="750" y="250" width="50" height="30" fill="#B0C4DE" />
+</svg>

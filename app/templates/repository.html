@@ -30,7 +30,6 @@
                         <th>Issue</th>
                         <th>Volume</th>
                         <th>Pages</th>
-                        <th>Keywords</th>
                         <th>PubMed ID</th>
                         <th>DOI</th>
                         <th>Action</th>
@@ -41,21 +40,23 @@
                     <tr>
                         <td>{{ article.title }}</td>
                         <td>{% for author in article.authors %}
-                        {{ author.fullName }}{% if not loop.last %}; {% endif %}
-                        {% endfor %}</td>
+                            {{ author.fullName }}{% if not loop.last %}; {% endif %}
+                            {% endfor %}</td>
                         <td>{{ article.publication_date or '' }}</td>
                         <td>{{ article.journal or '' }}</td>
                         <td>{{ article.journal_issue or '' }}</td>
                         <td>{{ article.journal_volume or '' }}</td>
                         <td>{{ article.pages or '' }}</td>
-                        <td>{{ article.keywords | map(attribute='keyword') | join('; ') }}</td>
                         <td>{{ article.pubmed_id or '' }}</td>
                         <td>
                             {% if article.doi %}
                             <a href="https://doi.org/{{ article.doi }}" target="_blank">{{ article.doi }}</a>
                             {% endif %}
                         </td>
-                        <td><a href="/researchrepository/article/{{ article.uuid }}">View</a></td>
+                        <td><a href="/researchrepository/article/{{ article.uuid }}">
+                            <img
+                                    src="/researchrepository/constant/assets/logo/browse-svgrepo-com.svg" alt="Icon"
+                                    class="link-icon" style="width: 70%; height:auto; max-height:100%;"></a></td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -64,19 +65,16 @@
 
         <div class="pagination">
             <!-- Previous button -->
-            <button 
-                {% if current_page <= 1 %}disabled{% endif %} 
-                type="button"
+            <button {% if current_page <=1 %}disabled{% endif %} type="button"
                 onclick="navigateToPage({{ current_page - 1 }}, '{{ entry | safe }}', {{ total_pages }})">
                 Previous
             </button>
-        
+
             <!-- Page info -->
             <span id="page-info">Page {{ current_page }} of {{ total_pages }}</span>
-        
+
             <!-- Next button -->
-            <button 
-                {% if current_page >= total_pages %}disabled{% endif %} 
+            <button {% if current_page>= total_pages %}disabled{% endif %}
                 type="button"
                 onclick="navigateToPage({{ current_page + 1 }}, '{{ entry | safe }}', {{ total_pages }})">
                 Next

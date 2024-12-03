@@ -42,15 +42,7 @@ class DevConfig(BaseConfig):
     OTP_ID = os.getenv('OTP_ID')
     OTP_SENDERID = os.getenv('OTP_SENDERID')
     
-    JWT_ACCESS_TOKEN_EXPIRES = os.getenv('JWT_ACCESS_TOKEN_EXPIRES')
-
-    if JWT_ACCESS_TOKEN_EXPIRES is not None:
-        JWT_ACCESS_TOKEN_EXPIRES = timedelta(minutes=float(JWT_ACCESS_TOKEN_EXPIRES))
-    
-    
-    
     UPLOAD_FOLDER = os.getenv('UPLOAD_FOLDER')
-    ALLOWED_EXTENSIONS = os.getenv('ALLOWED_EXTENSIONS')
     SCHEDULER_JOBSTORES = {
         "default": SQLAlchemyJobStore(url=SQLALCHEMY_DATABASE_URI)
     }

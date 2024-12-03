@@ -92,7 +92,7 @@ class User(db.Model):
 
     department= db.Column(db.String(30), nullable=False)
     designation= db.Column(db.String(30), nullable=False)
-    date_expiry= db.Column(DateTime, nullable=False)
+    date_expiry= db.Column(db.Date, nullable=False)
 
     roles = relationship("UserRoles", back_populates="user")
     status = db.Column(SQLAlchemyEnum(UserState), index=True, nullable=False, server_default=f'{UserState.CREATED}')
@@ -128,7 +128,7 @@ class User(db.Model):
     def __repr__(self):
         return (f"<User(id={self.id}, name='{self.firstname} {self.middlename or ''} {self.lastname or ''}', "
                 f"mobile='{self.mobile}', employee_id = '{self.employee_id}'"
-                f"status='{self.status}', role='{self.role}')>")
+                f"status='{self.status}', role='{self.roles}')>")
 
 
     def isDeleted(self):

@@ -175,12 +175,15 @@ def create_app():
 			log += f"Request Path: {request.path}\n"
 			log += f"Response Headers: {dict(response.headers)}\n"
 
-			# Log response data if JSON
-			if response.is_json:
-				log += f"Response JSON: {response.get_json()}\n"
+			
+			if response.direct_passthrough:
+				log = f"Response is in passthrough mode. Status: {response.status_code}\n"
 			else:
-				# Log raw response data as text
-				log += "Response Body (raw text)\n"
+				if response.is_json:
+					log += f"Response JSON: {response.get_json()}\n"
+				else:
+					# Log raw response data as text
+					log += "Response Body (raw text)\n"
 
 			# Log status code
 			log += f"Response Status Code: {response.status_code}\n"

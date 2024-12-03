@@ -1,6 +1,6 @@
 from flask import jsonify,current_app
 
-from app.decorator import checkBlueprintRouteFlag, verify_SUPERADMIN_role, verify_body, verify_user
+from app.decorator import checkBlueprintRouteFlag, verify_SUPERADMIN_role, verify_body, verify_internal_api_id, verify_user
 from app.models import User
 from app.extension import db
 
@@ -23,18 +23,25 @@ def getAll_users(session):
 
 
 @user_bp.route("/create",methods=["POST"])
+@verify_internal_api_id
 @verify_user
 @verify_body
 def createUser(data,session):
     userSchema = UserSchema()
+    print(session.user)
     if session.user.has_role(UserRole.SUPERADMIN):
-        user = userSchema.loads(data)
+        print(data)
+        user = userSchema.load(data)
         user.roles.append(UserRoles(role=UserRole.LIBRARYMANAGER))
+        db.session.add(user)
+        db.session.commit()
         return jsonify({"message":"User created successfully"}),200
     
     if session.user.has_role(UserRole.LIBRARYMANAGER):
-        user = userSchema.loads(data)
+        user = userSchema.load(data)
         user.roles.append(UserRoles(role=UserRole.FACULTY),UserRoles(role=UserRole.RESIDENT))
+        db.session.add(user)
+        db.session.commit()
         return jsonify({"message":"User created successfully"}),200
     
     return jsonify({"message":"Unauthorized User"}),401

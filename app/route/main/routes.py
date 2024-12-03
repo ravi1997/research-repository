@@ -1,4 +1,5 @@
 from datetime import datetime
+from pprint import pprint
 import uuid
 from flask import jsonify, render_template,make_response, request, send_from_directory
 import requests
@@ -48,8 +49,7 @@ def homePage():
 
 
 @main_bp.route('/repository')
-@verify_session
-def repositoryPage(session):
+def repositoryPage():
 	page = request.args.get('page', 1, type=int)
 	entry = request.args.get('entry', 10, type=int)
 
@@ -59,8 +59,13 @@ def repositoryPage(session):
 	headers = {
 		"API-ID":app.config.get('API_ID')
 	}
-	
-	cookies = request.cookies.to_dict()  # Converts the ImmutableMultiDict to a regular dictionary
+
+	if request.cookies:	
+		cookies = request.cookies.to_dict()  # Converts the ImmutableMultiDict to a regular dictionary
+	else:
+		cookies = requests.get(f"{server_url}/researchrepository/api/public/generateSession", headers=headers).json()
+
+ 
 	params = {
 		'page': page,
 		'entry': entry
@@ -72,9 +77,19 @@ def repositoryPage(session):
 		data =  response.json()
 		articles = data["data"]
 		total_pages = data["total_pages"]
+
+		session_id = request.cookies.get('Session-ID')
+		if session_id is not None:   
+			session = Client.query.filter_by(client_session_id=session_id).first()
+
+			if session is not None:
+				if session.isValid() and session.user_id is not None:
+					return render_template('repository.html',articles=articles,current_page=page,entry=entry,total_pages = total_pages)
+
 		response = make_response(render_template('repository.html',articles=articles,current_page=page,entry=entry,total_pages = total_pages))
 		return settingSession(request,response)
 	else:
+		pprint(response.json())
 		return jsonify({"message":"Something went wrong"}),500
 
 
