@@ -104,6 +104,7 @@ class User(db.Model):
 
     clients = relationship("Client", back_populates="user")
 
+
     def __init__(self, firstname, mobile,email,employee_id,department,designation,date_expiry, middlename=None, lastname=None,
                  status=UserState.CREATED, updated_at=None,roles = []):
         self.firstname = firstname

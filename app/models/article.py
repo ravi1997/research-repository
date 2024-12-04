@@ -64,6 +64,7 @@ class Article(db.Model):
 
     links = relationship("Link", back_populates="article")
     assets = relationship("Asset", back_populates="article")
+    statistic = db.relationship('ArticleStatistic', back_populates='article', uselist=False, cascade='all, delete-orphan')
 
     def __repr__(self):
         return f"<Article(id={self.id}, title='{self.title}')>"
@@ -143,3 +144,16 @@ class ArticlePublicationType(db.Model):
         primary_key=True,
         autoincrement=False
     )
+
+class ArticleStatistic(db.Model):
+    __tablename__ = "articlestatistics"
+    id = db.Column(db.Integer, primary_key=True)
+    article_id = db.Column(db.Integer, db.ForeignKey('articles.id'), nullable=False)
+    
+    viewed = db.Column(db.Integer,nullable=False,server_default='0')
+    searched = db.Column(db.Integer,nullable=False,server_default='0')
+    downloaded = db.Column(db.Integer,nullable=False,server_default='0')
+
+
+    # Back-reference to the User model
+    article = db.relationship('Article', back_populates='statistic')

@@ -6,37 +6,6 @@ from flask import current_app as app, jsonify, request, send_file
 from app.decorator import checkBlueprintRouteFlag, verify_SUPERADMIN_role, verify_body
 from . import superadmin_bp
 
-@superadmin_bp.route("/")
-@checkBlueprintRouteFlag
-@verify_SUPERADMIN_role
-def index(session):
-	return "This is research repository superadmin route"
-
-
-@superadmin_bp.route("/config/otp-flag")
-@verify_SUPERADMIN_role
-def otp_flag_get(session):
-	return jsonify({"value":app.config['OTP_FLAG']}),200
-
-@superadmin_bp.route("/config/otp-flag",methods=["POST"])
-@verify_SUPERADMIN_role
-@verify_body
-def otp_flag_set(data,session):
-	app.config['OTP_FLAG'] = data['value']
-	return jsonify({"message":"value is updated"}),200
-
-@superadmin_bp.route("/config/otp-generation")
-@verify_SUPERADMIN_role
-def otp_generation_get(session):
-	return jsonify({"value":app.config['OTP_GENERATION']}),200
-
-@superadmin_bp.route("/config/otp-generation",methods=["POST"])
-@verify_SUPERADMIN_role
-@verify_body
-def otp_generation_set(data,session):
-	app.config['OTP_GENERATION'] = data['value']
-	return jsonify({"message":"value is updated"}),200
-
 configs = [
 		'OTP_FLAG',
 		'OTP_GENERATION',
@@ -64,7 +33,6 @@ configs = [
 
 		'UPLOAD_FOLDER',
 	]
-	
 
 
 def serialize_timedelta(obj):
@@ -74,9 +42,44 @@ def serialize_timedelta(obj):
 
 
 def string_to_timedelta(time_str):
-    # Example: "1:30:15" (1 hour, 30 minutes, 15 seconds)
     hours, minutes, seconds = map(int, time_str.split(":"))
     return timedelta(hours=hours, minutes=minutes, seconds=seconds)
+
+
+
+@superadmin_bp.route("/")
+@checkBlueprintRouteFlag
+@verify_SUPERADMIN_role
+def index(session):
+	return "This is research repository superadmin route"
+
+
+@superadmin_bp.route("/config/<value>")
+@verify_SUPERADMIN_role
+def get_config_value(session,value):
+	if value in configs:
+		return jsonify({"value":serialize_timedelta(app.config[value])}),200
+	return jsonify({"message":f"No such config : {value}"}),400
+
+
+@superadmin_bp.route("/config",methods=["POST"])
+@verify_SUPERADMIN_role
+@verify_body
+def set_config_value(data,session):
+	changed = 0
+	notFound = {}
+	for key,value in data:
+		if key in configs:
+			if key == 'OTP_DELTA':
+				app.config[key] = string_to_timedelta(value)
+			else:
+				app.config[key] = value
+				
+			changed  = changed + 1
+		else:
+			notFound[key] = value
+	return jsonify({"message":"value has been updated","Number of changed value" : changed,"Not Found Values":notFound}),200
+
 
 
 
@@ -90,7 +93,6 @@ def export_config(session):
 	
 	file_path = os.path.join(os.getcwd(), "uploads", "export", "data.json")
 
-	# Write JSON object to a file
 	with open(file_path, 'w') as json_file:
 		json.dump(data, json_file, indent=4,default=serialize_timedelta)
 
@@ -107,11 +109,9 @@ def import_config(session):
 	file = request.files['file']
 	file_path = os.path.join(os.getcwd(), "uploads", "export", "data.json")
 
-	# Check if a file was submitted
 	if file.filename == '':
 		return jsonify({"error": "No file selected"}), 400
 
-	# Check if the file is allowed
 	if file and '.' in file.filename and file.filename.rsplit('.', 1)[1].lower() in ['json']:
 		file.save(file_path)
 		with open(file_path, 'r') as json_file:

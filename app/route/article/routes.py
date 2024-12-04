@@ -8,7 +8,7 @@ from sqlalchemy import func
 from collections import defaultdict
 from app.decorator import checkBlueprintRouteFlag, verify_LIBRARYMANAGER_role, verify_SUPERADMIN_role, verify_USER_role, verify_body, verify_internal_api_id, verify_session
 from app.extension import db,scheduler
-from app.models.article import Article, ArticleAuthor, ArticleKeyword, ArticlePublicationType, Author, Keyword, Link, PublicationType
+from app.models.article import Article, ArticleAuthor, ArticleKeyword, ArticlePublicationType, ArticleStatistic, Author, Keyword, Link, PublicationType
 from app.schema import ArticleSchema, AuthorSchema, KeywordSchema, LinkSchema, PublicationTypeSchema
 from app.util import download_xml, fileReader, find_full_row_match, getUnique,  parse_pubmed_xml
 from . import article_bp
@@ -45,10 +45,26 @@ def getSingle_article(session,id):
 	article = Article.query.filter_by(uuid=id).first()
 	if article:
 		article_schema = ArticleSchema()
-		
-		return article_schema.dump(article)
+		return article_schema.dump(article),200
 	else:
 		return jsonify({"message":f"Article id {id} not found"}),404
+
+
+def duplicateCheck(article):
+    return ( 
+		Article.query.filter_by(
+			title = article.title
+		).first() or 
+		Article.query.filter_by(
+			pubmed_id = article.pubmed_id
+		).first() or 
+		Article.query.filter_by(
+			doi = article.doi
+		).first() or 
+		Article.query.filter_by(
+			pmc_id = article.pmc_id
+		).first()
+	) is not None
 
 def upload(session, request, ALLOWED_EXTENSIONS):
 	# Check if the file part is present in the request
@@ -69,22 +85,31 @@ def upload(session, request, ALLOWED_EXTENSIONS):
 		# Save the file
 		file.save(file_path)
 		
-		myjsons = fileReader(filepath=file_path)
+		myjsons,skipped = fileReader(filepath=file_path)
 		articleSchema = ArticleSchema()
 		authorSchema = AuthorSchema()
 		keywordSchema = KeywordSchema()
 		linkSchema = LinkSchema()
 		publicationTypeSchema = PublicationTypeSchema()
-		
+		result_id = []
 		try:
 			for myjson in myjsons:
+				tempJson = myjson
+				duplicate = False
+				
 				publication_types = myjson.pop('publication_types')
 				keywords = myjson.pop('keywords')
 				authors = myjson.pop('authors')
 				links = myjson.pop('links')
 
 				newArticle = articleSchema.load(myjson)
+				newArticle.statistic = ArticleStatistic()
+
+
+
+
 				db.session.add(newArticle)
+
 
 				for pub_type in publication_types:
 					new_pub_type = publicationTypeSchema.load(pub_type)
@@ -124,12 +149,16 @@ def upload(session, request, ALLOWED_EXTENSIONS):
 					new_article_author = ArticleAuthor(article_id=newArticle.id, author_id=new_author.id, sequence_number=idx+1)
 					db.session.add(new_article_author)
 
-
+				result_id.append(newArticle.id)
 			db.session.commit()
 
+			articleSchemas = ArticleSchema(many=True)
+
+			articles = Article.query.filter(Article.id.in_(result_id)).all()
+   
 			app.logger.info(f"{len(myjsons)} added in the db")
 
-			return jsonify({"message": "File uploaded successfully", "filename": filename, "length": len(myjsons)}), 200
+			return jsonify({"message": "File uploaded successfully", "filename": filename, "added article": len(myjsons),"skipped article" :skipped,"articles":articleSchemas.dump(articles)}), 200
 
 		except Exception as e:
 			db.session.rollback()
@@ -173,7 +202,8 @@ def pubmedFectch(data,session):
 		links = myjson.pop('links')
 		newArticle = articleSchema.load(myjson)
 		db.session.add(newArticle)
-
+		statistic = ArticleStatistic(article_id=newArticle.id)
+		db.session.add(statistic)
 		for pub_type in publication_types:
 			new_pub_type = publicationTypeSchema.load(pub_type)
 
@@ -355,7 +385,7 @@ def find_duplicates(model, fields):
 def find_duplicate_groups(session):
 	fields = request.args.getlist('field')
 	if fields == []:
-		fields = ['pubmed_id','doi','title','pubmed_id']
+		fields = ['pubmed_id','doi','title','pmc_id']
 	duplicates = find_duplicates(Article, fields)
 
 	result = {}
@@ -366,3 +396,10 @@ def find_duplicate_groups(session):
 			result[field].append([article for article in group])
 
 	return jsonify(result),200
+
+
+@article_bp.route("/statistic",methods=['GET'])
+@verify_session
+def statistic(session):
+		
+	return jsonify({})

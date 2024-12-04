@@ -12,7 +12,6 @@ import uuid
 from app.models import Article
 import secrets
 import hashlib
-from pprint import pprint
 from nbib import read_file
 import re
 from cryptography.hazmat.primitives.ciphers import Cipher
@@ -24,7 +23,7 @@ from cryptography.hazmat.backends import default_backend
 import xml.etree.ElementTree as ET
 
 from urllib.parse import urlparse
-
+from app.mylogger import error_logger
 
 def getUnique(data):
     # Create a set to store unique JSON objects
@@ -212,7 +211,6 @@ def parse_date(date_string):
 
 	# Handle incomplete month format 'YYYY/MM' by assuming the 1st day of the month
 	if len(date_string) == 7 and date_string.count('/') == 1:  # E.g. '2021/12'
-		# print(f"Date format '{date_string}' detected. Assuming first day of the month.")
 		date_string = f"{date_string}/01"  # Convert to 'YYYY/MM/01'
 
 	# Define regex patterns for each valid format
@@ -234,11 +232,11 @@ def parse_date(date_string):
 				return date(mydate.year, mydate.month, mydate.day)
 			except ValueError:
 				# Handle invalid date format
-				print(f"Invalid date format: {date_string}")
+				error_logger.info(f"Invalid date format: {date_string}")
 				return None
 
 	# If no pattern matches, log and return None
-	print(f"Date format for '{date_string}' is not supported.")
+	error_logger.info(f"Date format for '{date_string}' is not supported.")
 	return None
 
 def fileReader(filepath):
@@ -260,9 +258,11 @@ def fileReader(filepath):
 		elif is_nbib:
 			entries = read_file(filepath)  # Assuming this function handles NBIB format
 	except Exception as e:
-		print(f"Error reading the file: {e}")
+		error_logger.info(f"Error reading the file: {e}")
 		return []
 	
+ 
+	skipped = 0
 	# Process each entry
 	for entry in entries:
 		try:
@@ -277,6 +277,7 @@ def fileReader(filepath):
 			if 'Journal Article' not in publication_type_list and publication_type_t != "JOUR":
 				# Handle missing essential fields
 				if  not publication_date:
+					skipped = skipped + 1
 					continue
 
 			publication_type = [{'publication_type': 'Journal Article'}]
@@ -319,7 +320,6 @@ def fileReader(filepath):
 			file_attachments2 = entry.get('file_attachments2',None)
 			urls = entry.get('urls',None)
 			if file_attachments1 is not None:
-				# print(file_attachments1)
 				links.append(
 					{
 						"link":file_attachments1                        
@@ -335,11 +335,8 @@ def fileReader(filepath):
 			if urls:
 				for link in urls:
 					if is_valid_url(link):
-						# print(f"link : {link}")
 						links.append({"link": link})
 
-			# print(f"links : {links}")
-			# Create the article dictionary
 			article = {
 				"uuid": str(uuid.uuid4()),
 				"publication_types": publication_type,
@@ -364,10 +361,10 @@ def fileReader(filepath):
 			articles.append(article)
 
 		except Exception as e:
-			print(f"Error processing entry: {e}")
+			error_logger.info(f"Error processing entry: {e}")
 			continue
 
-	return articles
+	return articles,skipped
 
 
 def download_xml(pmid, filename):
@@ -505,7 +502,7 @@ def parse_pubmed_xml(file_path):
 		article_data["links"] = []
 
 	except Exception as e:
-		print(f"Error while parsing the PubMed XML: {e}")
+		error_logger.info(f"Error while parsing the PubMed XML: {e}")
 		return None
 	
 	return article_data

@@ -2,7 +2,7 @@ from flask_marshmallow import Marshmallow
 from marshmallow import fields, EXCLUDE,validate
 
 from app.models import OTP, Client, User, Article,Author
-from app.models.article import ArticleAuthor, Keyword, Link, PublicationType
+from app.models.article import ArticleAuthor, ArticleStatistic, Keyword, Link, PublicationType
 
 ma = Marshmallow()
 
@@ -50,7 +50,6 @@ class AuthorSchema(ma.SQLAlchemyAutoSchema):
         include_fk = True  # Include foreign keys
     articles = fields.Nested("ArticleSchema",many=True,exclude=('authors',))
 
-
 class ArticleAuthorSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = ArticleAuthor
@@ -97,6 +96,14 @@ class PublicationTypeSchema(ma.SQLAlchemyAutoSchema):
             [article_author.article for article_author in obj.articles]
         )
 
+
+class ArticleStatisticSchema(ma.SQLAlchemyAutoSchema):
+    class Meta:
+        model = ArticleStatistic
+        load_instance = True
+        include_fk = True  # Include foreign keys
+    article = fields.Nested("ArticleSchema",exclude=('statistic',))
+
 class ArticleSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = Article
@@ -117,3 +124,5 @@ class ArticleSchema(ma.SQLAlchemyAutoSchema):
     keywords = fields.Nested(KeywordSchema,many=True,exclude=('articles',))  # Avoid circular dependency
     links = fields.Nested(LinkSchema,many=True,validate=validate.Length(min=0),exclude=('article',))  # Avoid circular dependency
     publication_types= fields.Nested(PublicationTypeSchema,many=True,validate=validate.Length(min=1),exclude=('articles',))  # Avoid circular dependency
+    statistic = fields.Nested(ArticleStatisticSchema,exclude=('article',))  # Avoid circular dependency
+    
