@@ -32,10 +32,7 @@ body {
 /* Header */
 
 
-header h1 {
-    margin: 0;
-    font-size: 2.5rem;
-}
+
 
 /* Table Styling */
 table {
@@ -70,11 +67,7 @@ td {
 }
 
 /* Main Container */
-.container {
-    max-width: 1200px;
-    margin: 20px auto;
-    padding: 20px;
-}
+
 
 /* Intro Section */
 .intro {
