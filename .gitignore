@@ -68,3 +68,9 @@ dmypy.json
 # Other files to ignore
 *.db
 *.sqlite3
+
+
+# TAILWIND
+node_modules/
+
+

@@ -1,25 +1,7 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "base.html" %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AIIMS Research Publication Repository</title>
-    <link rel="stylesheet" href="/researchrepository/constant/style/style.css">
+{% block content %}
 
-</head>
-
-<body>
-
-    <header>
-        <h1>AIIMS Research Publication Repository</h1>
-        <div class="button">
-            <a href="/researchrepository/login">Login</a>
-        </div>
-
-    </header>
-
-    <div class="container">
         <div class="intro">
             <h2>Welcome to the AIIMS Research Publication Repository</h2>
             <p>
@@ -49,13 +31,5 @@
                 <p>Connect with other researchers and work together on groundbreaking projects.</p>
             </div>
         </div>
-    </div>
 
-    <footer>
-        <p>&copy; 2024 AIIMS Research Repository. All Rights Reserved.</p>
-    </footer>
-
-
-</body>
-
-</html>
+{% endblock %}

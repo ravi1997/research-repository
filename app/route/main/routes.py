@@ -4,6 +4,9 @@ import uuid
 from flask import jsonify, render_template,make_response, request, send_from_directory
 import requests
 
+from time import time
+
+
 from app.decorator import verify_session, verify_user
 from app.models import Client
 from app.extension import db
@@ -14,9 +17,12 @@ from app.session import settingSession
 from . import main_bp
 from flask import current_app as app
 
+
+
+
 @main_bp.route("/", methods=["GET"])
 def index():
-	response = make_response(render_template('index.html'))
+	response = make_response(render_template('index.html', time=time()))
 	return settingSession(request,response)
 
 @main_bp.route('/login')
@@ -114,8 +120,6 @@ def articlePage(session,id):
 		return render_template('article.html',article=article_data,edit=userlogged)
 	else:
 		return jsonify({"message":f"Article id {id} not found"}),404
-
-
 
 @main_bp.route('/article/edit/<string:id>')
 @verify_user

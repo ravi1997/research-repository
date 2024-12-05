@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<link rel="icon" href="{{ url_for('static', filename='assets/favicon.png', version=time) }}" />
+        <link rel="stylesheet" href="{{url_for('static',filename='style/style.css')}}">
+        <link rel="stylesheet" href="{{url_for('static',filename='dist/css/output.css')}}">
+
+
+      {% if title %}
+        <title>{{ title }} - AIIMS Research Publication Repository</title>
+      {% else %}
+        <title>AIIMS Research Publication Repository </title>
+      {% endif %}
+    </head>
+
+
+    <body>
+        <header>
+            <h1>AIIMS Research Publication Repository</h1>
+                <div class="button">
+                        <a href="/researchrepository/login">Login</a>
+                    </div>
+        </header>
+
+            <div class="container h-screen">
+        {% block content %}
+        {% endblock %}
+            </div>
+
+    <footer>
+        <p>&copy; 2024 AIIMS Research Repository. All Rights Reserved.</p>
+    </footer>
+
+    </body>
+
+
+</html>
+
+
