@@ -1,8 +1,10 @@
 from datetime import date
 import os
 from pprint import pprint
+import traceback
 from flask import jsonify,current_app as app, request
 from marshmallow import ValidationError
+from sqlalchemy import or_
 
 from sqlalchemy import func
 from collections import defaultdict
@@ -50,124 +52,129 @@ def getSingle_article(session,id):
 		return jsonify({"message":f"Article id {id} not found"}),404
 
 
-def duplicateCheck(article):
-    return ( 
-		Article.query.filter_by(
-			title = article.title
-		).first() or 
-		Article.query.filter_by(
-			pubmed_id = article.pubmed_id
-		).first() or 
-		Article.query.filter_by(
-			doi = article.doi
-		).first() or 
-		Article.query.filter_by(
-			pmc_id = article.pmc_id
-		).first()
-	) is not None
+def check_duplicates(article_data):
+	"""
+	Check for duplicates in the database using a single query.
+	"""
+	filters = []
+	if 'title' in article_data:
+		filters.append(Article.title == article_data['title'])
+	if 'pubmed_id' in article_data:
+		filters.append(Article.pubmed_id == article_data['pubmed_id'])
+	if 'doi' in article_data:
+		filters.append(Article.doi == article_data['doi'])
+	if 'pmc_id' in article_data:
+		filters.append(Article.pmc_id == article_data['pmc_id'])
+
+	if not filters:
+		return None
+	
+	return Article.query.filter(or_(*filters)).first()
+
+
+def add_or_get(model, session, **kwargs):
+	"""
+	Add a new record or get an existing one.
+	"""
+	instance = session.query(model).filter_by(**kwargs).first()
+	if instance:
+		return instance
+	instance = model(**kwargs)
+	session.add(instance)
+	session.flush()  # Assign ID without committing
+	return instance
+
 
 def upload(session, request, ALLOWED_EXTENSIONS):
-	# Check if the file part is present in the request
 	if 'file' not in request.files:
 		return jsonify({"error": "No file part in the request"}), 400
 
 	file = request.files['file']
 
-	# Check if a file was submitted
 	if file.filename == '':
 		return jsonify({"error": "No file selected"}), 400
 
-	# Check if the file is allowed
 	if file and '.' in file.filename and file.filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS:
 		filename = file.filename
 		file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-		
+
 		# Save the file
 		file.save(file_path)
-		
-		myjsons,skipped = fileReader(filepath=file_path)
-		articleSchema = ArticleSchema()
-		authorSchema = AuthorSchema()
-		keywordSchema = KeywordSchema()
-		linkSchema = LinkSchema()
-		publicationTypeSchema = PublicationTypeSchema()
-		result_id = []
+
+		myjsons, skipped = fileReader(filepath=file_path)
+		article_schema = ArticleSchema()
+		result_ids = []
+		duplicates = {"title": [], "pubmed_id": [], "doi": [], "pmc_id": []}
+		duplicate_count = 0
+
 		try:
 			for myjson in myjsons:
-				tempJson = myjson
-				duplicate = False
-				
-				publication_types = myjson.pop('publication_types')
-				keywords = myjson.pop('keywords')
-				authors = myjson.pop('authors')
-				links = myjson.pop('links')
+				temp_json = myjson.copy()
 
-				newArticle = articleSchema.load(myjson)
-				newArticle.statistic = ArticleStatistic()
+				publication_types = temp_json.pop('publication_types', [])
+				keywords = temp_json.pop('keywords', [])
+				authors = temp_json.pop('authors', [])
+				links = temp_json.pop('links', [])
 
+				# Check for duplicates
+				duplicate_article = check_duplicates(temp_json)
+				if duplicate_article:
+					duplicate_count += 1
+					if duplicate_article.title:
+						duplicates['title'].append({"existing": ArticleSchema().dump(duplicate_article), "new": temp_json})
+					elif duplicate_article.pubmed_id:
+						duplicates['pubmed_id'].append({"existing": ArticleSchema().dump(duplicate_article), "new": temp_json})
+					elif duplicate_article.doi:
+						duplicates['doi'].append({"existing": ArticleSchema().dump(duplicate_article), "new": temp_json})
+					elif duplicate_article.pmc_id:
+						duplicates['pmc_id'].append({"existing": ArticleSchema().dump(duplicate_article), "new": temp_json})
 
+					continue
 
+				# Create new article
+				new_article = Article(**temp_json)
+				session.add(new_article)
+				session.flush()  # Get article ID
 
-				db.session.add(newArticle)
-
-
+				# Add publication types
 				for pub_type in publication_types:
-					new_pub_type = publicationTypeSchema.load(pub_type)
-	
-					old_pub_type = PublicationType.query.filter_by(
-						publication_type = new_pub_type.publication_type
-					).first()
-					if old_pub_type:
-						new_article_pub_type = ArticlePublicationType(article_id=newArticle.id, publication_type_id=old_pub_type.id)
-					else:
-						db.session.add(new_pub_type)
-						db.session.commit()
-						new_article_pub_type = ArticlePublicationType(article_id=newArticle.id, publication_type_id=new_pub_type.id)
-					db.session.add(new_article_pub_type)
+					pub_instance = add_or_get(PublicationType, session, publication_type=pub_type['publication_type'])
+					new_article.publication_types.append(pub_instance)
 
-				for keyword in getUnique(keywords):
-					new_keyword = keywordSchema.load(keyword)
-	
-					old_keyword = Keyword.query.filter_by(
-						keyword = new_keyword.keyword
-					).first()
-					if old_keyword:
-						new_article_keyword = ArticleKeyword(article_id=newArticle.id, keyword_id=old_keyword.id)
-					else:
-						db.session.add(new_keyword)
-						db.session.commit()
-						new_article_keyword = ArticleKeyword(article_id=newArticle.id, keyword_id=new_keyword.id)
-					db.session.add(new_article_keyword)
+				# Add keywords
+				for keyword in set(kw['keyword'] for kw in keywords):  # Avoid duplicates in the same article
+					keyword_instance = add_or_get(Keyword, session, keyword=keyword)
+					new_article.keywords.append(keyword_instance)
 
+				# Add links
 				for link in links:
-					newArticle.links.append(linkSchema.load(link))
+					new_link = Link(**link)
+					session.add(new_link)
+					new_article.links.append(new_link)
 
+				# Add authors
 				for idx, author in enumerate(authors):
-					new_author = authorSchema.load(author)
-					db.session.add(new_author)
-					db.session.commit()
-					new_article_author = ArticleAuthor(article_id=newArticle.id, author_id=new_author.id, sequence_number=idx+1)
-					db.session.add(new_article_author)
+					author_instance = add_or_get(Author, session, **author)
+					new_article.authors.append(ArticleAuthor(author=author_instance, sequence_number=idx + 1))
 
-				result_id.append(newArticle.id)
-			db.session.commit()
+				result_ids.append(new_article.id)
 
-			articleSchemas = ArticleSchema(many=True)
-
-			articles = Article.query.filter(Article.id.in_(result_id)).all()
-   
-			app.logger.info(f"{len(myjsons)} added in the db")
-
-			return jsonify({"message": "File uploaded successfully", "filename": filename, "added article": len(myjsons),"skipped article" :skipped,"articles":articleSchemas.dump(articles)}), 200
+			articles = Article.query.filter(Article.id.in_(result_ids)).all()
+			return jsonify({
+				"message": "File uploaded successfully",
+				"filename": filename,
+				"added_articles": len(result_ids),
+				"skipped_articles": skipped,
+				"articles": ArticleSchema(many=True).dump(articles),
+				"duplicate_articles": duplicates,
+			}), 200
 
 		except Exception as e:
-			db.session.rollback()
 			app.logger.error(f"Error during file processing: {str(e)}")
+			traceback.print_exc()
 			return jsonify({"error": "An error occurred while processing the file"}), 500
 
-	else:
-		return jsonify({"error": "Invalid file type. Only .ris files are allowed."}), 401
-
+	return jsonify({"error": "Invalid file type. Only .ris files are allowed."}), 401
 
 @article_bp.route('/upload_ris', methods=['POST'])
 @verify_USER_role
