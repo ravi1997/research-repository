@@ -12,18 +12,6 @@ flask db migrate
 flask db upgrade
 flask seed-db
 ```
-default 
-
-
-
-
-# Run
-```bash
-flask run
-```
-http://127.0.0.1:5000/researchrepository
-
-
 ## Tailwind Utilities
 
 
@@ -79,6 +67,36 @@ Run the app
 
 ```python
  python app.py
+
+```
+
+
+Git Workflow
+
+vivek 
+```bash
+git branch -a
+git remote show origin
+git checkout main # Latest code from server
+git pull
+
+git branch -D vg1 # Detach / delete preexisting local branch desktop
+git push origin --delete vg1 # Detach / delete preexisting REMOTE branch desktop
+
+git branch vg1 # Recreate a local  branch
+git checkout vg1 # Start working with t lcoal branch
+git branch -a # List all branches and remotes
+# Make changes to code
+
+git status
+git add .
+git commit  -m "Changed dark mode settings - Tailwind use slectpor strategy and sun icon on footer. Classes on BODY tag and base styles"
+git status
+# Push local branch code to remote
+git push -u origin vg1 
+# merge desktop with main on GitHub
+# Delete remote  desktop on GitHub
+
 
 ```
 
