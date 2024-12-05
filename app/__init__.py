@@ -21,6 +21,7 @@ from apscheduler.events import EVENT_JOB_EXECUTED
 from app.db_initializer import seed_db_command, empty_db_command,test_command
 from app.models import *
 
+
 def create_app():
 	app = Flask(__name__,static_folder='static')
 	app.config.from_object(DevConfig)

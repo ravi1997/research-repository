@@ -19,12 +19,13 @@ class BaseConfig:
     COOKIE_AGE = 60*60*24
     API_ID = "43576556-30fd-483c-b95a-28da3a950388"
     BLUEPRINT_ROUTE = True
+    
 
 class DevConfig(BaseConfig):
     load_dotenv('.env')
     DEBUG = True
     SECRET_KEY = os.getenv("SECRET_KEY", "default_secret_key")
-    
+    TEMPLATES_AUTO_RELOAD = True
     SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URI', 'sqlite:///' + os.path.join(basedir, 'app.db'))
     
     SQLALCHEMY_TRACK_MODIFICATIONS = False
