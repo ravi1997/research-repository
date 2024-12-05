@@ -7,71 +7,41 @@
         <link rel="stylesheet" href="{{url_for('static',filename='style/style.css')}}">
         <link rel="stylesheet" href="{{url_for('static',filename='dist/css/output.css')}}">
 
-
       {% if title %}
         <title>{{ title }} - AIIMS Research Publication Repository</title>
       {% else %}
         <title>AIIMS Research Publication Repository </title>
       {% endif %}
+
+        <script>
+        // Set theme on HTML page load
+            if (localStorage.getItem('theme') === 'dark') {
+				document.getElementsByTagName( 'html' )[0].classList.add("dark");
+			}
+        </script>
+
     </head>
 
 
 
-<body class="" >
+<body class="min-w-[470px]"  >
     <header>
-        <nav
-            class="
-            px-2 py-1
-            md:py-2
-            bg-slate-200 dark:bg-slate-700
-            text-gray-700"
-            id = "navbarBgfullwidth">
-        <div class="
-            container mx-auto
-            flex w-full flex-wrap items-center justify-between"
-            id = "navbarContainedContent">
-
-            <div class="flex items-center
-                    text-red-800 dark:text-teal-300"  id = "leftLogoTitle">
+        <nav class="px-4 py-2 md:py-0 content-center h-16  bg-slate-200 dark:bg-slate-700 text-gray-700 " id ="navbarBgfullwidth">
+        <div class="container mx-auto flex w-full flex-wrap items-center justify-between" id = "navbarContainedContent">
+            <div class="flex items-center text-red-800 dark:text-teal-300"  id = "leftLogoTitle">
                 <div id="brandLogo" class=" mr-4 h-10 w-10">
-
                     {% include 'logosvg.html' %}
-
                 </div>
                 <div class="text-lg md:text-xl">AIIMS Research Publication Repository</div>
             </div>
-
-            <button id="mainSiteNavToggle"
-                class="h-10 md:hidden "
-                aria-label="Main navigation" onclick="toggleHidden()">
-
-                <svg xmlns="http://www.w3.org/2000/svg"
-                    class="block h-6 w-6 cursor-pointer "
-                    fill="none" viewBox="0 0 24 24" stroke="currentColor" >
-                    <path stroke-linecap="round"  stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-                </svg>
+            <button id="mainSiteNavToggle"    class="h-10 md:hidden text-red-800 dark:text-teal-300 "      aria-label="Main navigation" onclick="toggleHidden()">
+                <svg xmlns="http://www.w3.org/2000/svg"  class="block h-6 w-6 cursor-pointer "      fill="none" viewBox="0 0 24 24" stroke="currentColor" >    <path stroke-linecap="round"  stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>  </svg>
             </button>
 
-            <div id="mainSiteNav"
-                 class="hidden fixed md:relative md:flex
-                    top-24 md:top-auto
-                    left-0 md:left-auto
-                    w-full md:w-auto
-                    h-screen md:h-auto
-                    bg-slate-400/90 md:bg-transparent
-                    md:items-center "
-
-                    aria-hidden="true">
-                <ul class="
-                        text-base text-right
-                        md:py-0 md:px-2
-                        text-gray-700 dark:text-teal-300
-                        md:flex gap-4 md:h-full md:justify-between ">
+            <div id="mainSiteNav"   class="hidden fixed md:relative md:flex  top-20 md:top-auto left-0 md:left-auto    w-full md:w-auto                     h-screen md:h-auto bg-slate-400/90 md:bg-transparent md:items-center "  aria-hidden="true">
+                <ul class=" text-base text-right    md:py-0 md:px-2 text-gray-700 dark:text-teal-300 md:flex gap-4 md:h-full md:justify-between ">
                     <li>
-                        <a class="block
-                        m-2 md:m-0
-                        px-2  py-4 md:py-2 md:px-4
-                        hover:text-slate-200  hover:bg-gray-600 transition duration-300 ease-out hover:ease-in-out " href="/">Home</a>
+                        <a class="block m-2 md:m-0 px-2  py-4 md:py-2 md:px-4 hover:text-slate-200  hover:bg-gray-600 transition duration-300 ease-out hover:ease-in-out " href="/">Home</a>
                     </li>
                     <li>
                         <a class="block m-2 md:m-0 px-2    py-4 md:py-2 md:px-4 hover:text-slate-200  hover:bg-gray-600 transition duration-300 ease-out hover:ease-in-out " href="/about">About</a>
@@ -86,7 +56,7 @@
     </header>
 
 
-    <main class="container h-screen bg-slate-100 dark:bg-gray-800 text-stone-700 dark:text-teal-100" >
+    <main class="container mx-auto px-4 h-screen bg-slate-100 dark:bg-gray-800 text-stone-700 dark:text-teal-100" >
             {% block content %}
             {% endblock %}
     </main>
@@ -150,6 +120,7 @@
          menu.classList.toggle('hidden');
     }
 
+
     function toggle_theme() {
         let saved_theme = localStorage.getItem("theme");
         let prefersDarkMode  = window.matchMedia("(prefers-color-scheme: dark)").matches;
@@ -160,34 +131,33 @@
                 console.log("set theme to ", themeToSet);
                 localStorage.setItem("theme", themeToSet);
                 if (themeToSet==="dark") {
-                    document.body.classList.add(themeToSet);
+                    document.getElementsByTagName( 'html' )[0].classList.add("dark");
                     console.log("Added Class  ", themeToSet);
                 }
                 else {
-                    document.body.classList.remove("dark");
+                    document.getElementsByTagName( 'html' )[0].classList.remove("dark");
                     console.log("Removed Class  ", "dark");
                 }
             }
 
             else  {
-                let themeToSet = saved_theme=="dark" ? "light" : "dark" ;
+                let themeToSet = saved_theme==="dark" ? "light" : "dark" ;
                 console.log("saved theme -- ", saved_theme, "--Now set a theme opposite to saved theme preference--", themeToSet);
                 localStorage.setItem("theme", themeToSet);
 
-                if (themeToSet=="dark") {
-                    document.body.classList.add(themeToSet);
+                if (themeToSet==="dark") {
+                   document.getElementsByTagName( 'html' )[0].classList.add("dark");
                     console.log("Added Class  ", themeToSet);
                 }
                 else {
-                    document.body.classList.remove("dark");
+                   document.getElementsByTagName( 'html' )[0].classList.remove("dark");
                     console.log("Removed Class  ", "Dark");
                 }
             }
 
         }
-
-
 </script>
+
 
 </html>
 
