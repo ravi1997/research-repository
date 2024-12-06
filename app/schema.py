@@ -2,7 +2,7 @@ from flask_marshmallow import Marshmallow
 from marshmallow import fields, EXCLUDE,validate
 
 from app.models import OTP, Client, User, Article,Author
-from app.models.article import ArticleAuthor, ArticleStatistic, Keyword, Link, PublicationType
+from app.models.article import ArticleAuthor, ArticleStatistic, Duplicate, Keyword, Link, PublicationType
 
 ma = Marshmallow()
 
@@ -96,7 +96,13 @@ class PublicationTypeSchema(ma.SQLAlchemyAutoSchema):
             [article_author.article for article_author in obj.articles]
         )
 
-
+class DuplicateSchema(ma.SQLAlchemyAutoSchema):
+    class Meta:
+        model = Duplicate
+        load_instance = True
+        include_fk = True  # Include foreign keys
+        
+        
 class ArticleStatisticSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = ArticleStatistic

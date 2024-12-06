@@ -87,7 +87,7 @@ header h1 {
 .authors li {
     position: relative;
     /* Position relative for absolute positioning of hover details */
-    background-color: #e9ecef;
+    background-color: #eaedf0;
     /* Light background for author cards */
     margin: 10px;
     /* Space between items */
@@ -153,7 +153,6 @@ header h1 {
 
 .authors li:hover .author-details {
     display: block;
-    /* Show details on hover */
 }
 
 /* Additional Author Details Styles */

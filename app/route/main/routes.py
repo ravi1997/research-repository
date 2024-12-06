@@ -7,9 +7,10 @@ import requests
 from time import time
 
 
-from app.decorator import verify_session, verify_user
+from app.decorator import verify_LIBRARYMANAGER_role, verify_session, verify_user
 from app.models import Client
 from app.extension import db
+from app.mylogger import error_logger
 from app.models.article import Article
 from app.schema import ArticleSchema
 from app.util import get_base_url, getIP, setCookie
@@ -48,7 +49,7 @@ def homePage():
 
 		if session is not None:
 			if session.isValid() and session.user_id is not None:
-				return render_template('home.html')
+				return render_template('home.html',logged_in=True)
 	
 	response = make_response(render_template('login.html'))
 	return settingSession(request,response)
@@ -90,12 +91,12 @@ def repositoryPage():
 
 			if session is not None:
 				if session.isValid() and session.user_id is not None:
-					return render_template('repository.html',articles=articles,current_page=page,entry=entry,total_pages = total_pages)
+					return render_template('repository.html',articles=articles,current_page=page,entry=entry,total_pages = total_pages,logged_in=True)
 
 		response = make_response(render_template('repository.html',articles=articles,current_page=page,entry=entry,total_pages = total_pages))
 		return settingSession(request,response)
 	else:
-		pprint(response.json())
+		error_logger.info(response.json())
 		return jsonify({"message":"Something went wrong"}),500
 
 
@@ -117,7 +118,7 @@ def articlePage(session,id):
 
 	if response.status_code==200:
 		article_data = response.json()
-		return render_template('article.html',article=article_data,edit=userlogged)
+		return render_template('article.html',article=article_data,edit=userlogged,logged_in=session.user_id is not None)
 	else:
 		return jsonify({"message":f"Article id {id} not found"}),404
 
@@ -136,12 +137,32 @@ def editArticlePage(session,id):
 
 	if response.status_code==200:
 		article_data = response.json()
-		return render_template('edit_article.html',article=article_data)
+		return render_template('edit_article.html',article=article_data,logged_in=session.user_id is not None)
 	else:
 		return jsonify({"message":f"Article id {id} not found"}),404
 
 
-@main_bp.route('/constant/<path:filename>')
-def style_css(filename):
-	return send_from_directory('static', filename)
+
+@main_bp.route('/duplicate-by-title')
+@verify_LIBRARYMANAGER_role
+def duplicateByTitlePage(session):
+	server_url = get_base_url()
+	url = f"{server_url}/researchrepository/api/article/duplicates"
+	headers = {
+		"API-ID":app.config.get('API_ID')
+	}
+
+	params = {
+		"field":"title"
+	}	
+	cookies = request.cookies.to_dict()  # Converts the ImmutableMultiDict to a regular dictionary
+
+	response = requests.get(url, headers=headers,params=params, cookies=cookies)  # Use `requests.get`
+
+	if response.status_code==200:
+		results = response.json()
+		return render_template('duplicate.html',results=results["title"],duplicateBy="Title",logged_in=session.user_id is not None)
+	else:
+		return jsonify({"message":f"Article id {id} not found"}),404
+
 

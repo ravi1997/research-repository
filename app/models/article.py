@@ -1,3 +1,4 @@
+from sqlalchemy import DateTime, func
 from app.extension import db
 from sqlalchemy.orm import relationship
 
@@ -157,3 +158,14 @@ class ArticleStatistic(db.Model):
 
     # Back-reference to the User model
     article = db.relationship('Article', back_populates='statistic')
+    
+    
+class Duplicate(db.Model):
+    __tablename__ = "duplicates"
+    id = db.Column(db.Integer, primary_key=True)
+    uuid = db.Column(db.Text, nullable=False)
+    field = db.Column(db.Text, nullable=False)
+    value = db.Column(db.Text, nullable=False)
+    articles = db.Column(db.JSON, nullable=False)
+    resolved = db.Column(db.Integer,nullable=False,server_default='0')
+    created_at = db.Column(DateTime, server_default=func.now())  # Corrected attribute name

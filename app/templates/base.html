@@ -47,8 +47,14 @@
                         <a class="block m-2 md:m-0 px-2    py-4 md:py-2 md:px-4 hover:text-slate-200  hover:bg-gray-600 transition duration-300 ease-out hover:ease-in-out " href="/about">About</a>
                     </li>
                     <li>
-                        <a class="block m-2 md:m-0 px-2   py-4  md:py-2 md:px-4 hover:text-slate-200  hover:bg-gray-600 transition duration-300 ease-out hover:ease-in-out " href="/researchrepository/login">Log In</a>
+                        {% if logged_in %}
+                            <a class="block m-2 md:m-0 px-2   py-4  md:py-2 md:px-4 hover:text-slate-200  hover:bg-gray-600 transition duration-300 ease-out hover:ease-in-out " href="#" onclick="logout()">Logout</a>
 
+                        {% else %}
+                            <a class="block m-2 md:m-0 px-2   py-4  md:py-2 md:px-4 hover:text-slate-200  hover:bg-gray-600 transition duration-300 ease-out hover:ease-in-out "
+                                href="/researchrepository/login">Log In</a>
+
+                        {% endif%}
                 </ul>
             </div>
         </div>
@@ -56,24 +62,18 @@
     </header>
 
 
-    <main class="container mx-auto px-4 h-screen bg-slate-100 dark:bg-gray-800 text-stone-700 dark:text-teal-100" >
+    <main class="min-h-screen container mx-auto px-4 bg-slate-100 dark:bg-gray-800 text-stone-700 dark:text-teal-100" >
             {% block content %}
             {% endblock %}
     </main>
 
 
 
-
-
-
-
-
-    <footer   class="sticky top-[100vh]  p-2
+    <footer   class=" p-2
     bg-slate-200 dark:bg-slate-700
     text-gray-700 dark:text-teal-300
      ">
-      <div class="footer
-    container mx-auto
+      <div class="container mx-auto
     flex w-full flex-wrap items-center justify-between"
     id = "footerContainedContent">
 
@@ -105,6 +105,7 @@
     </footer>
 
 </body>
+    <script src="{{url_for('static',filename='js/common.js')}}"></script>
 
 <script>
     const menu = document.getElementById('mainSiteNav');

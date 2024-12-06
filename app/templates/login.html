@@ -1,17 +1,6 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "base.html" %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - AIIMS Research Publication Repository</title>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/researchrepository/constant/style/style.css">
-    <link rel="preload" href="/researchrepository/constant/style/style.css" as="style"
-        onload="this.onload=null;this.rel='stylesheet'">
-</head>
-
-<body>
+{% block content %}
     <div class="login-container">
         <h2>Login to AIIMS Research Publication Repository</h2>
 
@@ -40,9 +29,7 @@
 
         <p>Don't have an account? <a href="/register">Register here</a></p>
     </div>
-    <script src="/researchrepository/constant/js/common.js"></script>
-    <script src="/researchrepository/constant/js/login.js"></script>
+    <script src="{{url_for('static',filename='js/common.js')}}"></script>
+    <script src="{{url_for('static',filename='js/login.js')}}"></script>
 
-</body>
-
-</html>
+{% endblock %}

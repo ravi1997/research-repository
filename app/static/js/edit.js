@@ -265,21 +265,4 @@ async function submitForm(event) {
     }
 }
 
-async function logout() {
-    try {
-        const response = await fetch("../researchrepository/api/auth/logout", {
-            method: "GET",
-        });
-
-        if (response.ok) {
-            window.location.href = "../researchrepository/login";
-        } else {
-            const error = await response.json()["message"];
-            showAlert(error, false);
-        }
-    } catch (error) {
-        console.error(error);
-        showAlert(error, false);
-    }
-}
 

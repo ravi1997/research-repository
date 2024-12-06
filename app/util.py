@@ -310,7 +310,7 @@ def fileReader(filepath):
 			journal_volume = entry.get('volume', None)
 			journal_issue = entry.get('number', None)
 			pubmed_id = str(entry.get('pubmed_id', None)) if entry.get('pubmed_id', None) else None
-			pmc_id = str(entry.get('pmcid', None)) if str(entry.get('pmcid', None)) else None
+			pmc_id = str(entry.get('pmcid', None)) if entry.get('pmcid', None) else None
 			pii = entry.get('pii', None)
 			doi = entry.get('doi', None)
 			issn = entry.get('print_issn', None) or entry.get('issn', None)

@@ -1,94 +1,72 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "base.html" %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AIIMS Research Publication Repository</title>
-    <link rel="stylesheet" href="/researchrepository/constant/style/style.css">
+{% block content %}
+<h2 class="text-center text-5xl font-bold">Published Articles</h2>
+<table>
+    <thead>
+        <tr>
+            <th>Title</th>
+            <th>Author(s)</th>
+            <th>Published Date</th>
+            <th>Journal</th>
+            <th>Issue</th>
+            <th>Volume</th>
+            <th>Pages</th>
+            <th>PubMed ID</th>
+            <th>DOI</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody id="table-body">
+        {% for article in articles %}
+        <tr>
+            <td>{{ article.title }}</td>
+            <td>{% for author in article.authors %}
+                {{ author.fullName }}{% if not loop.last %}; {% endif %}
+                {% endfor %}</td>
+            <td>{{ article.publication_date or '' }}</td>
+            <td>{{ article.journal or '' }}</td>
+            <td>{{ article.journal_issue or '' }}</td>
+            <td>{{ article.journal_volume or '' }}</td>
+            <td>{{ article.pages or '' }}</td>
+            <td>{{ article.pubmed_id or '' }}</td>
+            <td>
+                {% if article.doi %}
+                <a href="https://doi.org/{{ article.doi }}" target="_blank">{{ article.doi }}</a>
+                {% endif %}
+            </td>
+            <td><a href="/researchrepository/article/{{ article.uuid }}">
+                    <img src="{{url_for('static',filename='assets/logo/browse-svgrepo-com.svg')}}" alt="Icon"
+                        class="link-icon" style="width: 70%; height:auto; max-height:100%;"></a></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
 
-</head>
+<div class="pagination">
+    <!-- Previous button -->
+    <button {% if current_page<=1 %}disabled class="bg-blue-500 text-white font-bold py-2 px-4 rounded opacity-50 cursor-not-allowed"{% endif %} 
+        type="button"
+        onclick="navigateToPage({{ current_page - 1 }}, '{{ entry | safe }}', {{ total_pages }})"
+        {% if current_page>1 %}class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 border border-blue-700 rounded"{% endif %}
+        >
+        Previous
+    </button>
 
-<body>
-    <header>
-        <h1>AIIMS Research Publication Repository</h1>
-        <div class="button">
-            <a href="/researchrepository/login">Login</a>
-        </div>
-    </header>
+    <!-- Page info -->
+    <span id="page-info">Page {{ current_page }} of {{ total_pages }}</span>
 
-    <div class="center-container">
-        <h2>Published Articles</h2>
-        <div id="table-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Title</th>
-                        <th>Author(s)</th>
-                        <th>Published Date</th>
-                        <th>Journal</th>
-                        <th>Issue</th>
-                        <th>Volume</th>
-                        <th>Pages</th>
-                        <th>PubMed ID</th>
-                        <th>DOI</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody id="table-body">
-                    {% for article in articles %}
-                    <tr>
-                        <td>{{ article.title }}</td>
-                        <td>{% for author in article.authors %}
-                            {{ author.fullName }}{% if not loop.last %}; {% endif %}
-                            {% endfor %}</td>
-                        <td>{{ article.publication_date or '' }}</td>
-                        <td>{{ article.journal or '' }}</td>
-                        <td>{{ article.journal_issue or '' }}</td>
-                        <td>{{ article.journal_volume or '' }}</td>
-                        <td>{{ article.pages or '' }}</td>
-                        <td>{{ article.pubmed_id or '' }}</td>
-                        <td>
-                            {% if article.doi %}
-                            <a href="https://doi.org/{{ article.doi }}" target="_blank">{{ article.doi }}</a>
-                            {% endif %}
-                        </td>
-                        <td><a href="/researchrepository/article/{{ article.uuid }}">
-                            <img
-                                    src="/researchrepository/constant/assets/logo/browse-svgrepo-com.svg" alt="Icon"
-                                    class="link-icon" style="width: 70%; height:auto; max-height:100%;"></a></td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+    <!-- Next button -->
+    <button {% if current_page>= total_pages %}disabled class="bg-blue-500 text-white font-bold py-2 px-4 rounded opacity-50 cursor-not-allowed"{% endif %}
+        type="button"
+        onclick="navigateToPage({{ current_page + 1 }}, '{{ entry | safe }}', {{ total_pages }})"
+        {% if current_page< total_pages %}class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 border border-blue-700 rounded" {% endif %}
+        >
+        Next
+    </button>
+</div>
 
-        <div class="pagination">
-            <!-- Previous button -->
-            <button {% if current_page <=1 %}disabled{% endif %} type="button"
-                onclick="navigateToPage({{ current_page - 1 }}, '{{ entry | safe }}', {{ total_pages }})">
-                Previous
-            </button>
-
-            <!-- Page info -->
-            <span id="page-info">Page {{ current_page }} of {{ total_pages }}</span>
-
-            <!-- Next button -->
-            <button {% if current_page>= total_pages %}disabled{% endif %}
-                type="button"
-                onclick="navigateToPage({{ current_page + 1 }}, '{{ entry | safe }}', {{ total_pages }})">
-                Next
-            </button>
-        </div>
-
-    </div>
-
-    <footer>
-        <p>&copy; 2024 AIIMS Research Repository. All Rights Reserved.</p>
-    </footer>
-
-</body>
-<script src="/researchrepository/constant/js/common.js"></script>
-<script src="/researchrepository/constant/js/repository.js"></script>
-
-</html>
+</div>
+    <script src="{{url_for('static',filename='js/common.js')}}"></script>
+    <script src="{{url_for('static',filename='js/repository.js')}}"></script>
+{% endblock %}

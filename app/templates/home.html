@@ -1,27 +1,14 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "base.html" %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AIIMS Research Publication Repository</title>
-    <link rel="stylesheet" href="/researchrepository/constant/style/style.css">
-    <link rel="stylesheet" href="/researchrepository/constant/style/home.css">
-</head>
+{% block content %}
 
-<body>
-    <!-- Header Section -->
-    <header>
-        <h1>AIIMS Research Publication Repository</h1>
-        <div class="button" onclick="logout()">
-            Logout
-        </div>
-    </header>
 
     <div id="customAlert" class="alert-box">
         <span id="alertMessage">This is an alert message!</span>
         <button class="close-btn" onclick="closeAlert()">×</button>
     </div>
+
+
 
     <!-- Main Content Container -->
     <div class="container">
@@ -56,14 +43,7 @@
         </div>
     </div>
 
-    <!-- Footer Section -->
-    <footer>
-        <p>&copy; 2024 AIIMS Research Repository. All Rights Reserved.</p>
-    </footer>
 
     <!-- JavaScript Files -->
-    <script src="/researchrepository/constant/js/common.js"></script>
-    <script src="/researchrepository/constant/js/home.js"></script>
-</body>
-
-</html>
+    <script src="{{url_for('static',filename='js/home.js')}}"></script>
+{% endblock %}

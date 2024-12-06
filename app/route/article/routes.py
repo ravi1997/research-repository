@@ -10,8 +10,8 @@ from sqlalchemy import func
 from collections import defaultdict
 from app.decorator import checkBlueprintRouteFlag, verify_LIBRARYMANAGER_role, verify_SUPERADMIN_role, verify_USER_role, verify_body, verify_internal_api_id, verify_session
 from app.extension import db,scheduler
-from app.models.article import Article, ArticleAuthor, ArticleKeyword, ArticlePublicationType, ArticleStatistic, Author, Keyword, Link, PublicationType
-from app.schema import ArticleSchema, AuthorSchema, KeywordSchema, LinkSchema, PublicationTypeSchema
+from app.models.article import Article, ArticleAuthor, ArticleKeyword, ArticlePublicationType, ArticleStatistic, Author, Duplicate, Keyword, Link, PublicationType
+from app.schema import ArticleSchema, AuthorSchema, DuplicateSchema, KeywordSchema, LinkSchema, PublicationTypeSchema
 from app.util import download_xml, fileReader, find_full_row_match, getUnique,  parse_pubmed_xml
 from . import article_bp
 
@@ -57,13 +57,13 @@ def check_duplicates(article_data):
 	Check for duplicates in the database using a single query.
 	"""
 	filters = []
-	if 'title' in article_data:
+	if 'title' in article_data and article_data['title'] is not None:
 		filters.append(Article.title == article_data['title'])
-	if 'pubmed_id' in article_data:
+	if 'pubmed_id' in article_data and article_data['pubmed_id'] is not None:
 		filters.append(Article.pubmed_id == article_data['pubmed_id'])
-	if 'doi' in article_data:
+	if 'doi' in article_data and article_data['doi'] is not None:
 		filters.append(Article.doi == article_data['doi'])
-	if 'pmc_id' in article_data:
+	if 'pmc_id' in article_data and article_data['pmc_id'] is not None:
 		filters.append(Article.pmc_id == article_data['pmc_id'])
 
 	if not filters:
@@ -76,12 +76,12 @@ def add_or_get(model, session, **kwargs):
 	"""
 	Add a new record or get an existing one.
 	"""
-	instance = session.query(model).filter_by(**kwargs).first()
+	instance = db.session.query(model).filter_by(**kwargs).first()
 	if instance:
 		return instance
 	instance = model(**kwargs)
-	session.add(instance)
-	session.flush()  # Assign ID without committing
+	db.session.add(instance)
+	db.session.commit()  # Assign ID without committing
 	return instance
 
 
@@ -120,21 +120,21 @@ def upload(session, request, ALLOWED_EXTENSIONS):
 				duplicate_article = check_duplicates(temp_json)
 				if duplicate_article:
 					duplicate_count += 1
-					if duplicate_article.title:
-						duplicates['title'].append({"existing": ArticleSchema().dump(duplicate_article), "new": temp_json})
-					elif duplicate_article.pubmed_id:
-						duplicates['pubmed_id'].append({"existing": ArticleSchema().dump(duplicate_article), "new": temp_json})
-					elif duplicate_article.doi:
-						duplicates['doi'].append({"existing": ArticleSchema().dump(duplicate_article), "new": temp_json})
-					elif duplicate_article.pmc_id:
-						duplicates['pmc_id'].append({"existing": ArticleSchema().dump(duplicate_article), "new": temp_json})
+					if duplicate_article.title is not None and duplicate_article.title == myjson['title']:
+						duplicates['title'].append({"existing": article_schema.dump(duplicate_article), "new": myjson})
+					elif duplicate_article.pubmed_id is not None and duplicate_article.pubmed_id == myjson['pubmed_id']:
+						duplicates['pubmed_id'].append({"existing": article_schema.dump(duplicate_article), "new": myjson})
+					elif duplicate_article.doi is not None and duplicate_article.doi == myjson['doi']:
+						duplicates['doi'].append({"existing": article_schema.dump(duplicate_article), "new": myjson})
+					elif duplicate_article.pmc_id is not None and duplicate_article.pmc_id == myjson['pmc_id']:
+						duplicates['pmc_id'].append({"existing": article_schema.dump(duplicate_article), "new": myjson})
 
 					continue
-
+ 
 				# Create new article
-				new_article = Article(**temp_json)
-				session.add(new_article)
-				session.flush()  # Get article ID
+				new_article = article_schema.load(temp_json)
+				db.session.add(new_article)
+				db.session.commit()  # Get article ID
 
 				# Add publication types
 				for pub_type in publication_types:
@@ -149,7 +149,7 @@ def upload(session, request, ALLOWED_EXTENSIONS):
 				# Add links
 				for link in links:
 					new_link = Link(**link)
-					session.add(new_link)
+					db.session.add(new_link)
 					new_article.links.append(new_link)
 
 				# Add authors
@@ -196,66 +196,65 @@ def pubmedFectch(data,session):
 
 	success = download_xml(pubmed_id,filename)
 	if success:
-		myjson = parse_pubmed_xml(filename)		
-		articleSchema = ArticleSchema()
-		authorSchema = AuthorSchema()
-		keywordSchema = KeywordSchema()
-		linkSchema = LinkSchema()
-		publicationTypeSchema = PublicationTypeSchema()
+		myjson = parse_pubmed_xml(filename)
+		temp_json = myjson.copy()
+		article_schema = ArticleSchema()
+		duplicate_count = 0
+		duplicates = {"title": [], "pubmed_id": [], "doi": [], "pmc_id": []}
 
 		publication_types = myjson.pop('publication_types')
 		keywords = myjson.pop('keywords')
 		authors = myjson.pop('authors')
 		links = myjson.pop('links')
-		newArticle = articleSchema.load(myjson)
-		db.session.add(newArticle)
-		statistic = ArticleStatistic(article_id=newArticle.id)
-		db.session.add(statistic)
+		# Check for duplicates
+		duplicate_article = check_duplicates(myjson)
+		if duplicate_article:
+			duplicate_count += 1
+			if duplicate_article.title is not None and duplicate_article.title == temp_json['title']:
+				duplicates['title'].append({"existing": article_schema.dump(duplicate_article), "new": temp_json})
+			elif duplicate_article.pubmed_id is not None and duplicate_article.pubmed_id == temp_json['pubmed_id']:
+				duplicates['pubmed_id'].append({"existing": article_schema.dump(duplicate_article), "new": temp_json})
+			elif duplicate_article.doi is not None and duplicate_article.doi == temp_json['doi']:
+				duplicates['doi'].append({"existing": article_schema.dump(duplicate_article), "new": temp_json})
+			elif duplicate_article.pmc_id is not None and duplicate_article.pmc_id == temp_json['pmc_id']:
+				duplicates['pmc_id'].append({"existing": article_schema.dump(duplicate_article), "new": temp_json})
+
+			return jsonify({
+				"message": "Duplicate Article found",
+				"added_articles": 0,
+				"articles": article_schema.dump(duplicate_article),
+				"duplicate_articles": duplicates,
+			}), 400
+		# Create new article
+		new_article = article_schema.load(myjson)
+		db.session.add(new_article)
+		db.session.commit()  # Get article ID
+
+		# Add publication types
 		for pub_type in publication_types:
-			new_pub_type = publicationTypeSchema.load(pub_type)
+			pub_instance = add_or_get(PublicationType, session, publication_type=pub_type['publication_type'])
+			new_article.publication_types.append(pub_instance)
 
-			old_pub_type = PublicationType.query.filter_by(
-				publication_type = new_pub_type.publication_type
-			).first()
-			if old_pub_type:
-				new_article_pub_type = ArticlePublicationType(article_id=newArticle.id, publication_type_id=old_pub_type.id)
-			else:
-				db.session.add(new_pub_type)
-				db.session.commit()
-				new_article_pub_type = ArticlePublicationType(article_id=newArticle.id, publication_type_id=new_pub_type.id)
-			db.session.add(new_article_pub_type)
+		# Add keywords
+		for keyword in set(kw['keyword'] for kw in keywords):  # Avoid duplicates in the same article
+			keyword_instance = add_or_get(Keyword, session, keyword=keyword)
+			new_article.keywords.append(keyword_instance)
 
-		for keyword in getUnique(keywords):
-			new_keyword = keywordSchema.load(keyword)
-
-			old_keyword = Keyword.query.filter_by(
-				keyword = new_keyword.keyword
-			).first()
-			if old_keyword:
-				new_article_keyword = ArticleKeyword(article_id=newArticle.id, keyword_id=old_keyword.id)
-			else:
-				db.session.add(new_keyword)
-				db.session.commit()
-				new_article_keyword = ArticleKeyword(article_id=newArticle.id, keyword_id=new_keyword.id)
-			db.session.add(new_article_keyword)
-
+		# Add links
 		for link in links:
-			newArticle.links.append(linkSchema.load(link))
+			new_link = Link(**link)
+			db.session.add(new_link)
+			new_article.links.append(new_link)
 
-
+		# Add authors
 		for idx, author in enumerate(authors):
-			new_author = authorSchema.load(author)
-			db.session.add(new_author)
-			db.session.commit()
-			new_article_author = ArticleAuthor(article_id=newArticle.id, author_id=new_author.id, sequence_number=idx+1)
-			db.session.add(new_article_author)
-
+			author_instance = add_or_get(Author, session, **author)
+			new_article.authors.append(ArticleAuthor(author=author_instance, sequence_number=idx + 1))
 
 		db.session.commit()
-
 		app.logger.info("1 item added in the db")  
 			
-		return jsonify({"message": "Pubmed Article Added successfully" }), 200
+		return jsonify({"message": "Pubmed Article Added successfully","articles": article_schema.dump(Article.query.filter_by(id=new_article.id).first())}), 200
 
 	else:
 		return jsonify({"message":"Either you provided wrong Pubmed ID or something went wrong."}),401
@@ -373,13 +372,21 @@ def find_duplicates(model, fields):
 			.having(func.count(field_attr) > 1)
 			.all()
 		)
-		
+		duplicate_schema = DuplicateSchema()
 		# Parse results into groups of duplicates
 		duplicate_records = []
 		for _, ids in duplicate_groups:
 			article_ids = list(map(int, ids.split(',')))
+			value = article_schema.dump(Article.query.filter_by(id=article_ids[0]).first())[field]
+			
+			duplicate = Duplicate(
+				uuid = "",
+				field = field,
+				value = value,
+				articles = (id for id in Article.query(Article.uuid).filter(model.id.in_(article_ids)).all())
+			)
 			duplicate_records.append(
-				article_schema.dump(model) for model in model.query.filter(model.id.in_(article_ids)).all()
+				duplicate_schema.dump(duplicate)
 			)
 		
 		duplicates[field] = duplicate_records
@@ -395,14 +402,8 @@ def find_duplicate_groups(session):
 		fields = ['pubmed_id','doi','title','pmc_id']
 	duplicates = find_duplicates(Article, fields)
 
-	result = {}
-
-	for field, groups in duplicates.items():
-		result[field] = []
-		for group in groups:
-			result[field].append([article for article in group])
-
-	return jsonify(result),200
+	
+	return jsonify(duplicates),200
 
 
 @article_bp.route("/statistic",methods=['GET'])
