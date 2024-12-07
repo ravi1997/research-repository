@@ -165,4 +165,28 @@ def duplicateByTitlePage(session):
 	else:
 		return jsonify({"message":f"Article id {id} not found"}),404
 
+@main_bp.route('/singleDuplicate/<string:id>')
+@verify_LIBRARYMANAGER_role
+def singleArticleDuplicatePage(session,id):
+	server_url = get_base_url()
+	url = f"{server_url}/researchrepository/api/article/duplicate/{id}"
+	headers = {
+		"API-ID":app.config.get('API_ID')
+	}
+	cookies = request.cookies.to_dict()  # Converts the ImmutableMultiDict to a regular dictionary
 
+	response = requests.get(url, headers=headers, cookies=cookies)  # Use `requests.get`
+
+	if response.status_code==200:
+		result = response.json()
+		articles = []
+		for uuid in result["articles"]:
+			article_url = f"{server_url}/researchrepository/api/article/{uuid}"
+			new_response = requests.get(article_url, headers=headers, cookies=cookies)  # Use `requests.get`
+		
+			article = new_response.json()
+			articles.append(article)
+  
+		return render_template('singleDuplicate.html',result=result,articles = articles,logged_in=session.user_id is not None)
+	else:
+		return jsonify({"message":f"Article id {id} not found"}),404

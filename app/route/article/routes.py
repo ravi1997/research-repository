@@ -6,6 +6,9 @@ from flask import jsonify,current_app as app, request
 from marshmallow import ValidationError
 from sqlalchemy import or_
 
+import uuid
+
+
 from sqlalchemy import func
 from collections import defaultdict
 from app.decorator import checkBlueprintRouteFlag, verify_LIBRARYMANAGER_role, verify_SUPERADMIN_role, verify_USER_role, verify_body, verify_internal_api_id, verify_session
@@ -360,6 +363,7 @@ def find_duplicates(model, fields):
 	Returns:
 		dict: Dictionary where keys are fields and values are lists of duplicate groups.
 	"""
+
 	duplicates = {}
 	article_schema = ArticleSchema()
 	
@@ -378,13 +382,21 @@ def find_duplicates(model, fields):
 		for _, ids in duplicate_groups:
 			article_ids = list(map(int, ids.split(',')))
 			value = article_schema.dump(Article.query.filter_by(id=article_ids[0]).first())[field]
-			
+			articles = []
+			for row in db.session.query(Article.uuid).filter(model.id.in_(article_ids)).all():
+				myuuid = row._mapping['uuid']
+				# print(uuid)
+				articles.append(myuuid)
+			# pprint(articles)
 			duplicate = Duplicate(
-				uuid = "",
+				uuid = str(uuid.uuid4()),
 				field = field,
 				value = value,
-				articles = (id for id in Article.query(Article.uuid).filter(model.id.in_(article_ids)).all())
+				articles = articles
 			)
+			db.session.add(duplicate)
+			db.session.commit()
+   
 			duplicate_records.append(
 				duplicate_schema.dump(duplicate)
 			)
@@ -402,7 +414,7 @@ def find_duplicate_groups(session):
 		fields = ['pubmed_id','doi','title','pmc_id']
 	duplicates = find_duplicates(Article, fields)
 
-	
+	# pprint(duplicates)
 	return jsonify(duplicates),200
 
 
@@ -411,3 +423,141 @@ def find_duplicate_groups(session):
 def statistic(session):
 		
 	return jsonify({})
+
+
+
+
+def uploadDuplicate(session, request, ALLOWED_EXTENSIONS):
+	if 'file' not in request.files:
+		return jsonify({"error": "No file part in the request"}), 400
+
+	file = request.files['file']
+
+	if file.filename == '':
+		return jsonify({"error": "No file selected"}), 400
+
+	if file and '.' in file.filename and file.filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS:
+		filename = file.filename
+		file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+
+		# Save the file
+		file.save(file_path)
+
+		myjsons, skipped = fileReader(filepath=file_path)
+		article_schema = ArticleSchema()
+		result_ids = []
+		duplicates = {"title": [], "pubmed_id": [], "doi": [], "pmc_id": []}
+		duplicate_count = 0
+
+		try:
+			for myjson in myjsons:
+				temp_json = myjson.copy()
+
+				publication_types = temp_json.pop('publication_types', [])
+				keywords = temp_json.pop('keywords', [])
+				authors = temp_json.pop('authors', [])
+				links = temp_json.pop('links', [])
+
+				# Check for duplicates
+				duplicate_article = check_duplicates(temp_json)
+				if duplicate_article:
+					duplicate_count += 1
+					if duplicate_article.title is not None and duplicate_article.title == myjson['title']:
+						duplicates['title'].append({"existing": article_schema.dump(duplicate_article), "new": myjson})
+					elif duplicate_article.pubmed_id is not None and duplicate_article.pubmed_id == myjson['pubmed_id']:
+						duplicates['pubmed_id'].append({"existing": article_schema.dump(duplicate_article), "new": myjson})
+					elif duplicate_article.doi is not None and duplicate_article.doi == myjson['doi']:
+						duplicates['doi'].append({"existing": article_schema.dump(duplicate_article), "new": myjson})
+					elif duplicate_article.pmc_id is not None and duplicate_article.pmc_id == myjson['pmc_id']:
+						duplicates['pmc_id'].append({"existing": article_schema.dump(duplicate_article), "new": myjson})
+
+ 
+				# Create new article
+				new_article = article_schema.load(temp_json)
+				db.session.add(new_article)
+				db.session.commit()  # Get article ID
+
+				# Add publication types
+				for pub_type in publication_types:
+					pub_instance = add_or_get(PublicationType, session, publication_type=pub_type['publication_type'])
+					new_article.publication_types.append(pub_instance)
+
+				# Add keywords
+				for keyword in set(kw['keyword'] for kw in keywords):  # Avoid duplicates in the same article
+					keyword_instance = add_or_get(Keyword, session, keyword=keyword)
+					new_article.keywords.append(keyword_instance)
+
+				# Add links
+				for link in links:
+					new_link = Link(**link)
+					db.session.add(new_link)
+					new_article.links.append(new_link)
+
+				# Add authors
+				for idx, author in enumerate(authors):
+					author_instance = add_or_get(Author, session, **author)
+					new_article.authors.append(ArticleAuthor(author=author_instance, sequence_number=idx + 1))
+
+				result_ids.append(new_article.id)
+
+			articles = Article.query.filter(Article.id.in_(result_ids)).all()
+			return jsonify({
+				"message": "File uploaded successfully",
+				"filename": filename,
+				"added_articles": len(result_ids),
+				"skipped_articles": skipped,
+				"articles": ArticleSchema(many=True).dump(articles),
+				"duplicate_articles": duplicates,
+			}), 200
+
+		except Exception as e:
+			app.logger.error(f"Error during file processing: {str(e)}")
+			traceback.print_exc()
+			return jsonify({"error": "An error occurred while processing the file"}), 500
+
+	return jsonify({"error": "Invalid file type. Only .ris files are allowed."}), 401
+
+@article_bp.route('/upload_ris_duplicate', methods=['POST'])
+@verify_USER_role
+def upload_ris_duplicate(session):
+	return uploadDuplicate(session,request,['ris'])
+
+@article_bp.route("/duplicate/<string:id>")
+@verify_session
+@verify_internal_api_id
+def getSingle_duplicate(session,id):
+	duplicate = Duplicate.query.filter_by(uuid=id).first()
+	if duplicate:
+		duplicate_schema = DuplicateSchema()
+		return duplicate_schema.dump(duplicate),200
+	else:
+		return jsonify({"message":f"Duplicate id {id} not found"}),404
+
+
+
+@article_bp.route("/duplicate/<string:id>/resolved")
+@verify_session
+@verify_internal_api_id
+def resolved_duplicate(session,id):
+	duplicate = Duplicate.query.filter_by(uuid=id).first()
+	if duplicate:
+		db.session.delete(duplicate)
+		db.session.commit()
+		return jsonify({"message":f"Duplicate resolved : {id}"}),200
+	else:
+		return jsonify({"message":f"Duplicate id {id} not found"}),404
+
+
+
+
+
+@article_bp.route("/<string:id>",methods=['DELETE'])
+@verify_session
+def delete_article(session,id):
+	article = Article.query.filter_by(uuid=id).first()
+	if article:
+		article_schema = ArticleSchema()
+		return article_schema.dump(article),200
+	else:
+		return jsonify({"message":f"Article id {id} not found"}),404
+

@@ -62,6 +62,11 @@ class Article(db.Model):
     electronic_issn = db.Column(db.Text, nullable=True)
     linking_issn = db.Column(db.Text, nullable=True)
     nlm_journal_id = db.Column(db.Text, nullable=True)
+    created_at = db.Column(DateTime, server_default=func.now())  # Corrected attribute name
+    created_by = db.Column(db.Integer,nullable=True)
+
+    updated_at = db.Column(DateTime,nullable=True)  # Corrected attribute name
+    updated_by = db.Column(db.Integer,nullable=True)
 
     links = relationship("Link", back_populates="article")
     assets = relationship("Asset", back_populates="article")
@@ -169,3 +174,11 @@ class Duplicate(db.Model):
     articles = db.Column(db.JSON, nullable=False)
     resolved = db.Column(db.Integer,nullable=False,server_default='0')
     created_at = db.Column(DateTime, server_default=func.now())  # Corrected attribute name
+
+
+
+class DeletedArticle(db.Model):
+    __tablename__ = "deleted_articles"
+    id = db.Column(db.Integer, primary_key=True)
+    uuid = db.Column(db.Text, nullable=False)
+    article = db.Column(db.JSON,nullable=False)
