@@ -1,6 +1,7 @@
-from sqlalchemy import DateTime, func
+from sqlalchemy import DateTime, func, Enum as SQLAlchemyEnum
 from app.extension import db
 from sqlalchemy.orm import relationship
+
 
 class Author(db.Model):
     __tablename__ = "authors"
@@ -172,7 +173,6 @@ class Duplicate(db.Model):
     field = db.Column(db.Text, nullable=False)
     value = db.Column(db.Text, nullable=False)
     articles = db.Column(db.JSON, nullable=False)
-    resolved = db.Column(db.Integer,nullable=False,server_default='0')
     created_at = db.Column(DateTime, server_default=func.now())  # Corrected attribute name
 
 
@@ -182,3 +182,4 @@ class DeletedArticle(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     uuid = db.Column(db.Text, nullable=False)
     article = db.Column(db.JSON,nullable=False)
+    deleted_at = db.Column(DateTime, server_default=func.now())  # Corrected attribute name

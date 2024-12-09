@@ -2,9 +2,12 @@
 
 {% block content %}
 
-<h2 class=" ">Duplicates by {{result.field}}</h2>
-<h2 class="">{{result.value}}</h2>
-<p class=" ">The {{result.field}} matched with {{ articles | length }} articles.</p>
+<h2 class="text-center text-5xl font-bold">Duplicates by {{result.field}}</h2>
+<br>
+<h2 class="text-center text-2xl"><strong>Value matched</strong> : {{result.value}}</h2>
+<br>
+<p class="text-center text-2xl">The {{result.field}} matched with <strong>{{ articles | length }}</strong> articles.</p>
+<br>
 
 <!--
 <table>
@@ -59,7 +62,7 @@
 <section class="container mx-auto flex flex-col justify-center">
 
         {% for article in articles %}
-        <div class="rounded overflow-hidden shadow-lg p-2 mx-auto my-2 flex hover:bg-white ">
+        <div id="{{ article.uuid }}" class="rounded overflow-hidden shadow-lg p-2 mx-auto my-2 flex hover:bg-white ">
             <div>
                 {% for author in article.authors %}
                 {{ author.fullName }}{% if not loop.last %}; {% endif %}
@@ -92,7 +95,7 @@
                     </svg>
                 </a>
         
-                <a href="/researchrepository/article/{{ article.uuid }}" class="text-red-500">
+                <a href="#" onclick="deleteArticle('{{ article.uuid }}')" class="text-red-500">
                     <svg fill="#4a5699" stroke="#4a5699" width="24px" height="24px" viewBox="0 0 24 24"
                         xmlns="http://www.w3.org/2000/svg">
                         <path
@@ -103,7 +106,8 @@
         </div>
         {% endfor %}
              
-  
+    <script src="{{url_for('static',filename='js/duplicate.js')}}"></script>
+        
 
 </section>
 

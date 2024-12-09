@@ -13,7 +13,7 @@ from sqlalchemy import func
 from collections import defaultdict
 from app.decorator import checkBlueprintRouteFlag, verify_LIBRARYMANAGER_role, verify_SUPERADMIN_role, verify_USER_role, verify_body, verify_internal_api_id, verify_session
 from app.extension import db,scheduler
-from app.models.article import Article, ArticleAuthor, ArticleKeyword, ArticlePublicationType, ArticleStatistic, Author, Duplicate, Keyword, Link, PublicationType
+from app.models.article import Article, ArticleAuthor, ArticleKeyword, ArticlePublicationType, ArticleStatistic, Author, DeletedArticle, Duplicate, Keyword, Link, PublicationType
 from app.schema import ArticleSchema, AuthorSchema, DuplicateSchema, KeywordSchema, LinkSchema, PublicationTypeSchema
 from app.util import download_xml, fileReader, find_full_row_match, getUnique,  parse_pubmed_xml
 from . import article_bp
@@ -352,7 +352,7 @@ def updateSingle_article(data,session,id):
 	else:
 		return jsonify({"message":f"Article id {id} not found"}),404
 
-def find_duplicates(model, fields):
+def find_duplicates(model, fields,page,entry):
 	"""
 	Find duplicates in the database based on specified fields.
 
@@ -363,45 +363,52 @@ def find_duplicates(model, fields):
 	Returns:
 		dict: Dictionary where keys are fields and values are lists of duplicate groups.
 	"""
+		
+  
 
 	duplicates = {}
 	article_schema = ArticleSchema()
 	
 	for field in fields:
-		# Dynamically construct the query for duplicates
-		field_attr = getattr(model, field)
-		duplicate_groups = (
-			db.session.query(field_attr, func.group_concat(model.id).label("ids"))
-			.group_by(field_attr)
-			.having(func.count(field_attr) > 1)
-			.all()
-		)
-		duplicate_schema = DuplicateSchema()
-		# Parse results into groups of duplicates
-		duplicate_records = []
-		for _, ids in duplicate_groups:
-			article_ids = list(map(int, ids.split(',')))
-			value = article_schema.dump(Article.query.filter_by(id=article_ids[0]).first())[field]
-			articles = []
-			for row in db.session.query(Article.uuid).filter(model.id.in_(article_ids)).all():
-				myuuid = row._mapping['uuid']
-				# print(uuid)
-				articles.append(myuuid)
-			# pprint(articles)
-			duplicate = Duplicate(
-				uuid = str(uuid.uuid4()),
-				field = field,
-				value = value,
-				articles = articles
+		if db.session.query(Duplicate).filter_by(field=field).count() > 0:
+			duplicate_schema = DuplicateSchema(many=True)
+			field_duplicates = db.session.query(Duplicate).filter_by(field=field).all()
+			duplicates[field] = duplicate_schema.dump(field_duplicates)
+		else:
+			# Dynamically construct the query for duplicates
+			field_attr = getattr(model, field)
+			duplicate_groups = (
+				db.session.query(field_attr, func.group_concat(model.id).label("ids"))
+				.group_by(field_attr)
+				.having(func.count(field_attr) > 1)
+				.all()
 			)
-			db.session.add(duplicate)
-			db.session.commit()
-   
-			duplicate_records.append(
-				duplicate_schema.dump(duplicate)
-			)
+			duplicate_schema = DuplicateSchema()
+			# Parse results into groups of duplicates
+			duplicate_records = []
+			for _, ids in duplicate_groups:
+				article_ids = list(map(int, ids.split(',')))
+				value = article_schema.dump(Article.query.filter_by(id=article_ids[0]).first())[field]
+				articles = []
+				for row in db.session.query(Article.uuid).filter(model.id.in_(article_ids)).all():
+					myuuid = row._mapping['uuid']
+					# print(uuid)
+					articles.append(myuuid)
+				# pprint(articles)
+				duplicate = Duplicate(
+					uuid = str(uuid.uuid4()),
+					field = field,
+					value = value,
+					articles = articles
+				)
+				db.session.add(duplicate)
+				db.session.commit()
+	
+				duplicate_records.append(
+					duplicate_schema.dump(duplicate)
+				)
 		
-		duplicates[field] = duplicate_records
+			duplicates[field] = duplicate_records
 
 	return duplicates
 
@@ -410,9 +417,11 @@ def find_duplicates(model, fields):
 @verify_LIBRARYMANAGER_role
 def find_duplicate_groups(session):
 	fields = request.args.getlist('field')
+	page = request.args.get('page')
+	entry = request.args.get('entry')
 	if fields == []:
 		fields = ['pubmed_id','doi','title','pmc_id']
-	duplicates = find_duplicates(Article, fields)
+	duplicates = find_duplicates(Article, fields,page,entry)
 
 	# pprint(duplicates)
 	return jsonify(duplicates),200
@@ -522,6 +531,11 @@ def uploadDuplicate(session, request, ALLOWED_EXTENSIONS):
 def upload_ris_duplicate(session):
 	return uploadDuplicate(session,request,['ris'])
 
+@article_bp.route('/upload_nbib_duplicate', methods=['POST'])
+@verify_USER_role
+def upload_nbib_duplicate(session):
+	return uploadDuplicate(session,request,['nbib'])
+
 @article_bp.route("/duplicate/<string:id>")
 @verify_session
 @verify_internal_api_id
@@ -557,7 +571,31 @@ def delete_article(session,id):
 	article = Article.query.filter_by(uuid=id).first()
 	if article:
 		article_schema = ArticleSchema()
-		return article_schema.dump(article),200
+		uuid = article.uuid
+		deletedArticle = DeletedArticle(uuid = uuid,article = article_schema.dump(article))
+		db.session.add(deletedArticle)
+		for author in article.authors:
+			db.session.delete(author)
+		db.session.delete(article)
+
+		duplicate_schema = DuplicateSchema()
+		for duplicate in Duplicate.query.filter(Duplicate.articles.contains(uuid)).all():
+			articles = []
+			myduplicate = duplicate_schema.dump(duplicate)
+			for myuuid in myduplicate["articles"]:
+				if myuuid is not uuid:
+					articles.append(myuuid)
+			myduplicate["articles"] = articles
+			Duplicate.query.filter_by(id=myduplicate["id"]).update(myduplicate)
+			pprint(f"updating value {duplicate.uuid}")
+		db.session.commit()
+
+		Duplicate.query.filter(func.json_array_length(Duplicate.articles) <= 1).delete()
+		db.session.commit()
+  
+		return jsonify({"message":f"Article id {id} is deleted"}),200
+
 	else:
+		db.session.rollback()
 		return jsonify({"message":f"Article id {id} not found"}),404
 

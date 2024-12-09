@@ -43,7 +43,7 @@
     </tbody>
 </table>
 
-<div class="pagination">
+<div class="pagination flex flex-row align-middle items-center gap-2 m-4" >
     <!-- Previous button -->
     <button {% if current_page<=1 %}disabled class="bg-blue-500 text-white font-bold py-2 px-4 rounded opacity-50 cursor-not-allowed"{% endif %} 
         type="button"
@@ -54,7 +54,7 @@
     </button>
 
     <!-- Page info -->
-    <span id="page-info">Page {{ current_page }} of {{ total_pages }}</span>
+    <div id="page-info flex items-center justify-center">Page {{ current_page }} of {{ total_pages }}</div>
 
     <!-- Next button -->
     <button {% if current_page>= total_pages %}disabled class="bg-blue-500 text-white font-bold py-2 px-4 rounded opacity-50 cursor-not-allowed"{% endif %}

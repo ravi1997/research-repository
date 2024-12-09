@@ -23,6 +23,13 @@ from flask import current_app as app
 
 @main_bp.route("/", methods=["GET"])
 def index():
+	session_id = request.cookies.get('Session-ID')
+	if session_id is not None:   
+		session = Client.query.filter_by(client_session_id=session_id).first()
+
+		if session is not None:
+			if session.isValid() and session.user_id is not None:
+				response = make_response(render_template('index.html', time=time(),logged_in=session.user_id is not None))
 	response = make_response(render_template('index.html', time=time()))
 	return settingSession(request,response)
 
@@ -35,7 +42,7 @@ def loginPage():
 
 		if session is not None:
 			if session.isValid() and session.user_id is not None:
-				return render_template('home.html')
+				return render_template('home.html',logged_in=session.user_id is not None)
 	response = make_response(render_template('login.html'))
 	return settingSession(request,response)
 
@@ -142,7 +149,6 @@ def editArticlePage(session,id):
 		return jsonify({"message":f"Article id {id} not found"}),404
 
 
-
 @main_bp.route('/duplicate-by-title')
 @verify_LIBRARYMANAGER_role
 def duplicateByTitlePage(session):
@@ -188,5 +194,75 @@ def singleArticleDuplicatePage(session,id):
 			articles.append(article)
   
 		return render_template('singleDuplicate.html',result=result,articles = articles,logged_in=session.user_id is not None)
+	else:
+		return jsonify({"message":f"Article id {id} not found"}),404
+
+
+
+
+@main_bp.route('/duplicate-by-pubmed-id')
+@verify_LIBRARYMANAGER_role
+def duplicateByPubmedIDPage(session):
+	server_url = get_base_url()
+	url = f"{server_url}/researchrepository/api/article/duplicates"
+	headers = {
+		"API-ID":app.config.get('API_ID')
+	}
+
+	params = {
+		"field":"pubmed_id"
+	}	
+	cookies = request.cookies.to_dict()  # Converts the ImmutableMultiDict to a regular dictionary
+
+	response = requests.get(url, headers=headers,params=params, cookies=cookies)  # Use `requests.get`
+
+	if response.status_code==200:
+		results = response.json()
+		return render_template('duplicate.html',results=results["pubmed_id"],duplicateBy="PUBMED ID",logged_in=session.user_id is not None)
+	else:
+		return jsonify({"message":f"Article id {id} not found"}),404
+
+@main_bp.route('/duplicate-by-pmc-id')
+@verify_LIBRARYMANAGER_role
+def duplicateByPMCIDPage(session):
+	server_url = get_base_url()
+	url = f"{server_url}/researchrepository/api/article/duplicates"
+	headers = {
+		"API-ID":app.config.get('API_ID')
+	}
+
+	params = {
+		"field":"pmc_id"
+	}	
+	cookies = request.cookies.to_dict()  # Converts the ImmutableMultiDict to a regular dictionary
+
+	response = requests.get(url, headers=headers,params=params, cookies=cookies)  # Use `requests.get`
+
+	if response.status_code==200:
+		results = response.json()
+		return render_template('duplicate.html',results=results["pmc_id"],duplicateBy="PMC ID",logged_in=session.user_id is not None)
+	else:
+		return jsonify({"message":f"Article id {id} not found"}),404
+
+
+@main_bp.route('/duplicate-by-doi')
+@verify_LIBRARYMANAGER_role
+def duplicateByDOIPage(session):
+	server_url = get_base_url()
+	url = f"{server_url}/researchrepository/api/article/duplicates"
+	headers = {
+		"API-ID":app.config.get('API_ID')
+	}
+
+	params = {
+		"field":"doi"
+	}	
+	cookies = request.cookies.to_dict()  # Converts the ImmutableMultiDict to a regular dictionary
+
+	response = requests.get(url, headers=headers,params=params, cookies=cookies)  # Use `requests.get`
+
+	if response.status_code==200:
+		results = response.json()
+		return render_template('duplicate.html',results=results["doi"],duplicateBy="DOI",logged_in=session.user_id is not None)
 	else:
 		return jsonify({"message":f"Article id {id} not found"}),404

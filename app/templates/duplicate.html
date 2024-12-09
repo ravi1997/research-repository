@@ -3,6 +3,7 @@
 {% block content %}
 
 <h2 class="text-center text-5xl font-bold">Duplicate by {{duplicateBy}}</h2>
+<h2 class="text-left text-2xl">Number of duplicates found: {{results | length}}</h2>
 
 <table>
     <thead>
@@ -12,6 +13,7 @@
         </tr>
     </thead>
     <tbody id="table-body">
+
         {% for result in results %}
         <tr>
             <td>{{ result.value }}</td>
