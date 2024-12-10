@@ -1,24 +1,7 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "base.html" %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edit Article</title>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/researchrepository/constant/style/style.css">
-    <link rel="stylesheet" href="/researchrepository/constant/style/edit.css">
-</head>
+{% block content %}
 
-<body>
-    <header class="header">
-        <h1>AIIMS Research Repository</h1>
-        <div class="button" onclick="logout()">
-            Logout
-        </div>
-    </header>
-
-    <main class="container">
         <div class="card">
             <h2 class="title">Edit Article</h2>
             <form id="edit-form" action="/researchrepository/api/article/{{ article.uuid }}" method="POST" class="form"
@@ -26,14 +9,14 @@
                 <div class="form-group">
                     <label for="title">Title</label>
                     <input type="text" id="title" name="title" value="{{ article.title or '' }}" required>
-
+        
                 </div>
-
+        
                 <div class="form-group">
                     <label for="abstract">Abstract</label>
                     <textarea id="abstract" name="abstract" rows="4" required>{{ article.abstract or '' }}</textarea>
                 </div>
-
+        
                 <!-- Authors Section -->
                 <div class="section">
                     <h3>Authors</h3>
@@ -53,8 +36,8 @@
                                 ondrop="onDrop(event)">
                                 <td style="display:none;"><input type="text" name="authors[{{ loop.index }}][id]"
                                         value="{{ author.id }}" required></td>
-                                <td><input type="text" name="authors[{{ loop.index }}][fullName]"
-                                        value="{{ author.fullName }}" required></td>
+                                <td><input type="text" name="authors[{{ loop.index }}][fullName]" value="{{ author.fullName }}"
+                                        required></td>
                                 <td><input type="text" name="authors[{{ loop.index }}][affiliation]"
                                         value="{{ author.affiliation }}"></td>
                                 <td><input type="text" name="authors[{{ loop.index }}][abbreviation]"
@@ -68,7 +51,7 @@
                     <button type="button" class="btn btn-primary" onclick="addAuthor()">+ Add
                         Author</button>
                 </div>
-
+        
                 <!-- Publication Details Section -->
                 <div class="section">
                     <h3>Publication Details</h3>
@@ -134,7 +117,7 @@
                         </div>
                     </div>
                 </div>
-
+        
                 <!-- Keywords Section -->
                 <div class="section">
                     <h3>Keywords</h3>
@@ -150,8 +133,10 @@
                             {% for keyword in article.keywords %}
                             <tr draggable="true" ondragstart="onDragStart(event)" ondragover="onDragOver(event)"
                                 ondrop="onDrop(event)">
-                                <td style="display:none;"><input type="text" name="keywords[{{ loop.index }}][id]" value="{{ keyword.id or '' }}" required></td>
-                                <td><input type="text" name="keywords[{{ loop.index }}][keyword]" value="{{ keyword.keyword or '' }}" required></td>
+                                <td style="display:none;"><input type="text" name="keywords[{{ loop.index }}][id]"
+                                        value="{{ keyword.id or '' }}" required></td>
+                                <td><input type="text" name="keywords[{{ loop.index }}][keyword]"
+                                        value="{{ keyword.keyword or '' }}" required></td>
                                 <td><button type="button" class="btn btn-sm btn-danger"
                                         onclick="removeRow(this)">Remove</button></td>
                             </tr>
@@ -161,7 +146,7 @@
                     <button type="button" class="btn btn-primary" onclick="addKeyword()">+ Add
                         Keyword</button>
                 </div>
-
+        
                 <!-- Links Section (New) -->
                 <div class="section">
                     <h3>Links</h3>
@@ -177,7 +162,8 @@
                             {% for link in article.links %}
                             <tr draggable="true" ondragstart="onDragStart(event)" ondragover="onDragOver(event)"
                                 ondrop="onDrop(event)">
-                                <td style="display:none;"><input type="text" name="links[{{ loop.index }}][id]" value="{{ link.id or '' }}" required></td>
+                                <td style="display:none;"><input type="text" name="links[{{ loop.index }}][id]"
+                                        value="{{ link.id or '' }}" required></td>
                                 <td><input type="url" name="links[{{ loop.index }}][link]" value="{{ link.link or '' }}"
                                         placeholder="Link" required></td>
                                 <td><button type="button" class="btn btn-sm btn-danger"
@@ -188,9 +174,9 @@
                     </table>
                     <button type="button" class="btn btn-primary" onclick="addLink()">+ Add Link</button>
                 </div>
-
-
-
+        
+        
+        
                 <!-- Form Actions -->
                 <div class="form-actions">
                     <button type="submit" class="btn btn-success">Save Changes</button>
@@ -198,23 +184,7 @@
                 </div>
             </form>
         </div>
-    </main>
-
-    <footer class="footer">
-        <p>&copy; 2024 AIIMS Research Repository. All Rights Reserved.</p>
-    </footer>
-
-    <script>
-        const article_uuid = "{{ article.uuid }}";
 
 
-    </script>
-    <script src="/researchrepository/constant/js/common.js"></script>
-    <script src="/researchrepository/constant/js/edit.js"></script>
-
-
-
-
-</body>
-
-</html>
+<script src="{{url_for('static',filename='js/edit.js')}}"></script>
+{% endblock %}

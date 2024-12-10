@@ -2,7 +2,8 @@
 module.exports = {
   content: [
     "./app/templates/**/*.html",
-    "./app/static/**/*.js"
+    "./app/static/**/*.js",
+    "./node_modules/flowbite/**/*.js"
   ],
   darkMode: 'selector',
   theme: {
@@ -13,6 +14,7 @@ module.exports = {
   },
   plugins: [
     require('@tailwindcss/typography'),
+    require('flowbite/plugin'),
   ],
 }
 

@@ -193,10 +193,9 @@ def singleArticleDuplicatePage(session,id):
 			article = new_response.json()
 			articles.append(article)
   
-		return render_template('singleDuplicate.html',result=result,articles = articles,logged_in=session.user_id is not None)
+		return render_template('singleDuplicate.html',uuid = id, result=result,articles = articles,logged_in=session.user_id is not None)
 	else:
-		return jsonify({"message":f"Article id {id} not found"}),404
-
+		return jsonify({"message":f"Duplicate id {id} not found"}),404
 
 
 

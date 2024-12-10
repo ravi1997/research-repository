@@ -2,8 +2,8 @@
 
 {% block content %}
 
-<h2 class="text-center text-5xl font-bold">Duplicate by {{duplicateBy}}</h2>
-<h2 class="text-left text-2xl">Number of duplicates found: {{results | length}}</h2>
+<h2 class="text-center text-5xl font-bold">Duplicates by {{duplicateBy}}</h2>
+<h2 class="text-left text-2xl">Duplicate {{duplicateBy}}s found: {{results | length}}</h2>
 
 <table>
     <thead>
@@ -22,9 +22,8 @@
                         type="button"
                         class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 border border-blue-700 rounded"
                         onclick="window.open('../researchrepository/singleDuplicate/{{result.uuid}}', '_blank')"
-                        
                         >
-                            view/edit
+                            View Articles
                     </button>
                 
                 </td>

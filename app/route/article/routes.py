@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 import os
 from pprint import pprint
 import traceback
@@ -549,9 +549,8 @@ def getSingle_duplicate(session,id):
 
 
 
-@article_bp.route("/duplicate/<string:id>/resolved")
+@article_bp.route("/duplicate/<string:id>/resolved",methods=["DELETE"])
 @verify_session
-@verify_internal_api_id
 def resolved_duplicate(session,id):
 	duplicate = Duplicate.query.filter_by(uuid=id).first()
 	if duplicate:
@@ -582,16 +581,21 @@ def delete_article(session,id):
 		for duplicate in Duplicate.query.filter(Duplicate.articles.contains(uuid)).all():
 			articles = []
 			myduplicate = duplicate_schema.dump(duplicate)
+			# pprint(myduplicate["articles"])
 			for myuuid in myduplicate["articles"]:
-				if myuuid is not uuid:
+				if myuuid != uuid:
+					# pprint(myuuid)
 					articles.append(myuuid)
 			myduplicate["articles"] = articles
-			Duplicate.query.filter_by(id=myduplicate["id"]).update(myduplicate)
-			pprint(f"updating value {duplicate.uuid}")
+			# pprint(myduplicate["created_at"])
+			# myduplicate["created_at"] = datetime.fromisoformat(myduplicate["created_at"])
+			Duplicate.query.filter_by(id=myduplicate["id"]).delete()
+			myduplicate.pop("id")
+			if len(articles) > 1:
+				db.session.add(duplicate_schema.load(myduplicate))
+			app.logger.info(f"updating uuid {duplicate.uuid} in duplicate model")
 		db.session.commit()
 
-		Duplicate.query.filter(func.json_array_length(Duplicate.articles) <= 1).delete()
-		db.session.commit()
   
 		return jsonify({"message":f"Article id {id} is deleted"}),200
 
