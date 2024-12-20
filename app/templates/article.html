@@ -24,7 +24,7 @@
             <ul class="authors grid grid-cols-5 gap-5">
                 {% for author in article.authors %}
                 <li class="relative bg-[#eaedf0] m-auto px-2 py-3.5 rounded w-auto mx-auto text-center shadow hover:shadow-lg">
-                    <h3 class="text-xl mb-1">{{ author.fullName }}</h3>
+                    <a href="/researchrepository/author?q={{author.fullName}}" target="_blank"><h3 class="text-xl mb-1">{{ author.fullName }}</h3></a>
                     <div class="author-details hidden absolute bottom-full left-1/2 bg-white p-3 rounded shadow-md z-[1] w-52 text-left">
                         <p class="my-0 mx-3 text-sm"><strong>Affiliation:</strong> {{ author.affiliations or "" }}</p>
                         <p class="my-0 mx-3 text-sm"><strong>Author Abbreviated:</strong> {{ author.author_abbreviated or "" }}</a></p>
@@ -36,7 +36,7 @@
         
         <section class="section space-y-2">
             <h2 class="text-center text-2xl text-bold pb-2">Publication Details</h2>
-            <p><strong>Journal:</strong> {{ article.journal }} ({{ article.journal_abrevated }})</p>
+            <p><strong>Journal:</strong> <a href="/researchrepository/journal?q={{article.journal}}" target="_blank">{{ article.journal }} ({{ article.journal_abrevated }})</a></p>
             <p><strong>Volume:</strong> {{ article.journal_volume }}, <strong>Issue:</strong> {{ article.journal_issue }}</p>
             <p><strong>Pages:</strong> {{ article.pages }}</p>
             <p><strong>Published Date:</strong> {{ article.publication_date }}</p>
@@ -52,7 +52,7 @@
             <h2 class="text-center text-2xl text-bold">Keywords</h2>
             <ul class="list-none p-4 mx-0 my-3 grid grid-cols-5 gap-3">
                 {% for keyword in article.keywords %}
-                <li class="bg-white px-2 py-3.5 rounded text-sm cursor-pointer text-center">{{ keyword.keyword }}</li>
+                <li class="bg-white px-2 py-3.5 rounded text-sm cursor-pointer text-center"><a href="/researchrepository/keyword?q={{keyword.keyword}}" target="_blank">{{ keyword.keyword }}</a></li>
                 {% endfor %}
             </ul>
         </section>

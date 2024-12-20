@@ -29,7 +29,8 @@ def index():
 
 		if session is not None:
 			if session.isValid() and session.user_id is not None:
-				response = make_response(render_template('index.html', time=time(),logged_in=session.user_id is not None))
+				response = make_response(render_template('index.html',time=time(),logged_in=session.user_id is not None))
+				return settingSession(request,response)
 	response = make_response(render_template('index.html', time=time()))
 	return settingSession(request,response)
 
@@ -264,4 +265,91 @@ def duplicateByDOIPage(session):
 		results = response.json()
 		return render_template('duplicate.html',results=results["doi"],duplicateBy="DOI",logged_in=session.user_id is not None)
 	else:
-		return jsonify({"message":f"Article id {id} not found"}),404
+		return jsonify({"message":f"Duplicate id {id} not found"}),404
+
+
+@main_bp.route('/author')
+@verify_session
+def authorPage(session):
+	query = request.args.get('q','')
+	offset = request.args.get('offset', 0, type=int)
+	limit = request.args.get('limit', 10, type=int)
+    
+	server_url = get_base_url()
+	url = f"{server_url}/researchrepository/api/article/search"
+	headers = {
+		"API-ID":app.config.get('API_ID')
+	}
+
+	params = {
+		"q":query,
+		"search_by":"author",
+		"offset":offset,
+		"limit":limit
+	}	
+	cookies = request.cookies.to_dict()  # Converts the ImmutableMultiDict to a regular dictionary
+	response = requests.get(url, headers=headers,params=params, cookies=cookies)  # Use `requests.get`
+
+	if response.status_code==200:
+		results = response.json()
+		return render_template('author.html',results=results["articles"],result_for=results["result_for"],logged_in=session.user_id is not None)
+	else:
+		return jsonify({"message":f"Internal Error occured"}),500
+
+@main_bp.route('/keyword')
+@verify_session
+def keywordPage(session):
+	query = request.args.get('q','')
+	offset = request.args.get('offset', 0, type=int)
+	limit = request.args.get('limit', 10, type=int)
+    
+	server_url = get_base_url()
+	url = f"{server_url}/researchrepository/api/article/search"
+	headers = {
+		"API-ID":app.config.get('API_ID')
+	}
+
+	params = {
+		"q":query,
+		"search_by":"keyword",
+		"offset":offset,
+		"limit":limit
+	}	
+	cookies = request.cookies.to_dict()  # Converts the ImmutableMultiDict to a regular dictionary
+	response = requests.get(url, headers=headers,params=params, cookies=cookies)  # Use `requests.get`
+
+	if response.status_code==200:
+		results = response.json()
+		return render_template('keyword.html',results=results["articles"],result_for=results["result_for"],logged_in=session.user_id is not None)
+	else:
+		return jsonify({"message":f"Internal Error occured"}),500
+
+
+@main_bp.route('/journal')
+@verify_session
+def journalPage(session):
+	query = request.args.get('q','')
+	offset = request.args.get('offset', 0, type=int)
+	limit = request.args.get('limit', 10, type=int)
+    
+	server_url = get_base_url()
+	url = f"{server_url}/researchrepository/api/article/search"
+	headers = {
+		"API-ID":app.config.get('API_ID')
+	}
+
+	params = {
+		"q":query,
+		"search_by":"journal",
+		"offset":offset,
+		"limit":limit
+	}	
+	cookies = request.cookies.to_dict()  # Converts the ImmutableMultiDict to a regular dictionary
+	response = requests.get(url, headers=headers,params=params, cookies=cookies)  # Use `requests.get`
+
+	if response.status_code==200:
+		results = response.json()
+		return render_template('journal.html',results=results["articles"],result_for=results["result_for"],logged_in=session.user_id is not None)
+	else:
+		return jsonify({"message":f"Internal Error occured"}),500
+

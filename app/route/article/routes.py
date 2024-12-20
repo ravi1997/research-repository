@@ -1,10 +1,10 @@
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 import os
 from pprint import pprint
 import traceback
 from flask import jsonify,current_app as app, request
 from marshmallow import ValidationError
-from sqlalchemy import or_
+from sqlalchemy import desc, or_
 
 import uuid
 
@@ -155,11 +155,12 @@ def upload(session, request, ALLOWED_EXTENSIONS):
 					db.session.add(new_link)
 					new_article.links.append(new_link)
 
-				# Add authors
+				db.session.commit()
 				for idx, author in enumerate(authors):
 					author_instance = add_or_get(Author, session, **author)
 					new_article.authors.append(ArticleAuthor(author=author_instance, sequence_number=idx + 1))
 
+				db.session.commit()
 				result_ids.append(new_article.id)
 
 			articles = Article.query.filter(Article.id.in_(result_ids)).all()
@@ -426,13 +427,116 @@ def find_duplicate_groups(session):
 	# pprint(duplicates)
 	return jsonify(duplicates),200
 
+def calculate_font_size(article_count, min_count, max_count, min_font=10, max_font=50):
+    """
+    Scale article_count to a font size between min_font and max_font.
+
+    Args:
+    - article_count (int): The count of articles.
+    - min_count (int): The minimum article count in the dataset.
+    - max_count (int): The maximum article count in the dataset.
+    - min_font (int): Minimum font size.
+    - max_font (int): Maximum font size.
+
+    Returns:
+    - int: Scaled font size.
+    """
+    
+    if max_count == min_count:  # Avoid division by zero
+        return (max_font + min_font) // 2
+    return int(((article_count - min_count) / (max_count - min_count)) * (max_font - min_font) + min_font)
+
+
 
 @article_bp.route("/statistic",methods=['GET'])
 @verify_session
 def statistic(session):
-		
-	return jsonify({})
+	query = request.args.get('q','')
+	if not query:
+		return jsonify({"message":"Query parameter is mandatory"}),400
+	
+	if query == "count":
+		count = Article.query.count()
+		return jsonify({"message":"Successfull result","result":count}),200
+	
+	if query == "view":
+		count = 0
+		for stats in ArticleStatistic.query.all():
+			count += stats.view 
+		return jsonify({"message":"Successfull result","result":count}),200
 
+	if query == "currentCount":
+		current = str(datetime.now().year)
+		count = 0
+		results = (
+				db.session.query(
+					func.strftime('%Y', Article.publication_date).label('year'),  # Extract year from publication_date
+					func.count(Article.id).label('count')  # Count articles
+				)
+				.filter(Article.publication_date.isnot(None))
+				.group_by('year')  # Group by year
+				.order_by('year')  # Order by year
+				.all()
+			)
+  
+		for year, mycount in results:
+      
+			if year == current:
+				count = mycount
+
+		return jsonify({"message":"Successfull result","result":count}),200
+
+	if query == "keyword":
+		keyword_counts = (
+			db.session.query(Keyword.keyword, func.count(ArticleKeyword.article_id).label('article_count'))
+			.join(ArticleKeyword, Keyword.id == ArticleKeyword.keyword_id)
+			.group_by(Keyword.id)
+			.limit(200)
+			.all()
+		)
+		min_count = min(keyword_counts, key=lambda x: x[1])[1]
+		max_count = max(keyword_counts, key=lambda x: x[1])[1]
+		# Format the result as a list of dictionaries
+		result = [
+			{"url":f"/researchrepository/keyword?q={keyword}","word": keyword, "size": calculate_font_size(article_count, min_count, max_count)}
+			for keyword, article_count in keyword_counts
+		]
+		return jsonify({"message":"Successfull result","result":result}),200
+
+	if query=="recentArticles":
+		articles = Article.query.order_by(desc(Article.publication_date)).limit(10).all()
+		article_schema = ArticleSchema(many=True)
+		result = article_schema.dump(articles)
+		return jsonify({"message":"Successfull result","result":result}),200
+  
+	if query == "yearData":    
+		try:
+			# Query to get counts of articles grouped by year
+			results = (
+				db.session.query(
+					func.strftime('%Y', Article.publication_date).label('year'),  # Extract year from publication_date
+					func.count(Article.id).label('count')  # Count articles
+				)
+				.filter(Article.publication_date.isnot(None))
+				.group_by('year')  # Group by year
+				.order_by('year')  # Order by year
+				.all()
+			)
+
+
+			years = []
+			values = []
+			for year, count in results:
+				years.append(str(year))
+				values.append(count)
+
+   
+			return jsonify({"status": "success", "labels": years,"values":values}), 200
+
+		except Exception as e:
+			return jsonify({"status": "error", "message": str(e)}), 500
+	
+	return jsonify({"message":"Wrong parameter"}),400
 
 
 
@@ -502,11 +606,12 @@ def uploadDuplicate(session, request, ALLOWED_EXTENSIONS):
 					db.session.add(new_link)
 					new_article.links.append(new_link)
 
-				# Add authors
+				db.session.commit()
 				for idx, author in enumerate(authors):
 					author_instance = add_or_get(Author, session, **author)
 					new_article.authors.append(ArticleAuthor(author=author_instance, sequence_number=idx + 1))
 
+				db.session.commit()
 				result_ids.append(new_article.id)
 
 			articles = Article.query.filter(Article.id.in_(result_ids)).all()
@@ -525,6 +630,7 @@ def uploadDuplicate(session, request, ALLOWED_EXTENSIONS):
 			return jsonify({"error": "An error occurred while processing the file"}), 500
 
 	return jsonify({"error": "Invalid file type. Only .ris files are allowed."}), 401
+
 
 @article_bp.route('/upload_ris_duplicate', methods=['POST'])
 @verify_USER_role
@@ -602,4 +708,99 @@ def delete_article(session,id):
 	else:
 		db.session.rollback()
 		return jsonify({"message":f"Article id {id} not found"}),404
+
+
+
+def search(query,author,offset,limit):    
+	# Get total count of matching articles
+	total_articles = query.count()
+
+	# Handle out-of-bounds offset
+	if offset >= total_articles:
+		return jsonify({
+			"message": "Offset exceeds the total number of results.",
+			"total_articles": total_articles,
+			"offset": offset,
+			"limit": limit,
+			"articles": []
+		}),400
+
+	# Apply offset and limit for pagination
+	paginated_articles = query.offset(offset).limit(limit).all()
+	article_schema = ArticleSchema(many=True)
+
+	# Serialize the article data
+	articles_data = article_schema.dump(paginated_articles)
+	
+	return jsonify({
+		"result_for": author,
+		"total_articles": total_articles,
+		"offset": offset,
+		"limit": limit,
+		"articles": articles_data
+	}),200
+	
+
+@article_bp.route("/search")
+@verify_session
+@verify_internal_api_id
+def search_article(session):
+	query = request.args.get('q','')
+	search_by = request.args.get('search_by','')
+	offset = request.args.get('offset', 0, type=int)
+	limit = request.args.get('limit', 10, type=int)
+	
+	if not query:
+		return jsonify({"message":"Search must have a query parameter"}),401
+
+	if offset<0 or limit <= 0:
+		return jsonify({"error": "Offset must be non negative and Limit must be greater than 0"}), 400
+	
+	author_query = (
+			db.session.query(Article)
+			.join(ArticleAuthor, Article.id == ArticleAuthor.article_id)
+			.join(Author, ArticleAuthor.author_id == Author.id)
+			.filter(
+				or_(
+					Author.fullName.ilike(f"%{query}%"),  # Match full name
+					Author.author_abbreviated.ilike(f"%{query}%")  # Match abbreviation
+				)
+			)
+			.distinct()  # Ensure unique articles
+		)
+
+	keyword_query = (
+			db.session.query(Article)
+			.join(ArticleKeyword, Article.id == ArticleKeyword.article_id)
+			.join(Keyword, ArticleKeyword.keyword_id == Keyword.id)
+			.filter(Keyword.keyword.ilike(f"%{query}%"))
+			.distinct()  # Ensure unique articles
+		)
+
+	journal_query = (
+			db.session.query(Article)
+   			.filter(
+				or_(
+					Article.journal.ilike(f"%{query}%"),  # Match full name
+					Article.journal_abrevated.ilike(f"%{query}%")  # Match abbreviation
+				)
+			)
+			.distinct()  # Ensure unique articles
+		)
+
+
+
+	if search_by == "author":
+		return search(author_query,query,offset,limit)
+
+	elif search_by == "keyword":
+		return search(keyword_query,query,offset,limit)
+
+	elif search_by == "journal":
+		return search(journal_query,query,offset,limit)
+	else:
+	 
+	
+	 
+		return jsonify({"message":f"Searching for {query}"}),200
 

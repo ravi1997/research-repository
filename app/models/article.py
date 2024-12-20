@@ -2,6 +2,7 @@ from sqlalchemy import DateTime, func, Enum as SQLAlchemyEnum
 from app.extension import db
 from sqlalchemy.orm import relationship
 
+import uuid
 
 class Author(db.Model):
     __tablename__ = "authors"
@@ -124,6 +125,7 @@ class Keyword(db.Model):
     __tablename__ = 'keywords'
     id = db.Column(db.Integer, primary_key=True)
     keyword = db.Column(db.Text, nullable=False)
+    uuid = db.Column(db.Text, nullable=False,server_default=str(uuid.uuid4()))
     
     # Many-to-Many relationship with Article
     articles = db.relationship(

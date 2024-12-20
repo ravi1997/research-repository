@@ -5,6 +5,7 @@
     "tailwindcss": "^3.4.16"
   },
   "dependencies": {
+    "apexcharts": "^4.2.0",
     "flowbite": "^2.5.2",
     "toastify-js": "^1.12.0"
   }
