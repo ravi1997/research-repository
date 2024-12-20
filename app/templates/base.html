@@ -6,9 +6,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="{{ url_for('static', filename='assets/favicon.png', version=time) }}" />
     <link rel="stylesheet" href="{{url_for('static',filename='style/style.css')}}">
-    <link rel="stylesheet" href="{{url_for('static',filename='dist/css/output.css')}}">
+
     <link rel="stylesheet" href="{{url_for('static',filename='style/flowbite.min.css')}}">
     <link rel="stylesheet" href="{{url_for('static',filename='style/toastify.css')}}">
+
+    <link rel="stylesheet" href="{{url_for('static',filename='dist/css/output.css')}}">
     {% if title %}
     <title>{{ title }} - AIIMS Research Publication Repository</title>
     {% else %}

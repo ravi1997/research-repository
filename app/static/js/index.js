@@ -14,11 +14,11 @@ window.onload = async function () {
                     const articleHtml = `
                     <ul>
     <li id="${article.uuid}-uuid" class="w-full">
-        <div class="flex flex-row items-center ps-3 w-full">
+        <div class="flex flex-row ps-3 w-full">
             <div id="${article.uuid}"
                 class="rounded w-full overflow-hidden shadow-lg p-2 mx-auto my-2 flex flex-row justify-between
                                     hover:text-teal-100 hover:bg-teal-900 ease-in duration-100 border dark:border-gray-300">
-                <div>
+                <div class="text-left">
                     ${article.field !== "tittle" ? `${article.title}<br />` : ""}
                     ${article.authors.map(author => author.fullName).join("; ")}<br />
                     <span class="italic">${article.journal || ''}</span><br />
@@ -152,7 +152,7 @@ function createWordCloud(myWords) {
     const selectedWords = myWords.slice(0, Math.min(wordCount, myWords.length));
 
     const margin = { top: 10, right: 10, bottom: 10, left: 10 },
-        width = Math.min(screenWidth, 900) - margin.left - margin.right,
+        width = Math.min(screenWidth, 1200) - margin.left - margin.right,
         height = Math.min(window.innerHeight, 500) - margin.top - margin.bottom;
 
     // Clear existing SVG
