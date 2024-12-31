@@ -17,7 +17,7 @@
             <h3>Upload .ris File</h3>
             <form id="uploadForm" enctype="multipart/form-data">
                 <input type="file" id="file" name="file" accept=".ris" required>
-                <button type="button" onclick="uploadrisFile()">Upload</button>
+                <button class="button p-4 px-8 bg-teal-800 rounded-lg text-white font-semibold" type="button" onclick="uploadrisFile()">Upload</button>
             </form>
             <p id="message"></p>
         </div>
@@ -27,7 +27,7 @@
             <h3>Upload .nbib File</h3>
             <form id="uploadForm-nbib" enctype="multipart/form-data">
                 <input type="file" id="file" name="file" accept=".nbib" required>
-                <button type="button" onclick="uploadnbibFile()">Upload</button>
+                <button class="button p-4 px-8 bg-teal-800 rounded-lg text-white font-semibold" type="button" onclick="uploadnbibFile()">Upload</button>
             </form>
             <p id="message1"></p>
         </div>
@@ -38,7 +38,7 @@
             <form id="pubmed-form" action="../researchrepository/api/article/pubmedFectch" method="post"
                 onsubmit="submitForm(event)">
                 <input type="text" name="pmid" placeholder="Enter PubMed ID" required>
-                <button type="submit">Submit</button>
+                <button class="button p-4 px-8 bg-teal-800 rounded-lg text-white font-semibold" type="submit">Submit</button>
             </form>
         </div>
     </div>
