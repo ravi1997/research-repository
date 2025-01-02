@@ -1,0 +1,283 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="flex">
+    <!-- Left Panel (Filters) -->
+    <div class="w-1/4 bg-white p-6 rounded-lg shadow-lg">
+        <h2 class="text-xl font-semibold text-gray-800 mb-4">Filters</h2>
+        <form id="filter-form" method="GET" action="/researchrepository/search" onsubmit="applyFunction">
+            <div class="space-y-4">
+                <div id="offset-div" class="hidden">
+                    <input id="offset" type="text" name="offset" placeholder="offset" value="{{offset}}"
+                class="w-full p-3 border border-gray-300 rounded-lg" />
+                </div>
+                <div id="limit-div" class="hidden">
+                    <input id="limit" type="text" name="limit" placeholder="limit" value="{{entry}}"
+                class="w-full p-3 border border-gray-300 rounded-lg" />
+                </div>
+
+                <div id="query-div" class="hidden">
+                    <input id="query" type="text" name="query" placeholder="Search articles..." value="{{query}}"
+                class="w-full p-3 border border-gray-300 rounded-lg" />
+                </div>
+                <!-- Author -->
+                <div>
+                    <label for="authors" class="block text-gray-700">Authors</label>
+
+                    <!-- Search Box -->
+                    <input 
+                        type="text" 
+                        id="author-search" 
+                        placeholder="Search authors..." 
+                        class="w-full p-2 border border-gray-300 rounded-lg mb-2"
+                        oninput="filterAuthors()"
+                    >
+
+                    <!-- Authors List -->
+                    <div id="author-options"
+                        class="space-y-2 max-h-32 overflow-y-auto border border-gray-300 rounded-lg p-2">
+                        <!-- Dynamic author options -->
+                        {% for author in unique_authors %}
+                        <div class="author-item">
+                            <input 
+                                type="checkbox" 
+                                id="author-{{ loop.index }}" 
+                                name="authors" 
+                                value="{{ author }}" 
+                                {% if myfilters and author in myfilters.authors %}checked{% endif %} 
+                                onchange="reorderAuthors()">
+                            <label 
+                                for="author-{{ loop.index }}" 
+                                class="text-gray-700">{{ author }}</label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Start Date -->
+                <div>
+                    <label for="start-date" class="block text-gray-700">Start Date</label>
+                    <input type="date" id="start-date" name="start_date"
+                        class="w-full p-3 border border-gray-300 rounded-lg" value="{{ myfilters.start_date[0] if myfilters and 'start_date' in myfilters else '' }}">
+                </div>
+
+                <!-- End Date -->
+                <div>
+                    <label for="end-date" class="block text-gray-700">End Date</label>
+                    <input type="date" id="end-date" name="end_date"
+                        class="w-full p-3 border border-gray-300 rounded-lg"
+                        value="{{ myfilters.end_date[0] if myfilters and 'end_date' in myfilters else '' }}"
+                        >
+                </div>
+
+                <!-- Keywords -->
+                <div>
+                    <label for="keywords" class="block text-gray-700">Keywords</label>
+
+                    <!-- Search Box -->
+                    <input 
+                        type="text" 
+                        id="keyword-search" 
+                        placeholder="Search keywords..." 
+                        class="w-full p-2 border border-gray-300 rounded-lg mb-2"
+                        oninput="filterKeywords()"
+                    >
+
+                    <!-- Keywords List -->
+                    <div id="keyword-options"
+                        class="space-y-2 max-h-32 overflow-y-auto border border-gray-300 rounded-lg p-2">
+                        {% for keyword in unique_keywords %}
+                        <div class="keyword-item">
+                            <input type="checkbox" id="keyword-{{ loop.index }}" name="keywords" value="{{ keyword }}" 
+                            {% if myfilters and keyword in myfilters.keywords %}checked{% endif %} onchange="reorderKeywords()">
+                            <label for="keyword-{{ loop.index }}" class="text-gray-700">{{ keyword }}</label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+
+                <!-- Journals -->
+                <div>
+                    <label for="journals" class="block text-gray-700">Journals (ANY) </label>
+
+                    <!-- Search Box -->
+                    <input 
+                        type="text" 
+                        id="journal-search" 
+                        placeholder="Search journals..." 
+                        class="w-full p-2 border border-gray-300 rounded-lg mb-2"
+                        oninput="filterJournals()"
+                    >
+
+                    <!-- Journals List -->
+                    <div id="journal-options"
+                        class="space-y-2 max-h-32 overflow-y-auto border border-gray-300 rounded-lg p-2">
+                        {% for journal in unique_journals %}
+                        <div class="journal-item">
+                            <input type="checkbox" id="journal-{{ loop.index }}" name="journals" value="{{ journal }}" 
+                            {% if myfilters and journal in myfilters.journals %}checked{% endif %} onchange="reorderJournals()">
+                            <label for="journal-{{ loop.index }}" class="text-gray-700">{{ journal }}</label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+
+                <!-- Apply Filters Button -->
+                <button type="submit"
+                    class="w-full p-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition">Apply
+                    Filters</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Right Panel (Results) -->
+    <div class="w-3/4 p-6">
+        <!-- Search Field -->
+        <div class="mb-6">
+            <input type="text" id="search" name="search" placeholder="Search articles..." value="{{query}}"
+                class="w-full p-3 border border-gray-300 rounded-lg" />
+        </div>
+
+        <h2 class="text-center text-5xl font-bold mb-8">Search Results</h2>
+        
+        <div class="pagination flex flex-row align-middle items-center gap-2 m-4">
+            <!-- Previous button -->
+            <button 
+                {% if current_page <= 1 %}
+                    disabled
+                    class="bg-blue-500 text-white font-bold py-2 px-4 rounded opacity-50 cursor-not-allowed" 
+                {% else %}
+                    class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 border border-blue-700 rounded"
+                {% endif %}
+                type="button" 
+                onclick="navigateToPage(1, '{{ entry | safe }}', {{ total_pages }})"
+            >
+                First
+            </button>
+
+            <button 
+                {% if current_page <= 1 %}
+                    disabled
+                    class="bg-blue-500 text-white font-bold py-2 px-4 rounded opacity-50 cursor-not-allowed" 
+                {% else %}
+                    class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 border border-blue-700 rounded"
+                {% endif %}
+                type="button" 
+                onclick="navigateToPage({{ current_page - 1 }}, '{{ entry | safe }}', {{ total_pages }})"
+            >
+                Previous
+            </button>
+
+            <!-- Page info -->
+            <div id="page-info" class="flex items-center justify-center">
+                Page {{ current_page }} of {{ total_pages }}
+            </div>
+
+            <!-- Next button -->
+            <button 
+                {% if current_page >= total_pages %}
+                    disabled
+                    class="bg-blue-500 text-white font-bold py-2 px-4 rounded opacity-50 cursor-not-allowed" 
+                {% else %}
+                    class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 border border-blue-700 rounded"
+                {% endif %}
+                type="button" 
+                onclick="navigateToPage({{ current_page + 1 }}, '{{ entry | safe }}', {{ total_pages }})"
+            >
+                Next
+            </button>
+
+            <button 
+                {% if current_page >= total_pages %}
+                    disabled
+                    class="bg-blue-500 text-white font-bold py-2 px-4 rounded opacity-50 cursor-not-allowed" 
+                {% else %}
+                    class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 border border-blue-700 rounded"
+                {% endif %}
+                type="button" 
+                onclick="navigateToPage({{ total_pages }}, '{{ entry | safe }}', {{ total_pages }})"
+            >
+                Last
+            </button>
+        </div>
+        <div class="text-center text-xl font-bold">
+                <span>
+                    {% set string1 = (current_page-1) * entry +1 %}
+                    {% set string2 = string1 + articles|length - 1 %}
+                    Showing records from {{ string1 }} to {{ string2 }}
+                </span>
+
+        </div>
+        <div id="results" class="container mx-auto flex flex-col justify-center">
+            {% for article in articles %}
+            <ul>
+                {% set string1 = article.uuid %}
+                {% set string2 = "-uuid" %}
+                {% set string3 = string1 + string2 %}
+                <li id="{{string3}}" class="w-full">
+                    <div class="flex flex-row ps-3 w-full ">
+            
+                        <label for="{{ article.uuid }}" class="w-full">
+                            <div id="{{ article.uuid }}"
+                                class="rounded overflow-hidden shadow-lg p-2 mx-auto my-2 flex flex-row justify-between
+                                                        hover:text-teal-100 hover:bg-teal-900 ease-in duration-100 border dark:border-gray-300">
+                                <div>
+            
+                                    {{article.title}}
+                                    <br />
+                                    {% for author in article.authors %}
+                                    {{ author.fullName }}{% if not loop.last %}; {% endif %}
+                                    {% endfor %}
+                                    <br />
+                                    <span class="italic"> {{ article.journal or '' }} </span>
+                                    <br /> {{ article.publication_date or '' }}. {{ article.journal_volume or '' }}({{
+                                    article.journal_issue or '' }}):{{ article.pages or '' }} {{ article.pubmed_id or '' }}
+                                    <br />
+                                    {% if article.doi %}
+                                    DOI: <a href="https://doi.org/{{ article.doi }}" target="_blank">{{ article.doi }}</a>
+                                    {% endif %}
+                                    {% if article.pubmed_id %}
+                                    PUBMED: <a href="https://pubmed.ncbi.nlm.nih.gov/{{ article.pubmed_id }}" target="_blank">{{
+                                        article.pubmed_id or '' }}</a>
+                                    {% endif %}
+                                    {% if article.created_at %}
+                                    created at: {{ article.created_at or ''}}</a>
+                                    {% endif %}
+                                </div>
+                                <div class="p-2 flex flex-col align-middle gap-2">
+                                    <a href="/researchrepository/article/{{ article.uuid }}" target="_blank">
+                                        <svg width="24px" height="24px" viewBox="0 0 1024 1024" class="icon" version="1.1"
+                                            xmlns="http://www.w3.org/2000/svg">
+                                            <path
+                                                d="M94.433 536.378c49.818-67.226 110.761-124.854 180.172-166.808 35.333-21.356 62.64-33.686 99.016-45.698 17.076-5.638 34.511-10.135 52.088-13.898 23.033-4.932 28.596-5.483 49.577-7.228 76.233-6.333 138.449 4.648 210.869 33.643 3.581 1.435 10.361 4.513 18.987 8.594 8.488 4.013 16.816 8.358 25.086 12.801 18.349 9.861 36.004 20.974 53.173 32.756 31.245 21.442 62.37 49.184 91.227 79.147 20.218 20.991 39.395 43.706 56.427 66.689 14.436 19.479 38.301 29.282 60.985 15.991 19.248-11.276 30.491-41.417 15.991-60.984-101.194-136.555-243.302-247.3-415.205-272.778-165.834-24.575-325.153 31.855-452.148 138.262-46.849 39.252-86.915 85.525-123.221 134.518-14.5 19.567-3.258 49.708 15.991 60.984 22.685 13.291 46.549 3.488 60.985-15.991z"
+                                                fill="currentColor" />
+                                            <path
+                                                d="M931.055 491.378c-49.817 67.228-110.761 124.856-180.173 166.811-35.332 21.354-62.639 33.684-99.015 45.694-17.076 5.641-34.512 10.137-52.09 13.902-23.032 4.931-28.593 5.48-49.576 7.225-76.233 6.336-138.449-4.648-210.869-33.642-3.582-1.436-10.362-4.514-18.987-8.595-8.488-4.015-16.816-8.357-25.087-12.801-18.348-9.862-36.003-20.974-53.172-32.755-31.245-21.443-62.37-49.184-91.227-79.149-20.218-20.99-39.395-43.705-56.427-66.69-14.436-19.479-38.3-29.279-60.985-15.991-19.249 11.276-30.491 41.419-15.991 60.984C118.65 672.929 260.76 783.677 432.661 809.15c165.834 24.578 325.152-31.854 452.148-138.259 46.85-39.256 86.915-85.528 123.222-134.521 14.5-19.564 3.257-49.708-15.991-60.984-22.685-13.287-46.55-3.487-60.985 15.992z"
+                                                fill="#C45FA0" />
+                                            <path
+                                                d="M594.746 519.234c0.03 46.266-34.587 83.401-80.113 85.188-46.243 1.814-83.453-35.93-85.188-80.11-0.953-24.271-19.555-44.574-44.574-44.574-23.577 0-45.527 20.281-44.573 44.574 3.705 94.378 79.154 169.32 174.334 169.258 94.457-0.063 169.321-81.897 169.261-174.335-0.039-57.486-89.184-57.49-89.147-0.001z"
+                                                fill="#F39A2B" />
+                                            <path
+                                                d="M430.688 514.818c0.876-45.416 37.262-81.797 82.677-82.672 45.438-0.875 81.824 38.571 82.673 82.672 1.105 57.413 90.256 57.521 89.147 0-1.827-94.791-77.028-169.994-171.82-171.82-94.787-1.827-170.049 79.785-171.824 171.82-1.108 57.522 88.04 57.413 89.147 0z"
+                                                fill="#E5594F" />
+                                        </svg>
+                                    </a>
+            
+                                </div>
+                            </div>
+                        </label>
+                    </div>
+                </li>
+            </ul>
+            {% endfor %}
+        </div>
+
+    </div>
+</div>
+
+<script src="{{url_for('static',filename='js/common.js')}}"></script>
+<script src="{{url_for('static',filename='js/search.js')}}"></script>
+
+{% endblock %}

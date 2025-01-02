@@ -1,4 +1,5 @@
 from datetime import datetime
+import math
 from pprint import pprint
 import uuid
 from flask import jsonify, render_template,make_response, request, send_from_directory
@@ -106,6 +107,55 @@ def repositoryPage():
 	else:
 		error_logger.info(response.json())
 		return jsonify({"message":"Something went wrong"}),500
+
+@main_bp.route('/search')
+@verify_session
+def searchPage(session):
+	# If there are any query parameters, call the external search API
+	search_params = request.args.to_dict(flat=False)
+
+	# Prepare the server URL and endpoint
+	server_url = get_base_url()
+	url = f"{server_url}/researchrepository/api/article/searchspecific"
+
+	# Prepare headers (you can adjust this according to your API needs)
+	headers = {
+		"API-ID": app.config.get('API_ID')  # Assuming the API_ID is set in your Flask config
+	}
+
+	# Prepare cookies from the current request
+	cookies = request.cookies.to_dict()  # Converts ImmutableMultiDict to a regular dict
+
+	# Send the GET request to the external search API
+	response = requests.get(url, headers=headers, cookies=cookies, params=search_params)
+
+	# Check if the response is successful
+	if response.status_code == 200:
+		# Parse the JSON response
+		search_results = response.json()
+		# Render the search page with the results from the external API
+		current_page=(search_results["offset"]//search_results["limit"]) + 1
+		entry=search_results["limit"]
+		total_pages = math.ceil(search_results["total_articles"]/search_results["limit"])
+  
+		return render_template(
+			'search.html',
+			query=search_params['query'][0],
+			myfilters = search_results["filters"],
+			articles=search_results['articles'],
+			unique_authors=search_results['unique_authors'],
+			unique_keywords=search_results['unique_keywords'],
+			unique_journals=search_results['unique_journals'],
+   			current_page=current_page,
+      		offset = search_results["offset"],
+	  		entry=entry,
+			total_pages = total_pages,
+			logged_in=session.user_id is not None
+		)
+	else:
+		# If the external API request fails, return an error page or message
+		return jsonify({"error": "Failed to fetch search results from external API"}), 500
+	# If no parameters are provided, render the page with empty filter options
 
 
 @main_bp.route('/article/<string:id>')
@@ -274,7 +324,7 @@ def authorPage(session):
 	query = request.args.get('q','')
 	offset = request.args.get('offset', 0, type=int)
 	limit = request.args.get('limit', 10, type=int)
-    
+	
 	server_url = get_base_url()
 	url = f"{server_url}/researchrepository/api/article/search"
 	headers = {
@@ -302,7 +352,7 @@ def keywordPage(session):
 	query = request.args.get('q','')
 	offset = request.args.get('offset', 0, type=int)
 	limit = request.args.get('limit', 10, type=int)
-    
+	
 	server_url = get_base_url()
 	url = f"{server_url}/researchrepository/api/article/search"
 	headers = {
@@ -331,9 +381,9 @@ def journalPage(session):
 	query = request.args.get('q','')
 	offset = request.args.get('offset', 0, type=int)
 	limit = request.args.get('limit', 10, type=int)
-    
+	
 	server_url = get_base_url()
-	url = f"{server_url}/researchrepository/api/article/search"
+	url = f"{server_url}/researchrepository/api/article/searchspec"
 	headers = {
 		"API-ID":app.config.get('API_ID')
 	}

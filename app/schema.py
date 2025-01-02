@@ -42,6 +42,11 @@ class GuestClientSchema(ma.SQLAlchemyAutoSchema):
         include_fk = True
 
 
+class AuthorSchemaWithoutArticle(ma.SQLAlchemyAutoSchema):
+    class Meta:
+        model = Author
+        load_instance = True
+        include_fk = True  # Include foreign keys
 
 class AuthorSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
@@ -58,7 +63,11 @@ class ArticleAuthorSchema(ma.SQLAlchemyAutoSchema):
 
     author = fields.Nested(AuthorSchema)  # Include full Author object
 
-
+class KeywordSchemaWithoutArticle(ma.SQLAlchemyAutoSchema):
+    class Meta:
+        model = Keyword
+        load_instance = True
+        include_fk = True  # Include foreign keys
 
 class KeywordSchema(ma.SQLAlchemyAutoSchema):
     class Meta:

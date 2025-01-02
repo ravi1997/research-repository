@@ -1,22 +1,27 @@
 from datetime import date, datetime, timedelta
+from multiprocessing import Pool
 import os
 from pprint import pprint
 import traceback
 from flask import jsonify,current_app as app, request
 from marshmallow import ValidationError
+import requests
 from sqlalchemy import desc, or_
-
+from sqlalchemy.orm import aliased
 import uuid
-
+from sqlalchemy import select, or_
+from sqlalchemy.orm import joinedload
+from itertools import combinations
 
 from sqlalchemy import func
 from collections import defaultdict
 from app.decorator import checkBlueprintRouteFlag, verify_LIBRARYMANAGER_role, verify_SUPERADMIN_role, verify_USER_role, verify_body, verify_internal_api_id, verify_session
 from app.extension import db,scheduler
 from app.models.article import Article, ArticleAuthor, ArticleKeyword, ArticlePublicationType, ArticleStatistic, Author, DeletedArticle, Duplicate, Keyword, Link, PublicationType
-from app.schema import ArticleSchema, AuthorSchema, DuplicateSchema, KeywordSchema, LinkSchema, PublicationTypeSchema
-from app.util import download_xml, fileReader, find_full_row_match, getUnique,  parse_pubmed_xml
+from app.schema import ArticleSchema, AuthorSchema, AuthorSchemaWithoutArticle, DuplicateSchema, KeywordSchema, KeywordSchemaWithoutArticle, LinkSchema, PublicationTypeSchema
+from app.util import download_xml, fileReader, find_full_row_match, get_base_url, getUnique,  parse_pubmed_xml
 from . import article_bp
+import re
 
 @article_bp.route("/")
 @checkBlueprintRouteFlag
@@ -428,29 +433,211 @@ def find_duplicate_groups(session):
 	return jsonify(duplicates),200
 
 def calculate_font_size(article_count, min_count, max_count, min_font=10, max_font=50):
-    """
-    Scale article_count to a font size between min_font and max_font.
+	"""
+	Scale article_count to a font size between min_font and max_font.
 
-    Args:
-    - article_count (int): The count of articles.
-    - min_count (int): The minimum article count in the dataset.
-    - max_count (int): The maximum article count in the dataset.
-    - min_font (int): Minimum font size.
-    - max_font (int): Maximum font size.
+	Args:
+	- article_count (int): The count of articles.
+	- min_count (int): The minimum article count in the dataset.
+	- max_count (int): The maximum article count in the dataset.
+	- min_font (int): Minimum font size.
+	- max_font (int): Maximum font size.
 
-    Returns:
-    - int: Scaled font size.
-    """
-    
-    if max_count == min_count:  # Avoid division by zero
-        return (max_font + min_font) // 2
-    return int(((article_count - min_count) / (max_count - min_count)) * (max_font - min_font) + min_font)
+	Returns:
+	- int: Scaled font size.
+	"""
+	
+	if max_count == min_count:  # Avoid division by zero
+		return (max_font + min_font) // 2
+	return int(((article_count - min_count) / (max_count - min_count)) * (max_font - min_font) + min_font)
+
+# Function to check if an article matches the filter criteria
+def article_matches_filter(article, filter_criteria):
+	# Check if authors match
+	if filter_criteria.get('authors'):
+		author_names = [author['fullName'] for author in article.get('authors', [])]
+		if not any(author in author_names for author in filter_criteria['authors']):
+			return False
+
+	# Check if keywords match
+	if filter_criteria.get('keywords'):
+		article_keywords = [keyword['keyword'] for keyword in article.get('keywords', [])]
+		if any(keyword not in article_keywords for keyword in filter_criteria['keywords']):
+			return False
+
+	# Check if journal matches
+	if filter_criteria.get('journals'):
+		article_journal = article.get('journal', "")
+		if article_journal not in filter_criteria['journals']:
+			return False
+
+	# Check if publication_date is within the date range
+	start_date = filter_criteria.get('start_date')[0]
+	end_date = filter_criteria.get('end_date')[0]
+
+	if start_date or end_date:
+		pub_date_str = article.get('publication_date', "")
+		if pub_date_str:
+			try:
+				pub_date = datetime.strptime(pub_date_str, "%Y-%m-%d")
+			except ValueError:
+				return False  # Invalid date format
+		else:
+			return True
+		# Check against start_date if present
+		if start_date and start_date!="":
+			if pub_date < datetime.strptime(start_date, "%Y-%m-%d"):
+				return False
+		
+		# Check against end_date if present
+		if end_date and start_date!="":
+			if pub_date > datetime.strptime(end_date, "%Y-%m-%d"):
+				return False
+
+	return True
+
+# Function to filter articles
+def filter_articles(articles, filter_criteria):
+	with Pool() as pool:
+		# Apply the filtering function to each article in parallel
+		result = pool.starmap(article_matches_filter, [(article, filter_criteria) for article in articles])
+	
+	# Filter out articles where result is False (those should be removed)
+	filtered_articles = [article for article, keep in zip(articles, result) if keep]
+	return filtered_articles
+
+
+@article_bp.route('/searchspecific', methods=['GET'])
+def search_articles():
+	search_params = request.args.to_dict(flat=False)  # Allows multiple values for the same key
+	myquery = search_params.get('query', ["Importance of Critical View"])[0]
+	offset = request.args.get('offset', 0, type=int)
+	limit = request.args.get('limit', 10, type=int)
+
+	characters_to_replace = r"[!\-:&.]"
+	myqueries = re.sub(characters_to_replace, " ", myquery).strip().split()
+
+	if offset < 0 or limit <= 0:
+		return jsonify({"error": "Offset must be non-negative and Limit must be greater than 0"}), 400
+
+	server_url = get_base_url()
+	url = f"{server_url}/researchrepository/api/article/search"
+	headers = {
+		"API-ID":app.config.get('API_ID')
+	}
+
+	search_bys = ["keyword","title","author","journal"]
+	cookies = request.cookies.to_dict()  # Converts the ImmutableMultiDict to a regular dictionary
+
+	articles_json = []
+	for search_by in search_bys:
+		params = {
+			"q":myquery,
+			"search_by":search_by,
+			"offset":0,
+			"limit":100000
+		}
+		response = requests.get(url, headers=headers,params=params, cookies=cookies)  # Use `requests.get`
+
+		if response.status_code==200:
+			results = response.json()
+			articles_json.extend(results["articles"])
+
+	for q in myqueries:
+		for search_by in search_bys:
+			params = {
+				"q":q,
+				"search_by":search_by,
+				"offset":0,
+				"limit":100000
+			}
+			response = requests.get(url, headers=headers,params=params, cookies=cookies)  # Use `requests.get`
+
+			if response.status_code==200:
+				results = response.json()
+				articles_json.extend(results["articles"])
+
+	filter_json = {}
+	# Apply filters for authors
+	if 'authors' in search_params:
+		filter_json["authors"] = search_params['authors']
+  
+	# Apply filters for keywords
+	if 'keywords' in search_params:
+		filter_json["keywords"] = search_params['keywords']
+
+	# Apply filters for publication date
+	if 'start_date' in search_params:
+		if search_params['start_date'] and search_params['start_date']!="":
+			filter_json["start_date"] = search_params['start_date']
+  
+	if 'end_date' in search_params:
+		if search_params['end_date'] and search_params['end_date']!="":
+			filter_json["end_date"] = search_params['end_date']
+  
+	# Apply filters for journals
+	if 'journals' in search_params:
+		filter_json["journals"] = search_params['journals']	# Apply filters for authors
+  
+	if articles_json == []:
+		return jsonify({
+			"message": "Offset exceeds the total number of results.",
+			"total_articles": 0,
+			"offset": offset,
+			"limit": limit,
+			"articles": [],
+			"unique_authors": [],
+			"unique_keywords": [],
+			"unique_journals": [],
+			"filters" : filter_json
+		}), 200
+  
+	all_authors = {author["fullName"] for article in articles_json for author in article["authors"]}
+	all_keywords = {keyword["keyword"] for article in articles_json for keyword in article["keywords"]}
+	all_journals = {article["journal"] for article in articles_json}
+	
+	filtered_articles = filter_articles(articles_json, filter_json)
+
+	total_articles = len(filtered_articles)
+	
+	# Count total articles before pagination
+	if offset >= total_articles:
+		print(f"{offset} - {total_articles}")
+		pprint(filter_json)
+		return jsonify({
+			"message": "Offset exceeds the total number of results.",
+			"total_articles": total_articles,
+			"offset": offset,
+			"limit": limit,
+			"articles": [],
+			"unique_authors": list(all_authors),
+			"unique_keywords": list(all_keywords),
+			"unique_journals": list(all_journals),
+			"filters" : filter_json
+		}), 200
+
+	
+
+	response = {
+		"message": "Search successful.",
+		"total_articles": total_articles,
+		"offset": offset,
+		"limit": limit,
+		"articles": filtered_articles[offset:offset + limit],
+		"unique_authors": list(all_authors),
+		"unique_keywords": list(all_keywords),
+		"unique_journals": list(all_journals),
+		"filters" : filter_json
+	}
+
+	return jsonify(response), 200
+
+
 
 
 
 @article_bp.route("/statistic",methods=['GET'])
-@verify_session
-def statistic(session):
+def statistic():
 	query = request.args.get('q','')
 	if not query:
 		return jsonify({"message":"Query parameter is mandatory"}),400
@@ -480,7 +667,7 @@ def statistic(session):
 			)
   
 		for year, mycount in results:
-      
+	  
 			if year == current:
 				count = mycount
 
@@ -630,6 +817,28 @@ def uploadDuplicate(session, request, ALLOWED_EXTENSIONS):
 			return jsonify({"error": "An error occurred while processing the file"}), 500
 
 	return jsonify({"error": "Invalid file type. Only .ris files are allowed."}), 401
+
+
+@article_bp.route('/authors', methods=['GET'])
+@verify_session
+def authors(session):
+	authorSchemas = AuthorSchemaWithoutArticle(many=True)
+	authors_found = Author.query.all()
+	return authorSchemas.dump(authors_found),200
+
+@article_bp.route('/keywords', methods=['GET'])
+@verify_session
+def keywords(session):
+	keywordSchemas = KeywordSchemaWithoutArticle(many=True)
+	keywords_found = Keyword.query.all()
+	return keywordSchemas.dump(keywords_found),200
+
+@article_bp.route('/journals', methods=['GET'])
+@verify_session
+def journals(session):
+	journals_found = db.session.query(Article.journal).distinct().all()
+	myjournals = [journal[0] for journal in journals_found]
+	return myjournals,200
 
 
 @article_bp.route('/upload_ris_duplicate', methods=['POST'])
@@ -788,7 +997,15 @@ def search_article(session):
 			.distinct()  # Ensure unique articles
 		)
 
-
+	title_query = (
+			db.session.query(Article)
+   			.filter(
+				or_(
+					Article.title.ilike(f"%{query}%"),  # Match full name
+				)
+			)
+			.distinct()  # Ensure unique articles
+		)
 
 	if search_by == "author":
 		return search(author_query,query,offset,limit)
@@ -798,9 +1015,8 @@ def search_article(session):
 
 	elif search_by == "journal":
 		return search(journal_query,query,offset,limit)
+	elif search_by == "title":
+		return search(title_query,query,offset,limit)
 	else:
-	 
-	
-	 
 		return jsonify({"message":f"Searching for {query}"}),200
 

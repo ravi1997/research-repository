@@ -1,49 +1,64 @@
-{% extends "base.html" %}
+{% extends "base.html" %} {% block content %}
 
-{% block content %}
+<div id="customAlert" class="alert-box">
+  <span id="alertMessage">This is an alert message!</span>
+  <button class="close-btn" onclick="closeAlert()">×</button>
+</div>
 
+<!-- Main Content Container -->
+<div class="container">
+  <!-- Upload Section for RIS Files -->
+  <div class="card">
+    <h3>Upload .ris File</h3>
+    <form id="uploadForm" enctype="multipart/form-data">
+      <input type="file" id="file" name="file" accept=".ris" required />
+      <button
+        class="button rounded-lg bg-teal-800 p-4 px-8 font-semibold text-white"
+        type="button"
+        onclick="uploadrisFile()"
+      >
+        Upload
+      </button>
+    </form>
+    <p id="message"></p>
+  </div>
 
-    <div id="customAlert" class="alert-box">
-        <span id="alertMessage">This is an alert message!</span>
-        <button class="close-btn" onclick="closeAlert()">×</button>
-    </div>
+  <!-- Upload Section for NBIB Files -->
+  <div class="card">
+    <h3>Upload .nbib File</h3>
+    <form id="uploadForm-nbib" enctype="multipart/form-data">
+      <input type="file" id="file" name="file" accept=".nbib" required />
+      <button
+        class="button rounded-lg bg-teal-800 p-4 px-8 font-semibold text-white"
+        type="button"
+        onclick="uploadnbibFile()"
+      >
+        Upload
+      </button>
+    </form>
+    <p id="message1"></p>
+  </div>
 
+  <!-- PubMed Fetch Section with CAPTCHA -->
+  <div class="card">
+    <h3>Fetch Publication via PubMed ID</h3>
+    <form
+      id="pubmed-form"
+      action="../researchrepository/api/article/pubmedFectch"
+      method="post"
+      onsubmit="submitForm(event)"
+    >
+      <input type="text" name="pmid" placeholder="Enter PubMed ID" required />
+      <button
+        class="button rounded-lg bg-teal-800 p-4 px-8 font-semibold text-white"
+        type="submit"
+      >
+        Submit
+      </button>
+    </form>
+  </div>
+</div>
 
-
-    <!-- Main Content Container -->
-    <div class="container">
-        <!-- Upload Section for RIS Files -->
-        <div class="card">
-            <h3>Upload .ris File</h3>
-            <form id="uploadForm" enctype="multipart/form-data">
-                <input type="file" id="file" name="file" accept=".ris" required>
-                <button class="button p-4 px-8 bg-teal-800 rounded-lg text-white font-semibold" type="button" onclick="uploadrisFile()">Upload</button>
-            </form>
-            <p id="message"></p>
-        </div>
-
-        <!-- Upload Section for NBIB Files -->
-        <div class="card">
-            <h3>Upload .nbib File</h3>
-            <form id="uploadForm-nbib" enctype="multipart/form-data">
-                <input type="file" id="file" name="file" accept=".nbib" required>
-                <button class="button p-4 px-8 bg-teal-800 rounded-lg text-white font-semibold" type="button" onclick="uploadnbibFile()">Upload</button>
-            </form>
-            <p id="message1"></p>
-        </div>
-
-        <!-- PubMed Fetch Section with CAPTCHA -->
-        <div class="card">
-            <h3>Fetch Publication via PubMed ID</h3>
-            <form id="pubmed-form" action="../researchrepository/api/article/pubmedFectch" method="post"
-                onsubmit="submitForm(event)">
-                <input type="text" name="pmid" placeholder="Enter PubMed ID" required>
-                <button class="button p-4 px-8 bg-teal-800 rounded-lg text-white font-semibold" type="submit">Submit</button>
-            </form>
-        </div>
-    </div>
-
-
-    <!-- JavaScript Files -->
-    <script src="{{url_for('static',filename='js/home.js')}}"></script>
+<!-- JavaScript Files -->
+<script src="{{url_for('static',filename='js/home.js')}}"></script>
 {% endblock %}
