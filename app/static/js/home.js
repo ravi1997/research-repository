@@ -1,115 +1,145 @@
+// Helper: Show Modal
+function showModal(title, summary, data) {
+    document.getElementById("modalTitle").textContent = title;
+    document.getElementById("modalSummary").textContent = summary;
 
+    const modalContent = document.getElementById("modalContent");
+    modalContent.innerHTML = ""; // Clear previous content
+
+    const addedCount = data.added_articles || 0;
+    const duplicateCount = Object.values(data.duplicate_articles || {}).flat().length;
+    const skippedCount = data.skipped_articles || 0;
+
+    const summarySection = document.createElement("div");
+    summarySection.classList.add("p-4", "space-y-3", "bg-gray-100", "rounded-lg");
+
+    summarySection.innerHTML = `
+        <p class="text-gray-800 text-lg">
+            <strong>Upload Summary:</strong>
+        </p>
+        <ul class="list-disc pl-5 space-y-1">
+            <li class="text-green-700 font-medium">Added Articles: ${addedCount}</li>
+            <li class="text-yellow-700 font-medium">Duplicate Articles: ${duplicateCount}</li>
+            <li class="text-red-700 font-medium">Skipped Articles: ${skippedCount}</li>
+        </ul>
+    `;
+
+    modalContent.appendChild(summarySection);
+
+    // Show the modal
+    document.getElementById("resultModal").classList.remove("hidden");
+}
+
+// Helper: Close Modal
+function closeModal() {
+    document.getElementById("resultModal").classList.add("hidden");
+}
+
+// Upload .ris File
 async function uploadrisFile() {
-    const form = document.getElementById('uploadForm');
+    const form = document.getElementById("uploadForm");
     const formData = new FormData(form);
+    const button = form.querySelector("button");
+
+    showLoading('upload_ris_btn');
 
     try {
         const response = await fetch("../researchrepository/api/article/upload_ris", {
             method: "POST",
-            body: formData
+            body: formData,
         });
+
+        stopLoading('upload_ris_btn');
 
         if (response.ok) {
             const result = await response.json();
-            document.getElementById("message").innerText = "File uploaded successfully: " + result.filename;
+            showModal(
+                "Upload Successful",
+                `File uploaded: ${result.filename}`,
+                result
+            );
         } else {
             const error = await response.json();
-            document.getElementById("message").innerText = "Error: " + error.error;
+            showAlert(`Error: ${error.error}`);
         }
     } catch (error) {
         console.error("Upload error:", error);
-        document.getElementById("message").innerText = "An error occurred while uploading the file.";
+        showAlert("An error occurred while uploading the file.");
+        stopLoading('upload_ris_btn');
     }
 }
 
+// Upload .nbib File
 async function uploadnbibFile() {
-    const form = document.getElementById('uploadForm-nbib');
+    const form = document.getElementById("uploadForm-nbib");
     const formData = new FormData(form);
+    const button = form.querySelector("button");
+
+    showLoading('upload_nib_btn');
 
     try {
         const response = await fetch("../researchrepository/api/article/upload_nbib", {
             method: "POST",
-            body: formData
+            body: formData,
         });
+        stopLoading('upload_nib_btn');
+
 
         if (response.ok) {
             const result = await response.json();
-            document.getElementById("message1").innerText = "File uploaded successfully: " + result.filename;
+            showModal(
+                "Upload Successful",
+                `File uploaded: ${result.filename}`,
+                result
+            );
         } else {
             const error = await response.json();
-            document.getElementById("message1").innerText = "Error: " + error.error;
+            showAlert(`Error: ${error.error}`);
         }
     } catch (error) {
         console.error("Upload error:", error);
-        document.getElementById("message1").innerText = "An error occurred while uploading the file.";
+        showAlert("An error occurred while uploading the file.");
+        stopLoading('upload_nib_btn');
     }
 }
 
-// Function to show the alert box with a custom message and success/failure status
-function showAlert(message, isSuccess) {
-    const alertBox = document.getElementById('customAlert');
-    const alertMessage = document.getElementById('alertMessage');
-
-    alertMessage.textContent = message; // Set the alert message
-
-    // Toggle class based on success or failure
-    if (isSuccess) {
-        alertBox.classList.add('success'); // Add success class for green color
-        alertBox.classList.remove('failure'); // Remove failure class if present
-    } else {
-        alertBox.classList.remove('success'); // Remove success class if present
-        alertBox.classList.add('failure'); // Add failure class for red color
-    }
-
-    alertBox.style.display = 'block'; // Show the alert box
-}
-
-// Function to close the alert box
-function closeAlert() {
-    const alertBox = document.getElementById('customAlert');
-    alertBox.style.display = 'none'; // Hide the alert box
-}
-
-
-
+// Submit PubMed Form
 async function submitForm(event) {
-    event.preventDefault();  // Prevent the default form submission
-    const salt = getCookie("Session-SALT");  // Assuming the salt cookie is named "salt"
-    if (!salt) {
-        console.error("Salt not found in cookies.");
-        return;
-    }
+    event.preventDefault();
     const form = document.getElementById("pubmed-form");
     const formData = new FormData(form);
-    const formDataJson = Object.fromEntries(formData.entries())
+    const salt = getCookie("Session-SALT");
+    showLoading('upload_pubmed_btn');
 
+    if (!salt) {
+        console.error("Salt not found in cookies.");
+        showAlert("Error: Session expired. Please log in again.");
+        return;
+    }
+
+    const formDataJson = Object.fromEntries(formData.entries());
     const data = JSON.stringify(formDataJson);
-    console.log(data)
     const encodeFunction = await cipher(salt);
     const encryptedData = encodeFunction(data);
 
     try {
-        // Send data to the server using fetch API
         const response = await fetch(form.action, {
             method: form.method,
             headers: {
-                'Content-Type': 'application/json',  // Ensure JSON is being sent
+                "Content-Type": "application/json",
             },
-            body: JSON.stringify({ data: encryptedData })
+            body: JSON.stringify({ data: encryptedData }),
         });
+        stopLoading('upload_pubmed_btn');
 
-        // Check if the response is successful
         if (response.ok) {
-            // Call toggleForms if the response is successful
-            showAlert('Pubmed data added successfully',true);
+            showAlert("PubMed data added successfully", true);
         } else {
-            // Handle errors, if any (e.g., show an error message)
-            console.error("Form submission failed.");
+            showAlert("Error: Unable to add PubMed data.");
         }
     } catch (error) {
         console.error("An error occurred:", error);
+        showAlert("An error occurred while submitting the PubMed form.");
+        stopLoading('upload_pubmed_btn');
     }
 }
-
-
-

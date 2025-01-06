@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h1 class="text-2xl font-bold text-teal-800 text-center mb-4">
+      Take Ownership of Article
+    </h1>
+
+    <!-- Description -->
+    <p class="text-gray-600 text-center mb-6">
+      Enter the details of the article you'd like to take ownership of.
+    </p>
+
+    <!-- Search Bar -->
+    <form action="/researchrepository/ownershipresult" method="GET">
+      <div class="relative">
+        <input 
+          type="text" 
+          name="query" 
+          placeholder="Search by article title, DOI, or PubMed ID..." 
+          required
+          class="w-full p-4 pl-10 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-transparent"
+        >
+        <svg xmlns="http://www.w3.org/2000/svg" class="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M8 16l-4-4m0 0l4-4m-4 4h16m-8 8a9 9 0 110-18 9 9 0 010 18z" />
+        </svg>
+      </div>
+      <!-- Submit Button -->
+      <button 
+        type="submit" 
+        class="w-full mt-4 bg-teal-800 text-white font-semibold py-3 rounded-lg shadow-md hover:bg-teal-600 transition-colors"
+      >
+        Search
+      </button>
+    </form>
+  </div>
+
+
+{% endblock %}

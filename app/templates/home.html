@@ -5,6 +5,45 @@
   <button class="close-btn" onclick="closeAlert()">×</button>
 </div>
 
+<!-- Modal -->
+<!-- Modal -->
+<div
+  id="resultModal"
+  class="fixed inset-0 z-50 flex hidden items-center justify-center bg-black bg-opacity-50"
+>
+  <div class="w-full max-w-lg space-y-4 rounded-lg bg-white p-6 shadow-lg">
+    <div class="flex items-center justify-between">
+      <h3 id="modalTitle" class="text-xl font-semibold text-gray-800"></h3>
+      <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke-width="2"
+          stroke="currentColor"
+          class="h-6 w-6"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M6 18L18 6M6 6l12 12"
+          />
+        </svg>
+      </button>
+    </div>
+    <p id="modalSummary" class="text-sm text-gray-600"></p>
+    <div id="modalContent" class="space-y-2">
+      <!-- Dynamic content will be inserted here -->
+    </div>
+    <button
+      onclick="closeModal()"
+      class="w-full rounded-lg bg-teal-800 py-2 text-white hover:bg-teal-900"
+    >
+      Close
+    </button>
+  </div>
+</div>
+
 <!-- Main Content Container -->
 <div class="container">
   <!-- Upload Section for RIS Files -->
@@ -13,11 +52,16 @@
     <form id="uploadForm" enctype="multipart/form-data">
       <input type="file" id="file" name="file" accept=".ris" required />
       <button
-        class="button rounded-lg bg-teal-800 p-4 px-8 font-semibold text-white"
+        id="upload_ris_btn"
         type="button"
         onclick="uploadrisFile()"
+        class="button rounded-lg bg-teal-800 p-4 px-8 font-semibold text-white"
       >
-        Upload
+        <span class="button-text">Upload</span>
+        <span
+          class="loading-spinner inline-block h-5 w-5 animate-spin rounded-full border-2 border-transparent border-t-white align-middle"
+          style="display: none"
+        ></span>
       </button>
     </form>
     <p id="message"></p>
@@ -30,10 +74,15 @@
       <input type="file" id="file" name="file" accept=".nbib" required />
       <button
         class="button rounded-lg bg-teal-800 p-4 px-8 font-semibold text-white"
+        id="upload_nib_btn"
         type="button"
         onclick="uploadnbibFile()"
       >
-        Upload
+        <span class="button-text">Upload</span>
+        <span
+          class="loading-spinner inline-block h-5 w-5 animate-spin rounded-full border-2 border-transparent border-t-white align-middle"
+          style="display: none"
+        ></span>
       </button>
     </form>
     <p id="message1"></p>
@@ -48,12 +97,17 @@
       method="post"
       onsubmit="submitForm(event)"
     >
-      <input type="text" name="pmid" placeholder="Enter PubMed ID" required />
+      <input type="text" name="pmid" class="h-12" placeholder="Enter PubMed ID" required />
       <button
         class="button rounded-lg bg-teal-800 p-4 px-8 font-semibold text-white"
+        id="upload_pubmed_btn"
         type="submit"
       >
-        Submit
+        <span class="button-text">Submit</span>
+        <span
+          class="loading-spinner inline-block h-5 w-5 animate-spin rounded-full border-2 border-transparent border-t-white align-middle"
+          style="display: none"
+        ></span>
       </button>
     </form>
   </div>

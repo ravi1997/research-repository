@@ -43,6 +43,14 @@ class DevConfig(BaseConfig):
     OTP_ID = os.getenv('OTP_ID')
     OTP_SENDERID = os.getenv('OTP_SENDERID')
     
+    
+    CDAC_USERNAME = os.getenv('CDAC_USERNAME')
+    CDAC_PASSWORD = os.getenv('CDAC_PASSWORD')
+    CDAC_AUTH_SERVER = os.getenv('CDAC_AUTH_SERVER')
+    CDAC_SERVER = os.getenv('CDAC_SERVER')
+    CDAC_ID = os.getenv('CDAC_ID')
+
+    
     UPLOAD_FOLDER = os.getenv('UPLOAD_FOLDER')
     SCHEDULER_JOBSTORES = {
         "default": SQLAlchemyJobStore(url=SQLALCHEMY_DATABASE_URI)

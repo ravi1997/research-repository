@@ -1,4 +1,4 @@
-{% extends "base.html" %} {% block content %} {% if edit %}
+{% extends "base.html" %} {% block content %} {% if logged_in %}
 <div
   class="fixed bottom-6 right-6 z-40 flex h-20 w-20 rounded-[50%] bg-[#007bff] text-center"
 >
@@ -31,11 +31,18 @@
       <li
         class="relative m-auto mx-auto w-auto rounded bg-[#eaedf0] px-2 py-3.5 text-center shadow hover:shadow-lg"
       >
+        {% if author.employee_id %}
         <a
-          href="/researchrepository/author?q={{author.fullName}}"
+          href="/researchrepository/author?q={{author.employee_id}}"
           target="_blank"
-          ><h3 class="mb-1 text-xl">{{ author.fullName }}</h3></a
+          ><h3 class="mb-1 text-xl font-bold">{{ author.fullName }}</h3></a
         >
+        {% else %}
+
+        <h3 class="mb-1 text-xl">{{ author.fullName }}</h3>
+
+        {% endif %}
+
         <div
           class="author-details absolute bottom-full left-1/2 z-[1] hidden w-52 rounded bg-white p-3 text-left shadow-md"
         >

@@ -1,6 +1,17 @@
 {% extends "base.html" %}
 
 {% block content %}
+<!-- Modal for Success/Failure -->
+<div id="status-modal" class="fixed inset-0 flex justify-center items-center bg-black bg-opacity-50 hidden">
+    <div class="bg-white rounded-lg p-6 w-1/3">
+        <h2 id="modal-title" class="text-xl font-semibold mb-4"></h2>
+        <p id="modal-message" class="mb-4"></p>
+        <button id="close-modal" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
+            Close
+        </button>
+    </div>
+</div>
+
 <div class="flex">
     <!-- Left Panel (Filters) -->
     <div class="w-1/4 bg-white p-6 rounded-lg shadow-lg">
@@ -221,9 +232,16 @@
                                     {{article.title}}
                                     <br />
                                     {% for author in article.authors %}
-                                    <span {% if author.employee_id %}class="font-bold" {% endif %}>{{ author.fullName }}</span>{% if not loop.last %}; {% endif %}
-                                    
+                                        {% if "FACULTY" in roles %}
+                                            <a href="#" class="author-link" data-author-id="{{ author.id }}">
+                                                <span {% if author.employee_id %}class="font-bold" {% endif %}>{{ author.fullName }}</span>
+                                            </a>
+                                        {% else %}
+                                            <span {% if author.employee_id %}class="font-bold" {% endif %}>{{ author.fullName }}</span>
+                                        {% endif %}
+                                        {% if not loop.last %}; {% endif %}
                                     {% endfor %}
+
                                     <br />
                                     <span class="italic"> {{ article.journal or '' }} </span>
                                     <br /> {{ article.publication_date or '' }}. {{ article.journal_volume or '' }}({{
@@ -323,6 +341,7 @@
     </div>
 </div>
 
+<script src="{{url_for('static',filename='js/ownership.js')}}"></script>
 <script src="{{url_for('static',filename='js/search.js')}}"></script>
 
 {% endblock %}

@@ -55,3 +55,59 @@ async function logout() {
         showAlert(error, false);
     }
 }
+
+
+// Function to show the alert box with a custom message and success/failure status
+function showAlert(message, isSuccess) {
+    const alertBox = document.getElementById('customAlert');
+    const alertMessage = document.getElementById('alertMessage');
+
+    alertMessage.textContent = message; // Set the alert message
+
+    // Toggle class based on success or failure
+    if (isSuccess) {
+        alertBox.classList.add('bg-green-100'); // Add success class for green color
+        alertBox.classList.add('text-green-800'); // Add success class for green color
+             
+        alertBox.classList.remove('hidden'); // Remove failure class if present
+        alertBox.classList.remove('bg-red-100'); // Remove failure class if present
+        alertBox.classList.remove('text-red-800'); // Remove failure class if present
+    } else {
+        alertBox.classList.remove('bg-green-100'); // Add success class for green color
+        alertBox.classList.remove('text-green-800'); // Add success class for green color
+
+        alertBox.classList.add('hidden'); // Remove failure class if present
+        alertBox.classList.add('bg-red-100'); // Remove failure class if present
+        alertBox.classList.add('text-red-800'); // Remove failure class if present
+    }
+
+    alertBox.style.display = 'block'; // Show the alert box
+}
+
+// Function to close the alert box
+function closeAlert() {
+    const alertBox = document.getElementById('customAlert');
+    alertBox.style.display = 'none'; // Hide the alert box
+}
+
+function showLoading(buttonId) {
+    const button = document.getElementById(buttonId);
+    const spinner = button.querySelector(".loading-spinner");
+    const buttonText = button.querySelector(".button-text");
+
+    buttonText.style.display = "none"; // Hide button text
+    spinner.style.display = "inline-block"; // Show spinner
+    spinner.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-loader"><circle cx="12" cy="12" r="10"></circle><path d="M12 2v4"></path></svg>`; // Add spinner SVG
+    button.disabled = true; // Disable the button
+}
+
+function stopLoading(buttonId) {
+    const button = document.getElementById(buttonId);
+    const spinner = button.querySelector(".loading-spinner");
+    const buttonText = button.querySelector(".button-text");
+
+    buttonText.style.display = "inline"; // Show button text
+    spinner.style.display = "none"; // Hide spinner
+    spinner.innerHTML = ""; // Remove spinner content
+    button.disabled = false; // Re-enable the button
+}

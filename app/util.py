@@ -26,7 +26,7 @@ from urllib.parse import urlparse
 from app.mylogger import error_logger
 
 def getUnique(data):
-    # Create a set to store unique JSON objects
+	# Create a set to store unique JSON objects
 	unique_json_set = set()
 
 	# Convert the dictionaries to JSON strings (serialization) and store in a set
@@ -83,6 +83,54 @@ def send_sms(mobile,message):
 
 	# Return the response from the SMS service
 	return response.status_code
+
+
+
+def call_third_party_api(search_mode, search_key, org_code, access_token):
+	api_url = app.config["CDAC_SERVER"]
+	headers = {
+		"Authorization": f"Bearer {access_token}",
+		"searchMode": str(search_mode),
+		"searchKey": search_key,
+		"orgCode": org_code
+	}
+	response = requests.post(api_url, headers=headers)
+	return response
+
+def cdac_service(emp_id):
+	# Extract parameters from the request
+	type_ = "emp_id" # ["emp_id", "pan"]
+	search_key = emp_id # emp id or pan
+
+	search_mode = 2
+	org_code = "33101"
+
+	auth_url = app.config["CDAC_AUTH_SERVER"]
+	auth_data = {
+		"client_id": app.config["CDAC_USERNAME"],
+		"client_secret": app.config["CDAC_PASSWORD"],
+		"client_serID": app.config["CDAC_ID"]
+	}
+
+	# Call the third-party API
+	response_auth = requests.post(auth_url, json=auth_data)
+	if response_auth.status_code == 200:
+		access_token = response_auth.json().get('access_token')
+		if access_token:
+			response_api = call_third_party_api(search_mode, search_key, org_code, access_token)
+			if response_api.status_code == 200:
+				data = response_api.json()
+				return data
+			else:
+				error_logger.error(f"Either employee id is wrong or something went wrong. {response_api.status_code}")
+				return f"Either employee id is wrong or something went wrong."
+		else:
+			error_logger.error("Access token not found in response")
+			return "Something went wrong"
+	else:
+		error_logger.error(f"Authentication API call failed with status code {response_auth.status_code}")
+		return f"Something went wrong"    
+
 
 def to_date(date_string): 
 	try:

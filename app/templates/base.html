@@ -1,250 +1,295 @@
 <!doctype html>
 <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="icon"
+      href="{{ url_for('static', filename='assets/favicon.png', version=time) }}"
+    />
+    <link
+      rel="stylesheet"
+      href="{{url_for('static',filename='style/style.css')}}"
+    />
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" href="{{ url_for('static', filename='assets/favicon.png', version=time) }}" />
-    <link rel="stylesheet" href="{{url_for('static',filename='style/style.css')}}">
+    <link
+      rel="stylesheet"
+      href="{{url_for('static',filename='style/flowbite.min.css')}}"
+    />
+    <link
+      rel="stylesheet"
+      href="{{url_for('static',filename='style/toastify.css')}}"
+    />
 
-    <link rel="stylesheet" href="{{url_for('static',filename='style/flowbite.min.css')}}">
-    <link rel="stylesheet" href="{{url_for('static',filename='style/toastify.css')}}">
-
-    <link rel="stylesheet" href="{{url_for('static',filename='dist/css/output.css')}}">
+    <link
+      rel="stylesheet"
+      href="{{url_for('static',filename='dist/css/output.css')}}"
+    />
     {% if title %}
     <title>{{ title }} - AIIMS Research Publication Repository</title>
     {% else %}
-    <title>AIIMS Research Publication Repository </title>
+    <title>AIIMS Research Publication Repository</title>
     {% endif %}
 
     <script>
-        // Set theme on HTML page load
-        if (localStorage.getItem('theme') === 'dark') {
-            document.getElementsByTagName('html')[0].classList.add("dark");
-        }
+      // Set theme on HTML page load
+      if (localStorage.getItem("theme") === "dark") {
+        document.getElementsByTagName("html")[0].classList.add("dark");
+      }
     </script>
+  </head>
 
-</head>
-
-
-
-<body class="min-w-[470px] bg-slate-100 dark:bg-gray-800 text-stone-700 dark:text-teal-100">
+  <body
+    class="min-w-[470px] bg-slate-100 text-stone-700 dark:bg-gray-800 dark:text-teal-100"
+  >
     <header>
-        <nav 
-           class="px-4 py-2 md:py-0 content-center h-16  bg-slate-200 dark:bg-slate-700 text-gray-700 "
-            id="navbarBgfullwidth">
-            <div 
-                class="container mx-auto flex w-full flex-wrap items-center justify-between"
-                id="navbarContainedContent">
-                <div 
-                    class="flex items-center text-red-800 dark:text-teal-300" 
-                    id="leftLogoTitle">
-                    <div 
-                        id="brandLogo" 
-                        class=" mr-4 h-10 w-10">
-                        {% include 'logosvg.html' %}
-                    </div>
-                    <div 
-                        class="text-lg md:text-xl">AIIMS Research Publication Repository
-                    </div>
-                </div>
-                <button 
-                    id="mainSiteNavToggle" 
-                    class="h-10 md:hidden text-red-800 dark:text-teal-300 "
-                    aria-label="Main navigation" onclick="toggleHidden()">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="block h-6 w-6 cursor-pointer " fill="none"
-                        viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M4 6h16M4 12h16M4 18h16"></path>
-                    </svg>
-                </button>
-
-                <div 
-                    id="mainSiteNav"
-                    class="hidden 
-                            fixed md:relative md:flex  
-                            top-20 md:top-auto 
-                            left-0 md:left-auto    
-                            w-full md:w-auto  
-                            h-screen md:h-auto
-                            bg-slate-400/90 md:bg-transparent 
-                            md:items-center "
-                    aria-hidden="true">
-                    <ul
-                        class=" text-base text-right    
-                                md:py-0 md:px-2 
-                                text-gray-700 dark:text-teal-300 
-                                md:flex gap-4 
-                                md:h-full 
-                                md:justify-between ">
-                        <li>
-                            <a class="block m-2 md:m-0 px-2  py-4 md:py-2 md:px-4 hover:text-slate-200  hover:bg-gray-600 transition duration-300 ease-out hover:ease-in-out "
-                                href="/researchrepository/">Home</a>
-                        </li>
-                        <li>
-                            <a class="block m-2 md:m-0 px-2  py-4 md:py-2 md:px-4 hover:text-slate-200  hover:bg-gray-600 transition duration-300 ease-out hover:ease-in-out "
-                                href="/researchrepository/repository">Repository</a>
-                        </li>
-                        <li>
-                            <a class="block m-2 md:m-0 px-2    py-4 md:py-2 md:px-4 hover:text-slate-200  hover:bg-gray-600 transition duration-300 ease-out hover:ease-in-out "
-                                href="/about">About</a>
-                        </li>
-                        {% if logged_in %}
-
-                        {% if logged_in %}
-                        <li
-                            class="group relative dropdown  block m-2 md:m-0 px-2    py-4 md:py-2 md:px-4 hover:text-slate-200  hover:bg-gray-600 transition duration-300 ease-out hover:ease-in-out tracking-wide">
-                            <a>Duplicate</a>
-                            <div class="group-hover:block dropdown-menu absolute hidden h-auto">
-
-                                <ul class="top-0 w-56 bg-slate-400/90 md:items-center">
-                                    <li class="py-1"><a
-                                        href="/researchrepository/duplicate-by-title"
-                                            class="block m-2 md:m-0 px-2 py-4 md:py-2 md:px-4 hover:text-slate-200  hover:bg-gray-600 transition duration-300 ease-out hover:ease-in-out">Duplicate
-                                            by Title</a>
-                                    </li>
-                                    <li class="py-1"><a
-                                        href="/researchrepository/duplicate-by-pubmed-id"
-                                            class="block m-2 md:m-0 px-2 py-4 md:py-2 md:px-4 hover:text-slate-200  hover:bg-gray-600 transition duration-300 ease-out hover:ease-in-out">Duplicate
-                                            by PubMed ID</a>
-                                    </li>
-                                    <li class="py-1"><a
-                                        href="/researchrepository/duplicate-by-pmc-id"
-                                            class="block m-2 md:m-0 px-2 py-4 md:py-2 md:px-4 hover:text-slate-200  hover:bg-gray-600 transition duration-300 ease-out hover:ease-in-out">Duplicate
-                                            by PMC ID</a>
-                                    </li>
-                                    <li class="py-1"><a
-                                        href="/researchrepository/duplicate-by-doi"
-                                            class="block m-2 md:m-0 px-2 py-4 md:py-2 md:px-4 hover:text-slate-200  hover:bg-gray-600 transition duration-300 ease-out hover:ease-in-out">Duplicate
-                                            by DOI</a>
-                                    </li>
-                                    
-                                </ul>
-                            </div>
-                            {% endif%}
-
-                            {% endif%}
-
-                        <li>
-                            {% if logged_in %}
-                            <a class="block m-2 md:m-0 px-2   py-4  md:py-2 md:px-4 hover:text-slate-200  hover:bg-gray-600 transition duration-300 ease-out hover:ease-in-out "
-                                href="#" onclick="logout()">Logout</a>
-                            {% else %}
-                            <a class="block m-2 md:m-0 px-2   py-4  md:py-2 md:px-4 hover:text-slate-200  hover:bg-gray-600 transition duration-300 ease-out hover:ease-in-out "
-                                href="/researchrepository/login">Log In</a>
-
-                            {% endif%}
-                    </ul>
-                </div>
+      <nav
+        class="h-16 content-center bg-slate-200 px-4 py-2 text-gray-700 md:py-0 dark:bg-slate-700"
+        id="navbarBgfullwidth"
+      >
+        <div
+          class="container mx-auto flex w-full flex-wrap items-center justify-between"
+          id="navbarContainedContent"
+        >
+          <div
+            class="flex items-center text-red-800 dark:text-teal-300"
+            id="leftLogoTitle"
+          >
+            <div id="brandLogo" class="mr-4 h-10 w-10">
+              {% include 'logosvg.html' %}
             </div>
-        </nav>
+            <div class="text-lg md:text-xl">
+              AIIMS Research Publication Repository
+            </div>
+          </div>
+          <button
+            id="mainSiteNavToggle"
+            class="h-10 text-red-800 md:hidden dark:text-teal-300"
+            aria-label="Main navigation"
+            onclick="toggleHidden()"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="block h-6 w-6 cursor-pointer"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M4 6h16M4 12h16M4 18h16"
+              ></path>
+            </svg>
+          </button>
+
+          <div
+            id="mainSiteNav"
+            class="fixed left-0 top-20 hidden h-screen w-full bg-slate-400/90 md:relative md:left-auto md:top-auto md:flex md:h-auto md:w-auto md:items-center md:bg-transparent"
+            aria-hidden="true"
+          >
+            <ul
+              class="gap-4 text-right text-base text-gray-700 md:flex md:h-full md:justify-between md:px-2 md:py-0 dark:text-teal-300"
+            >
+              <li>
+                <div >
+                    <form action="/researchrepository/search" class="max-w-[480px] w-full px-4">
+                        <div class="relative">
+                            <input type="text" name="query" class="w-full border h-12 shadow p-4 rounded-full dark:text-gray-800 dark:border-gray-700 dark:bg-gray-200" placeholder="Search Articles">
+                            <button type="submit">
+                                <svg class="text-teal-400 h-5 w-5 absolute top-3.5 right-3 fill-current dark:text-teal-300"
+                                    xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1"
+                                    x="0px" y="0px" viewBox="0 0 56.966 56.966"
+                                    style="enable-background:new 0 0 56.966 56.966;" xml:space="preserve">
+                                    <path
+                                        d="M55.146,51.887L41.588,37.786c3.486-4.144,5.396-9.358,5.396-14.786c0-12.682-10.318-23-23-23s-23,10.318-23,23  s10.318,23,23,23c4.761,0,9.298-1.436,13.177-4.162l13.661,14.208c0.571,0.593,1.339,0.92,2.162,0.92  c0.779,0,1.518-0.297,2.079-0.837C56.255,54.982,56.293,53.08,55.146,51.887z M23.984,6c9.374,0,17,7.626,17,17s-7.626,17-17,17  s-17-7.626-17-17S14.61,6,23.984,6z">
+                                    </path>
+                                </svg>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+              </li>
+
+              <li>
+                <a
+                  class="m-2 block px-2 py-4 transition duration-300 ease-out hover:bg-gray-600 hover:text-slate-200 hover:ease-in-out md:m-0 md:px-4 md:py-2"
+                  href="/researchrepository/"
+                  >Home</a
+                >
+              </li>
+              <li>
+                <a
+                  class="m-2 block px-2 py-4 transition duration-300 ease-out hover:bg-gray-600 hover:text-slate-200 hover:ease-in-out md:m-0 md:px-4 md:py-2"
+                  href="/researchrepository/repository"
+                  >Repository</a
+                >
+              </li>
+              <li>
+                <a
+                  class="m-2 block px-2 py-4 transition duration-300 ease-out hover:bg-gray-600 hover:text-slate-200 hover:ease-in-out md:m-0 md:px-4 md:py-2"
+                  href="/about"
+                  >About</a
+                >
+              </li>
+              {% if logged_in %} {% if "LIBRARYMANAGER" in roles %}
+              <li
+                class="dropdown group relative m-2 block px-2 py-4 tracking-wide transition duration-300 ease-out hover:bg-gray-600 hover:text-slate-200 hover:ease-in-out md:m-0 md:px-4 md:py-2"
+              >
+                <a>Duplicate</a>
+                <div
+                  class="dropdown-menu absolute hidden h-auto group-hover:block"
+                >
+                  <ul class="top-0 w-56 bg-slate-400/90 md:items-center">
+                    <li class="py-1">
+                      <a
+                        href="/researchrepository/duplicate/title"
+                        class="m-2 block px-2 py-4 transition duration-300 ease-out hover:bg-gray-600 hover:text-slate-200 hover:ease-in-out md:m-0 md:px-4 md:py-2"
+                        >Duplicate by Title</a
+                      >
+                    </li>
+                    <li class="py-1">
+                      <a
+                        href="/researchrepository/duplicate/pubmed_id"
+                        class="m-2 block px-2 py-4 transition duration-300 ease-out hover:bg-gray-600 hover:text-slate-200 hover:ease-in-out md:m-0 md:px-4 md:py-2"
+                        >Duplicate by PubMed ID</a
+                      >
+                    </li>
+                    <li class="py-1">
+                      <a
+                        href="/researchrepository/duplicate/pmc_id"
+                        class="m-2 block px-2 py-4 transition duration-300 ease-out hover:bg-gray-600 hover:text-slate-200 hover:ease-in-out md:m-0 md:px-4 md:py-2"
+                        >Duplicate by PMC ID</a
+                      >
+                    </li>
+                    <li class="py-1">
+                      <a
+                        href="/researchrepository/duplicate/doi"
+                        class="m-2 block px-2 py-4 transition duration-300 ease-out hover:bg-gray-600 hover:text-slate-200 hover:ease-in-out md:m-0 md:px-4 md:py-2"
+                        >Duplicate by DOI</a
+                      >
+                    </li>
+                  </ul>
+                </div>
+                {% endif%} {% endif%}
+              </li>
+
+              <li>
+                {% if logged_in %}
+                <a
+                  class="m-2 block px-2 py-4 transition duration-300 ease-out hover:bg-gray-600 hover:text-slate-200 hover:ease-in-out md:m-0 md:px-4 md:py-2"
+                  href="#"
+                  onclick="logout()"
+                  >Logout</a
+                >
+                {% else %}
+                <a
+                  class="m-2 block px-2 py-4 transition duration-300 ease-out hover:bg-gray-600 hover:text-slate-200 hover:ease-in-out md:m-0 md:px-4 md:py-2"
+                  href="/researchrepository/login"
+                  >Log In</a
+                >
+
+                {% endif%}
+              </li>
+            </ul>
+          </div>
+        </div>
+      </nav>
     </header>
 
-
-    <main class="min-h-screen container mx-auto pt-4 px-4 ">
-
-
-        {% block content %}
-
-
-        {% endblock %}
-
-
-
+    <main class="container mx-auto min-h-screen px-4 pt-4">
+      {% block content %} {% endblock %}
     </main>
 
+    <footer
+      class="bg-slate-200 p-2 text-gray-700 dark:bg-slate-700 dark:text-teal-300"
+    >
+      <div
+        class="container mx-auto flex w-full flex-wrap items-center justify-between"
+        id="footerContainedContent"
+      >
+        <aside>
+          <h2>
+            AIIMS Research Repository.
+            <br />
+            AIIMS New Delhi, (c) 2024
+            <br />
+            All Rights Reserved
+          </h2>
+        </aside>
 
-
-    <footer class=" p-2
-    bg-slate-200 dark:bg-slate-700
-    text-gray-700 dark:text-teal-300
-     ">
-        <div class="container mx-auto
-    flex w-full flex-wrap items-center justify-between" id="footerContainedContent">
-
-            <aside>
-                <h2>
-                    AIIMS Research Repository.
-                    <br />
-                    AIIMS New Delhi, (c) 2024
-                    <br />
-                    All Rights Reserved
-                </h2>
-            </aside>
-
-            <nav>
-                <h6 class="footer-title">Legal</h6>
-                <a class="link link-hover">Terms of use</a>
-                <a class="link link-hover">Privacy policy</a>
-                <a class="link link-hover">Cookie policy</a>
-            </nav>
-            <nav>
-                <h6 class="footer-title">Mode</h6>
-                <button aria-label="toggle theme" onClick=toggle_theme()>
-                    {% include 'sunicon.html' %}
-                </button>
-            </nav>
-        </div>
-
-
+        <nav>
+          <h6 class="footer-title">Legal</h6>
+          <a class="link link-hover">Terms of use</a>
+          <a class="link link-hover">Privacy policy</a>
+          <a class="link link-hover">Cookie policy</a>
+        </nav>
+        <nav>
+          <h6 class="footer-title">Mode</h6>
+          <button aria-label="toggle theme" onClick="toggle_theme()">
+            {% include 'sunicon.html' %}
+          </button>
+        </nav>
+      </div>
     </footer>
+  </body>
+  <script src="{{url_for('static',filename='js/common.js')}}"></script>
+  <script src="{{url_for('static',filename='js/flowbite.min.js')}}"></script>
+  <script src="{{url_for('static',filename='js/toastify.js')}}"></script>
 
-</body>
-<script src="{{url_for('static',filename='js/common.js')}}"></script>
-<script src="{{url_for('static',filename='js/flowbite.min.js')}}"></script>
-<script src="{{url_for('static',filename='js/toastify.js')}}"></script>
+  <script>
+    const menu = document.getElementById("mainSiteNav");
+    const menuButton = document.getElementById("mainSiteNavToggle");
 
-<script>
-    const menu = document.getElementById('mainSiteNav');
-    const menuButton = document.getElementById('mainSiteNavToggle');
-
-    document.addEventListener('click', (event) => {
-        if (!menu.contains(event.target) && !menuButton.contains(event.target)) {
-            menu.classList.add('hidden');
-        }
+    document.addEventListener("click", (event) => {
+      if (!menu.contains(event.target) && !menuButton.contains(event.target)) {
+        menu.classList.add("hidden");
+      }
     });
 
     function toggleHidden() {
-        menu.classList.toggle('hidden');
+      menu.classList.toggle("hidden");
     }
-
 
     function toggle_theme() {
-        let saved_theme = localStorage.getItem("theme");
-        let prefersDarkMode = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      let saved_theme = localStorage.getItem("theme");
+      let prefersDarkMode = window.matchMedia(
+        "(prefers-color-scheme: dark)",
+      ).matches;
 
-        if (saved_theme == null) {
-            console.log("No saved theme. Now set a theme opposite to system preference");
-            let themeToSet = prefersDarkMode ? "light" : "dark";
-            console.log("set theme to ", themeToSet);
-            localStorage.setItem("theme", themeToSet);
-            if (themeToSet === "dark") {
-                document.getElementsByTagName('html')[0].classList.add("dark");
-                console.log("Added Class  ", themeToSet);
-            }
-            else {
-                document.getElementsByTagName('html')[0].classList.remove("dark");
-                console.log("Removed Class  ", "dark");
-            }
+      if (saved_theme == null) {
+        console.log(
+          "No saved theme. Now set a theme opposite to system preference",
+        );
+        let themeToSet = prefersDarkMode ? "light" : "dark";
+        console.log("set theme to ", themeToSet);
+        localStorage.setItem("theme", themeToSet);
+        if (themeToSet === "dark") {
+          document.getElementsByTagName("html")[0].classList.add("dark");
+          console.log("Added Class  ", themeToSet);
+        } else {
+          document.getElementsByTagName("html")[0].classList.remove("dark");
+          console.log("Removed Class  ", "dark");
         }
+      } else {
+        let themeToSet = saved_theme === "dark" ? "light" : "dark";
+        console.log(
+          "saved theme -- ",
+          saved_theme,
+          "--Now set a theme opposite to saved theme preference--",
+          themeToSet,
+        );
+        localStorage.setItem("theme", themeToSet);
 
-        else {
-            let themeToSet = saved_theme === "dark" ? "light" : "dark";
-            console.log("saved theme -- ", saved_theme, "--Now set a theme opposite to saved theme preference--", themeToSet);
-            localStorage.setItem("theme", themeToSet);
-
-            if (themeToSet === "dark") {
-                document.getElementsByTagName('html')[0].classList.add("dark");
-                console.log("Added Class  ", themeToSet);
-            }
-            else {
-                document.getElementsByTagName('html')[0].classList.remove("dark");
-                console.log("Removed Class  ", "Dark");
-            }
+        if (themeToSet === "dark") {
+          document.getElementsByTagName("html")[0].classList.add("dark");
+          console.log("Added Class  ", themeToSet);
+        } else {
+          document.getElementsByTagName("html")[0].classList.remove("dark");
+          console.log("Removed Class  ", "Dark");
         }
-
+      }
     }
-</script>
-
-
+  </script>
 </html>

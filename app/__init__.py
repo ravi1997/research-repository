@@ -1,4 +1,5 @@
 from logging.handlers import RotatingFileHandler
+from pprint import pprint
 from sqlalchemy import Text
 
 import json
@@ -203,6 +204,12 @@ def create_app():
 			response.set_cookie('Session-SALT', cookies['Session-SALT'],  max_age=app.config['COOKIE_AGE'], secure = True, samesite='None')     
 		return response
 
+	from app.util import cdac_service
+
+
+	@app.route("/test")
+	def copy_cookies():
+		return jsonify(cdac_service("E1500065")["Data"][0]),200
 
 	# Register blueprints
 	app.register_blueprint(main_bp, url_prefix="/researchrepository")

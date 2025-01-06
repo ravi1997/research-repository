@@ -1,190 +1,417 @@
-{% extends "base.html" %}
+{% extends "base.html" %} {% block content %}
+<div
+  id="customAlert"
+  class="my-5 hidden w-fit rounded-lg bg-yellow-500 p-4 text-white"
+>
+  <span id="alertMessage">This is an alert message!</span>
+  <button class="close-btn text-lg" onclick="closeAlert()">×</button>
+</div>
 
-{% block content %}
+<!-- Modal for success -->
+<div
+  id="successModal"
+  class="fixed inset-0 flex hidden items-center justify-center bg-black bg-opacity-50"
+>
+  <div class="w-full max-w-lg rounded-lg bg-white p-6 shadow-lg">
+    <div class="flex items-center justify-between">
+      <h5 class="text-lg font-semibold">Article Submitted Successfully</h5>
+      <button onclick="closeModal()" class="text-gray-500 hover:text-gray-700">
+        &times;
+      </button>
+    </div>
+    <div class="mt-4">
+      <p>
+        Your Article has been successfully submitted. Thank you for your input.
+      </p>
+    </div>
+    <div class="mt-6 flex justify-end">
+      <button
+        onclick="closeModal()"
+        class="rounded-lg bg-blue-500 px-4 py-2 text-white hover:bg-blue-600"
+      >
+        Close
+      </button>
+    </div>
+  </div>
+</div>
 
-        <div class="card">
-            <h2 class="text-center text-5xl font-bold">Edit Article</h2>
-            <form id="edit-form" action="/researchrepository/api/article/{{ article.uuid }}" method="POST" class="form"
-                onsubmit="submitForm(event)">
-                <div class="form-group">
-                    <label for="title">Title</label>
-                    <input type="text" id="title" name="title" value="{{ article.title or '' }}" required>
-        
-                </div>
-        
-                <div class="form-group">
-                    <label for="abstract">Abstract</label>
-                    <textarea id="abstract" name="abstract" rows="4" required>{{ article.abstract or '' }}</textarea>
-                </div>
-        
-                <!-- Authors Section -->
-                <div class="section">
-                    <h3>Authors</h3>
-                    <table class="table" id="authors-table">
-                        <thead>
-                            <tr>
-                                <th style="display:none;">Author Id</th>
-                                <th>Full Name</th>
-                                <th>Affiliation</th>
-                                <th>Abbreviation</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for author in article.authors %}
-                            <tr draggable="true" ondragstart="onDragStart(event)" ondragover="onDragOver(event)"
-                                ondrop="onDrop(event)">
-                                <td style="display:none;"><input type="text" name="authors[{{ loop.index }}][id]"
-                                        value="{{ author.id }}" required></td>
-                                <td><input type="text" name="authors[{{ loop.index }}][fullName]" value="{{ author.fullName }}"
-                                        required></td>
-                                <td><input type="text" name="authors[{{ loop.index }}][affiliation]"
-                                        value="{{ author.affiliation }}"></td>
-                                <td><input type="text" name="authors[{{ loop.index }}][abbreviation]"
-                                        value="{{ author.abbreviation }}"></td>
-                                <td><button type="button" class="btn btn-sm btn-danger"
-                                        onclick="removeRow(this)">Remove</button></td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                    <button type="button" class="btn btn-primary" onclick="addAuthor()">+ Add
-                        Author</button>
-                </div>
-        
-                <!-- Publication Details Section -->
-                <div class="section">
-                    <h3>Publication Details</h3>
-                    <div class="grid-form">
-                        <div class="form-group">
-                            <label for="journal">Journal</label>
-                            <input type="text" id="journal" name="journal" value="{{ article.journal or '' }}"
-                                placeholder="Journal" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="journal_abbreviation">Journal Abbreviation</label>
-                            <input type="text" id="journal_abbreviation" name="journal_abrevated"
-                                value="{{ article.journal_abrevated or ''}}" placeholder="Abbreviation" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="volume">Volume</label>
-                            <input type="text" id="volume" name="journal_volume" value="{{ article.journal_volume or ''}}"
-                                placeholder="Volume" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="issue">Issue</label>
-                            <input type="text" id="issue" name="journal_issue" value="{{ article.journal_issue or ''}}"
-                                placeholder="Issue" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="pages">Pages</label>
-                            <input type="text" id="pages" name="pages" value="{{ article.pages or ''}}" placeholder="Pages"
-                                required>
-                        </div>
-                        <div class="form-group">
-                            <label for="publication_date">Published Date</label>
-                            <input type="date" id="publication_date" name="publication_date"
-                                value="{{ article.publication_date or '' }}" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="print_issn">Print ISSN</label>
-                            <input type="text" id="print_issn" name="print_issn" value="{{ article.print_issn or '' }}"
-                                placeholder="Print ISSN" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="electronic_issn">Electronic ISSN</label>
-                            <input type="text" id="electronic_issn" name="electronic_issn"
-                                value="{{ article.electronic_issn or '' }}" placeholder="Electronic ISSN">
-                        </div>
-                        <div class="form-group">
-                            <label for="place_of_publication">Place of Publication</label>
-                            <input type="text" id="place_of_publication" name="place_of_publication"
-                                value="{{ article.place_of_publication or '' }}" placeholder="Place of Publication">
-                        </div>
-                        <div class="form-group">
-                            <label for="pmc_id">PMC ID</label>
-                            <input type="text" id="pmc_id" name="pmc_id" value="{{ article.pmc_id or '' }}"
-                                placeholder="PMC ID">
-                        </div>
-                        <div class="form-group">
-                            <label for="pubmed_id">PubMed ID</label>
-                            <input type="text" id="pubmed_id" name="pubmed_id" value="{{ article.pubmed_id or '' }}"
-                                placeholder="PubMed ID">
-                        </div>
-                        <div class="form-group">
-                            <label for="pii">PII</label>
-                            <input type="text" id="pii" name="pii" value="{{ article.pii or '' }}" placeholder="PII">
-                        </div>
-                    </div>
-                </div>
-        
-                <!-- Keywords Section -->
-                <div class="section">
-                    <h3>Keywords</h3>
-                    <table class="table" id="keywords-table">
-                        <thead>
-                            <tr>
-                                <th style="display:none;">Keyword Id</th>
-                                <th>Keyword</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for keyword in article.keywords %}
-                            <tr draggable="true" ondragstart="onDragStart(event)" ondragover="onDragOver(event)"
-                                ondrop="onDrop(event)">
-                                <td style="display:none;"><input type="text" name="keywords[{{ loop.index }}][id]"
-                                        value="{{ keyword.id or '' }}" required></td>
-                                <td><input type="text" name="keywords[{{ loop.index }}][keyword]"
-                                        value="{{ keyword.keyword or '' }}" required></td>
-                                <td><button type="button" class="btn btn-sm btn-danger"
-                                        onclick="removeRow(this)">Remove</button></td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                    <button type="button" class="btn btn-primary" onclick="addKeyword()">+ Add
-                        Keyword</button>
-                </div>
-        
-                <!-- Links Section (New) -->
-                <div class="section">
-                    <h3>Links</h3>
-                    <table class="table" id="links-table">
-                        <thead>
-                            <tr>
-                                <th style="display:none;">Link Id</th>
-                                <th>Link</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for link in article.links %}
-                            <tr draggable="true" ondragstart="onDragStart(event)" ondragover="onDragOver(event)"
-                                ondrop="onDrop(event)">
-                                <td style="display:none;"><input type="text" name="links[{{ loop.index }}][id]"
-                                        value="{{ link.id or '' }}" required></td>
-                                <td><input type="url" name="links[{{ loop.index }}][link]" value="{{ link.link or '' }}"
-                                        placeholder="Link" required></td>
-                                <td><button type="button" class="btn btn-sm btn-danger"
-                                        onclick="removeRow(this)">Remove</button></td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                    <button type="button" class="btn btn-primary" onclick="addLink()">+ Add Link</button>
-                </div>
-        
-        
-        
-                <!-- Form Actions -->
-                <div class="form-actions">
-                    <button type="submit" class="btn btn-success">Save Changes</button>
-                    <a href="/researchrepository/article/{{ article.id }}" class="btn btn-secondary">Cancel</a>
-                </div>
-            </form>
+<div class="mx-auto max-w-4xl rounded-lg bg-white p-6 shadow-xl">
+  <h2 class="mb-6 text-center text-4xl font-bold text-gray-800">
+    Edit Article
+  </h2>
+
+  <form
+    id="edit-form"
+    action="/researchrepository/api/article/{{ article.uuid }}"
+    method="POST"
+    class="space-y-6"
+    onsubmit="submitForm(event)"
+  >
+    <!-- Title and Abstract -->
+    <div class="space-y-4">
+      <div class="flex flex-col">
+        <label for="title" class="text-lg font-medium text-gray-700"
+          >Title</label
+        >
+        <input
+          type="text"
+          id="title"
+          name="title"
+          value="{{ article.title or '' }}"
+          required
+          class="input input-bordered w-full rounded-md border-gray-300 shadow-sm"
+        />
+      </div>
+
+      <div class="flex flex-col">
+        <label for="abstract" class="text-lg font-medium text-gray-700"
+          >Abstract</label
+        >
+        <textarea
+          id="abstract"
+          name="abstract"
+          rows="4"
+          required
+          class="textarea textarea-bordered w-full rounded-md border-gray-300 shadow-sm"
+        >
+{{ article.abstract or '' }}</textarea
+        >
+      </div>
+    </div>
+
+    <!-- Authors Section -->
+    <div class="space-y-4">
+      <h3 class="text-2xl font-semibold text-gray-800">Authors</h3>
+      <table id="authors-table" class="w-full table-auto">
+        <thead class="bg-gray-200">
+          <tr>
+            <th class="px-4 py-2 text-left">Full Name</th>
+            <th class="px-4 py-2 text-left">Affiliation</th>
+            <th class="px-4 py-2 text-left">Abbreviation</th>
+            <th class="px-4 py-2 text-left">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for author in article.authors %}
+          <tr class="border-b">
+            <td class="px-4 py-2">
+              <input
+                type="text"
+                name="authors[{{ loop.index }}][fullName]"
+                value="{{ author.fullName }}"
+                required
+                class="input input-bordered w-full rounded-md border-gray-300 shadow-sm"
+              />
+            </td>
+            <td class="px-4 py-2">
+              <input
+                type="text"
+                name="authors[{{ loop.index }}][affiliation]"
+                value="{{ author.affiliation }}"
+                class="input input-bordered w-full rounded-md border-gray-300 shadow-sm"
+              />
+            </td>
+            <td class="px-4 py-2">
+              <input
+                type="text"
+                name="authors[{{ loop.index }}][abbreviation]"
+                value="{{ author.abbreviation }}"
+                class="input input-bordered w-full rounded-md border-gray-300 shadow-sm"
+              />
+            </td>
+            <td class="px-4 py-2">
+              <button
+                type="button"
+                class="btn btn-sm btn-danger text-red-500"
+                onclick="removeRow(this)"
+              >
+                Remove
+              </button>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <button
+        type="button"
+        class="btn btn-primary mt-4 rounded-md bg-blue-500 px-4 py-2 text-white hover:bg-blue-600"
+        id="add-author-btn"
+      >
+        + Add Author
+      </button>
+    </div>
+
+    <!-- Publication Details Section -->
+    <div class="space-y-6">
+      <h3 class="text-2xl font-semibold text-gray-800">Publication Details</h3>
+      <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+        <div class="flex flex-col">
+          <label for="journal" class="text-lg font-medium text-gray-700"
+            >Journal</label
+          >
+          <input
+            type="text"
+            id="journal"
+            name="journal"
+            value="{{ article.journal or '' }}"
+            class="input input-bordered w-full rounded-md border-gray-300 shadow-sm"
+            required
+          />
         </div>
+        <div class="flex flex-col">
+          <label
+            for="journal_abbreviation"
+            class="text-lg font-medium text-gray-700"
+            >Journal Abbreviation</label
+          >
+          <input
+            type="text"
+            id="journal_abbreviation"
+            name="journal_abrevated"
+            value="{{ article.journal_abrevated or ''}}"
+            class="input input-bordered w-full rounded-md border-gray-300 shadow-sm"
+            required
+          />
+        </div>
+        <div class="flex flex-col">
+          <label for="volume" class="text-lg font-medium text-gray-700"
+            >Volume</label
+          >
+          <input
+            type="text"
+            id="volume"
+            name="journal_volume"
+            value="{{ article.journal_volume or ''}}"
+            class="input input-bordered w-full rounded-md border-gray-300 shadow-sm"
+            required
+          />
+        </div>
+        <div class="flex flex-col">
+          <label for="issue" class="text-lg font-medium text-gray-700"
+            >Issue</label
+          >
+          <input
+            type="text"
+            id="issue"
+            name="journal_issue"
+            value="{{ article.journal_issue or ''}}"
+            class="input input-bordered w-full rounded-md border-gray-300 shadow-sm"
+            required
+          />
+        </div>
+        <div class="flex flex-col">
+          <label for="pages" class="text-lg font-medium text-gray-700"
+            >Pages</label
+          >
+          <input
+            type="text"
+            id="pages"
+            name="pages"
+            value="{{ article.pages or ''}}"
+            class="input input-bordered w-full rounded-md border-gray-300 shadow-sm"
+            required
+          />
+        </div>
+        <div class="flex flex-col">
+          <label
+            for="publication_date"
+            class="text-lg font-medium text-gray-700"
+            >Published Date</label
+          >
+          <input
+            type="date"
+            id="publication_date"
+            name="publication_date"
+            value="{{ article.publication_date or '' }}"
+            class="input input-bordered w-full rounded-md border-gray-300 shadow-sm"
+            required
+          />
+        </div>
+        <div class="flex flex-col">
+          <label for="print_issn" class="text-lg font-medium text-gray-700"
+            >Print ISSN</label
+          >
+          <input
+            type="text"
+            id="print_issn"
+            name="print_issn"
+            value="{{ article.print_issn or '' }}"
+            class="input input-bordered w-full rounded-md border-gray-300 shadow-sm"
+            required
+          />
+        </div>
+        <div class="flex flex-col">
+          <label for="electronic_issn" class="text-lg font-medium text-gray-700"
+            >Electronic ISSN</label
+          >
+          <input
+            type="text"
+            id="electronic_issn"
+            name="electronic_issn"
+            value="{{ article.electronic_issn or '' }}"
+            class="input input-bordered w-full rounded-md border-gray-300 shadow-sm"
+          />
+        </div>
+        <div class="flex flex-col">
+          <label
+            for="place_of_publication"
+            class="text-lg font-medium text-gray-700"
+            >Place of Publication</label
+          >
+          <input
+            type="text"
+            id="place_of_publication"
+            name="place_of_publication"
+            value="{{ article.place_of_publication or '' }}"
+            class="input input-bordered w-full rounded-md border-gray-300 shadow-sm"
+          />
+        </div>
+        <div class="flex flex-col">
+          <label for="pmc_id" class="text-lg font-medium text-gray-700"
+            >PMC ID</label
+          >
+          <input
+            type="text"
+            id="pmc_id"
+            name="pmc_id"
+            value="{{ article.pmc_id or '' }}"
+            class="input input-bordered w-full rounded-md border-gray-300 shadow-sm"
+          />
+        </div>
+        <div class="flex flex-col">
+          <label for="pubmed_id" class="text-lg font-medium text-gray-700"
+            >PubMed ID</label
+          >
+          <input
+            type="text"
+            id="pubmed_id"
+            name="pubmed_id"
+            value="{{ article.pubmed_id or '' }}"
+            class="input input-bordered w-full rounded-md border-gray-300 shadow-sm"
+          />
+        </div>
+        <div class="flex flex-col">
+          <label for="pii" class="text-lg font-medium text-gray-700">PII</label>
+          <input
+            type="text"
+            id="pii"
+            name="pii"
+            value="{{ article.pii or '' }}"
+            class="input input-bordered w-full rounded-md border-gray-300 shadow-sm"
+          />
+        </div>
+      </div>
+    </div>
 
+    <!-- Keywords Section -->
+    <div class="space-y-4">
+      <h3 class="text-2xl font-semibold text-gray-800">Keywords</h3>
+      <table id="keywords-table" class="w-full table-auto">
+        <thead class="bg-gray-200">
+          <tr>
+            <th class="px-4 py-2 text-left">Keyword</th>
+            <th class="px-4 py-2 text-left">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for keyword in article.keywords %}
+          <tr class="border-b">
+            <td class="px-4 py-2">
+              <input
+                type="text"
+                name="keywords[{{ loop.index }}][keyword]"
+                value="{{ keyword.keyword or '' }}"
+                required
+                class="input input-bordered w-full rounded-md border-gray-300 shadow-sm"
+              />
+            </td>
+            <td class="px-4 py-2">
+              <button
+                type="button"
+                class="btn btn-sm btn-danger text-red-500"
+                onclick="removeRow(this)"
+              >
+                Remove
+              </button>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <button
+        type="button"
+        class="btn btn-primary mt-4 rounded-md bg-blue-500 px-4 py-2 text-white hover:bg-blue-600"
+        id="add-keyword-btn"
+      >
+        + Add Keyword
+      </button>
+    </div>
 
+    <!-- Links Section -->
+    <div class="space-y-4">
+      <h3 class="text-2xl font-semibold text-gray-800">Links</h3>
+      <table id="links-table" class="w-full table-auto">
+        <thead class="bg-gray-200">
+          <tr>
+            <th class="px-4 py-2 text-left">Link</th>
+            <th class="px-4 py-2 text-left">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for link in article.links %}
+          <tr class="border-b">
+            <td class="px-4 py-2">
+              <input
+                type="url"
+                name="links[{{ loop.index }}][link]"
+                value="{{ link.link or '' }}"
+                placeholder="Link"
+                required
+                class="input input-bordered w-full rounded-md border-gray-300 shadow-sm"
+              />
+            </td>
+            <td class="px-4 py-2">
+              <button
+                type="button"
+                class="btn btn-sm btn-danger text-red-500"
+                onclick="removeRow(this)"
+              >
+                Remove
+              </button>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <button
+        type="button"
+        class="btn btn-primary mt-4 rounded-md bg-blue-500 px-4 py-2 text-white hover:bg-blue-600"
+        id="add-link-btn"
+      >
+        + Add Link
+      </button>
+    </div>
+
+    <!-- Form Actions -->
+    <div class="mt-6 flex justify-end space-x-4">
+      <button id="submit-btn" type="submit" class="bg-green-500 text-white px-6 py-3 rounded-md hover:bg-green-600">
+        <span class="button-text">Save Changes</span>
+        <span
+          class="loading-spinner inline-block h-5 w-5 animate-spin rounded-full border-2 border-transparent border-t-white align-middle"
+          style="display: none"
+        ></span>
+      </button>
+      <a
+        href="/researchrepository/article/{{ article.uuid }}"
+        class="rounded-md bg-gray-500 px-6 py-3 text-white hover:bg-gray-600"
+        >Cancel</a
+      >
+    </div>
+  </form>
+</div>
+
+<script>
+  const article_uuid = "{{ article.uuid }}";
+</script>
 <script src="{{url_for('static',filename='js/edit.js')}}"></script>
 {% endblock %}

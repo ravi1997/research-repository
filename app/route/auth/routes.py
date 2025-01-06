@@ -1,16 +1,17 @@
 from datetime import datetime
 import json
+from pprint import pprint
 import uuid
 from flask import jsonify,current_app as app
 from marshmallow import ValidationError
 from sqlalchemy import func
-
+from dateutil import parser
 from app.decorator import checkBlueprintRouteFlag, verify_GUEST_role, verify_SUPERADMIN_role, verify_body, verify_user
 from app.models import OTP, User
 from app.extension import db,scheduler
-from app.models.user import UserState, ValidState
+from app.models.user import UserRole, UserRoles, UserState, ValidState
 from app.schema import UserSchema
-from app.util import  decode_text, generate_otp, send_sms
+from app.util import  cdac_service, decode_text, generate_otp, send_sms
 from . import auth_bp
 
 @auth_bp.route("/")
@@ -38,30 +39,59 @@ def delete_OTP(id):
 @verify_body
 def login(data,session):
     try:
-        if not 'mobile' in data:
-            app.logger.error("Phone number is compulsory")
-            return jsonify({"message":"Phone number is compulsory"}),401
+        if not 'employee_id' in data:
+            app.logger.error("Employee Id is compulsory")
+            return jsonify({"message":"Employee Id is compulsory"}),401
         
-        phone = data['mobile']
+        employee_id = data['employee_id']
         
         
         user = User.query.filter_by(
-            mobile=phone
+            employee_id=employee_id
         ).one_or_none()
-        
         if not user:
-            app.logger.error(f"Account does not exist : {phone}")
-            return jsonify({"message":"Account does not exist"}),401
-
+            response = cdac_service(employee_id)
+            if type(response) is str:
+                return jsonify({"message":"Something went wrong. Either employee id not valid or server error"}),500
+            
+            response = response["Data"][0]
+            name = response["name"].split()
+            if len(name) <= 2:
+                firstname = name[0]
+                lastname = name[1] 
+            else:
+                fname = name
+                lastname = fname.pop()
+                firstname = "".join(fname)                
+                
+            user = User(
+                firstname = firstname,
+                middlename = "",
+                lastname = lastname,
+                mobile = response["mobile_number"],
+                email = response["email_address"],
+                department= response["department"],
+                designation=  response["designation"],
+                date_expiry= parser.parse(response["retirement_date"]),
+                roles=[
+                    UserRoles(role=UserRole.FACULTY)
+                ] if "Professor".lower() in response["designation"].lower() else [],
+                employee_id = employee_id
+            )
+            
+            db.session.add(user)
+            db.session.commit()
+            
         if user.isDeleted():
-            app.logger.error(f"Account is deleted : {phone}")
+            app.logger.error(f"Account is deleted : {employee_id}")
             return jsonify({"message":"Account is either deleted or blocked. Please contact admin."}),401
 
         if user.isBlocked():
-            app.logger.error(f"Account is blocked : {phone}")
+            app.logger.error(f"Account is blocked : {employee_id}")
             return jsonify({"message":"Account is either deleted or blocked. Please contact admin."}),401
 
         new_otp = ""
+        phone = user.mobile
         found=False
 
         if session.otp != []:
@@ -134,11 +164,11 @@ def verifyOTP(data,session):
             app.logger.error("OTP is compulsory")
             return jsonify({"message":"OTP is compulsory"}),401
         
-        if not 'mobile' in data:
-            app.logger.error("Phone number is compulsory")
-            return jsonify({"message":"Phone number is compulsory"}),401
+        if not 'employee_id' in data:
+            app.logger.error("Employee Id is compulsory")
+            return jsonify({"message":"Employee Id is compulsory"}),401
         
-        phone = data['mobile']
+        employee_id = data['employee_id']
         
         current_otp = data['OTP']
         
@@ -154,18 +184,18 @@ def verifyOTP(data,session):
         otp_data = otp.otp
 
         user = User.query.filter_by(
-            mobile=phone
+            employee_id=employee_id
         ).one_or_none()
             
         if not user:
-            app.logger.error(f"Account does not exist : {phone}")
+            app.logger.error(f"Account does not exist : {employee_id}")
             app.logger.error(f"Invalid request")
             session.status = ValidState.INVALID
             db.session.commit()
             return jsonify({"message":"Invalid request"}),401
 
         if user.isDeleted() or user.isBlocked():
-            app.logger.error(f"Account {phone} is deleted or blocked.Please contact admin.")
+            app.logger.error(f"Account {employee_id} is deleted or blocked.Please contact admin.")
             session.status = ValidState.INVALID
             db.session.commit()
             return jsonify({"message":"Invalid request"}),401

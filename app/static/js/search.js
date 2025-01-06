@@ -6,6 +6,15 @@ function navigateToPage(page, entry, total_pages) {
     }
 }
 
+function jumpToPage(pageNumber, entry, totalPages) {
+    const page = parseInt(pageNumber, 10);
+    if (!isNaN(page) && page >= 1 && page <= totalPages) {
+        navigateToPage(page, entry, totalPages);
+    } else {
+        alert(`Please enter a valid page number between 1 and ${totalPages}`);
+    }
+}
+
 document.getElementById('search').addEventListener('keypress', function (e) {
     document.getElementById('offset').value = 0
     document.getElementById('query').value = document.getElementById('search').value

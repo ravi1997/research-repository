@@ -3,6 +3,9 @@ from app.extension import db
 from sqlalchemy.orm import relationship
 
 import uuid
+def generate_uuid():
+    return str(uuid.uuid4())
+
 
 class Author(db.Model):
     __tablename__ = "authors"

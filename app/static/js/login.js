@@ -4,8 +4,10 @@ window.onload = function () {
     generateCaptcha("captchaCode2");
 };
 
+
 async function submitFormVerify(event) {
     event.preventDefault();  // Prevent the default form submission
+    showLoading('verify-button');
     const salt = getCookie("Session-SALT");  // Assuming the salt cookie is named "salt"
     if (!salt) {
         console.error("Salt not found in cookies.");
@@ -18,7 +20,7 @@ async function submitFormVerify(event) {
     const Loginform = document.getElementById("login-form");
     const LoginformData = new FormData(Loginform);
     const LoginformDataJson = Object.fromEntries(LoginformData.entries())
-    formDataJson["mobile"] = LoginformDataJson["mobile"]
+    formDataJson["employee_id"] = LoginformDataJson["employee_id"]
     const data = JSON.stringify(formDataJson);
     const encodeFunction = await cipher(salt);
     const encryptedData = encodeFunction(data);
@@ -35,19 +37,27 @@ async function submitFormVerify(event) {
 
         // Check if the response is successful
         if (response.ok) {
-            console.log("successfull")
+            console.log("successfull");
             window.location.href = "../researchrepository/home";
         } else {
             // Handle errors, if any (e.g., show an error message)
+            const data = await response.json();
+            showAlert(data.message);
             console.error("Form submission failed.");
         }
     } catch (error) {
+        showAlert(error);
         console.error("An error occurred:", error);
     }
+
+    stopLoading('verify-button');
 }
 
 async function submitForm(event) {
     event.preventDefault();  // Prevent the default form submission
+
+    showLoading('login-button');
+
     const salt = getCookie("Session-SALT");  // Assuming the salt cookie is named "salt"
     if (!salt) {
         console.error("Salt not found in cookies.");
@@ -76,13 +86,18 @@ async function submitForm(event) {
         if (response.ok) {
             // Call toggleForms if the response is successful
             toggleForms();
+            showAlert('OTP sent', true);
         } else {
             // Handle errors, if any (e.g., show an error message)
+            const data = await response.json();
+            showAlert(data.message);
             console.error("Form submission failed.");
         }
     } catch (error) {
+        showAlert(error);
         console.error("An error occurred:", error);
     }
+    stopLoading('login-button');
 }
 
 function toggleForms() {

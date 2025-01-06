@@ -1,18 +1,26 @@
 {% extends "base.html" %}
 
 {% block content %}
+<div id="customAlert" class="hidden p-4 rounded-lg my-5 w-fit">
+  <span id="alertMessage">This is an alert message!</span>
+  <button class="close-btn" onclick="closeAlert()">×</button>
+</div>
+
     <div class="login-container">
         <h2>Login to AIIMS Research Publication Repository</h2>
 
         <!-- Mobile Number Form with CAPTCHA -->
         <form id="login-form" action="../researchrepository/api/auth/login" method="post" onsubmit="submitForm(event)">
-            <input type="text" name="mobile" placeholder="Enter Mobile Number" required pattern="\d{10}">
+            <input type="text" name="employee_id" placeholder="Enter Employee ID" required pattern="[A-Z]\d{7}">
             <div class="captcha-box">
                 <div id="captchaCode" class="captcha-code"></div>
                 <button type="button" class="refresh-btn" onclick="generateCaptcha('captchaCode')">⟳</button>
             </div>
             <input type="text" name="captcha" placeholder="Enter CAPTCHA" required>
-            <button class="button p-4 px-8 bg-teal-800 rounded-lg text-white font-semibold" type="submit">Send OTP</button>
+            <button id="login-button" class="button p-4 px-8 bg-teal-800 rounded-lg text-white font-semibold" type="submit">
+                <span class="button-text">Send OTP</span>
+                <span class="loading-spinner inline-block w-5 h-5 border-2 border-transparent border-t-white rounded-full animate-spin align-middle" style="display: none;"></span>
+            </button>
         </form>
 
         <!-- OTP Verification Form with CAPTCHA -->
@@ -24,11 +32,13 @@
                 <button type="button" class="refresh-btn" onclick="generateCaptcha('captchaCode2')">⟳</button>
             </div>
             <input type="text" name="captcha2" placeholder="Enter CAPTCHA" required>
-            <button class="button p-4 px-8 bg-teal-800 rounded-lg text-white font-semibold" type="submit">Verify OTP</button>
+            <button id="verify-button" class="button p-4 px-8 bg-teal-800 rounded-lg text-white font-semibold" type="submit">
+                <span class="button-text">Verify OTP</span>
+                <span class="loading-spinner inline-block w-5 h-5 border-2 border-transparent border-t-white rounded-full animate-spin align-middle" style="display: none;"></span>
+            </button>
         </form>
-
-        <p>Don't have an account? <a href="/register">Register here</a></p>
     </div>
+
     <script src="{{url_for('static',filename='js/common.js')}}"></script>
     <script src="{{url_for('static',filename='js/login.js')}}"></script>
 

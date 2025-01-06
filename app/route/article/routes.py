@@ -15,9 +15,10 @@ from itertools import combinations
 
 from sqlalchemy import func
 from collections import defaultdict
-from app.decorator import checkBlueprintRouteFlag, verify_LIBRARYMANAGER_role, verify_SUPERADMIN_role, verify_USER_role, verify_body, verify_internal_api_id, verify_session
+from app.decorator import checkBlueprintRouteFlag, verify_FACULTY_role, verify_LIBRARYMANAGER_role, verify_SUPERADMIN_role, verify_USER_role, verify_body, verify_internal_api_id, verify_session
 from app.extension import db,scheduler
 from app.models.article import Article, ArticleAuthor, ArticleKeyword, ArticlePublicationType, ArticleStatistic, Author, DeletedArticle, Duplicate, Keyword, Link, PublicationType
+from app.models.user import User
 from app.schema import ArticleSchema, AuthorSchema, AuthorSchemaWithoutArticle, DuplicateSchema, KeywordSchema, KeywordSchemaWithoutArticle, LinkSchema, PublicationTypeSchema
 from app.util import download_xml, fileReader, find_full_row_match, get_base_url, getUnique,  parse_pubmed_xml
 from . import article_bp
@@ -56,6 +57,19 @@ def getSingle_article(session,id):
 	if article:
 		article_schema = ArticleSchema()
 		return article_schema.dump(article),200
+	else:
+		return jsonify({"message":f"Article id {id} not found"}),404
+
+@article_bp.route("/ownership/<string:id>")
+@verify_FACULTY_role
+def getownership_article(session,id):
+	author = Author.query.filter_by(id=id).first()
+	if author:
+		if author.employee_id:
+			return jsonify({"message":"Ownership cannot be set for the author"}),400
+		author.employee_id = session.user.employee_id
+		db.session.commit()
+		return jsonify({"message":"Ownership set for the author"}),200
 	else:
 		return jsonify({"message":f"Article id {id} not found"}),404
 
@@ -163,7 +177,7 @@ def upload(session, request, ALLOWED_EXTENSIONS):
 				db.session.commit()
 				for idx, author in enumerate(authors):
 					author_instance = add_or_get(Author, session, **author)
-					new_article.authors.append(ArticleAuthor(author=author_instance, sequence_number=idx + 1))
+					new_article.authors.append(ArticleAuthor(article_id = new_article.id,author=author_instance, sequence_number=idx + 1))
 
 				db.session.commit()
 				result_ids.append(new_article.id)
@@ -472,8 +486,8 @@ def article_matches_filter(article, filter_criteria):
 			return False
 
 	# Check if publication_date is within the date range
-	start_date = filter_criteria.get('start_date')[0]
-	end_date = filter_criteria.get('end_date')[0]
+	start_date = filter_criteria.get('start_date')[0] if type(filter_criteria.get('start_date')) == list else filter_criteria.get('start_date')
+	end_date = filter_criteria.get('end_date')[0] if type(filter_criteria.get('end_date')) == list else filter_criteria.get('end_date')
 
 	if start_date or end_date:
 		pub_date_str = article.get('publication_date', "")
@@ -506,7 +520,6 @@ def filter_articles(articles, filter_criteria):
 	filtered_articles = [article for article, keep in zip(articles, result) if keep]
 	return filtered_articles
 
-
 @article_bp.route('/searchspecific', methods=['GET'])
 def search_articles():
 	search_params = request.args.to_dict(flat=False)  # Allows multiple values for the same key
@@ -526,7 +539,7 @@ def search_articles():
 		"API-ID":app.config.get('API_ID')
 	}
 
-	search_bys = ["keyword","title","author","journal"]
+	search_bys = ["keyword","title","author","journal","pubmed_id","doi"]
 	cookies = request.cookies.to_dict()  # Converts the ImmutableMultiDict to a regular dictionary
 
 	articles_json = []
@@ -556,6 +569,8 @@ def search_articles():
 			if response.status_code==200:
 				results = response.json()
 				articles_json.extend(results["articles"])
+
+	articles_json =  {v['uuid']:v for v in articles_json}.values()
 
 	filter_json = {}
 	# Apply filters for authors
@@ -631,8 +646,6 @@ def search_articles():
 	}
 
 	return jsonify(response), 200
-
-
 
 
 
@@ -724,8 +737,6 @@ def statistic():
 			return jsonify({"status": "error", "message": str(e)}), 500
 	
 	return jsonify({"message":"Wrong parameter"}),400
-
-
 
 def uploadDuplicate(session, request, ALLOWED_EXTENSIONS):
 	if 'file' not in request.files:
@@ -920,7 +931,7 @@ def delete_article(session,id):
 
 
 
-def search(query,author,offset,limit):    
+def search(query,author,offset,limit,result_for=None):    
 	# Get total count of matching articles
 	total_articles = query.count()
 
@@ -942,7 +953,7 @@ def search(query,author,offset,limit):
 	articles_data = article_schema.dump(paginated_articles)
 	
 	return jsonify({
-		"result_for": author,
+		"result_for": result_for if result_for else author,
 		"total_articles": total_articles,
 		"offset": offset,
 		"limit": limit,
@@ -977,7 +988,18 @@ def search_article(session):
 			)
 			.distinct()  # Ensure unique articles
 		)
-
+	employee_query = (
+			db.session.query(Article)
+			.join(ArticleAuthor, Article.id == ArticleAuthor.article_id)
+			.join(Author, ArticleAuthor.author_id == Author.id)
+			.filter(
+				or_(
+					Author.employee_id.ilike(f"%{query}%"),  # Match full name
+					Author.author_abbreviated.ilike(f"%{query}%")  # Match abbreviation
+				)
+			)
+			.distinct()  # Ensure unique articles
+		)
 	keyword_query = (
 			db.session.query(Article)
 			.join(ArticleKeyword, Article.id == ArticleKeyword.article_id)
@@ -1007,6 +1029,28 @@ def search_article(session):
 			.distinct()  # Ensure unique articles
 		)
 
+
+	pubmed_query = (
+			db.session.query(Article)
+   			.filter(
+				or_(
+					Article.pubmed_id.ilike(f"%{query}%"),  # Match full name
+				)
+			)
+			.distinct()  # Ensure unique articles
+		)
+
+	doi_query = (
+			db.session.query(Article)
+   			.filter(
+				or_(
+					Article.doi.ilike(f"%{query}%"),  # Match full name
+				)
+			)
+			.distinct()  # Ensure unique articles
+		)
+
+
 	if search_by == "author":
 		return search(author_query,query,offset,limit)
 
@@ -1017,6 +1061,20 @@ def search_article(session):
 		return search(journal_query,query,offset,limit)
 	elif search_by == "title":
 		return search(title_query,query,offset,limit)
+
+	elif search_by == "pubmed_id":
+		return search(pubmed_query,query,offset,limit)
+
+	elif search_by == "doi":
+		return search(doi_query,query,offset,limit)
+
+	elif search_by =="employee":
+		user = User.query.filter_by(employee_id=query).first()
+		if user:
+			return search(employee_query,query,offset,limit,result_for=f"{user.firstname} {user.lastname}")
+		else:
+			return jsonify({"message":f"Wrong employee ID :  {query}"}),400
+
 	else:
 		return jsonify({"message":f"Searching for {query}"}),200
 

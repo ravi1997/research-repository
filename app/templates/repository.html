@@ -22,7 +22,17 @@
     </button>
 
     <!-- Page info -->
-    <div id="page-info flex items-center justify-center">Page {{ current_page }} of {{ total_pages }}</div>
+    <div id="page-info flex items-center justify-center">Page <input 
+            id="page-number" 
+            type="text" 
+            min="1" 
+            max="{{ total_pages }}" 
+            value="{{ current_page }}"
+            placeholder="Page" 
+            class="w-16 p-2 border rounded text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
+            oninput="this.value = Math.min(Math.max(this.value, 1), {{ total_pages }});" 
+            onblur="jumpToPage(this.value, '{{ entry | safe }}', {{ total_pages }})"
+        /> of {{ total_pages }}</div>
 
     <!-- Next button -->
     <button {% if current_page>= total_pages %}disabled class="bg-blue-500 text-white font-bold py-2 px-4 rounded
@@ -153,22 +163,7 @@
                                 </svg>
                             </a>
 
-                            <a href="/researchrepository/article/edit/{{ article.uuid }}" target="_blank">
-                                <svg width="24px" height="24px" viewBox="0 0 24 24" fill="currentColor"
-                                    stroke="currentColor" xmlns="http://www.w3.org/2000/svg">
-                                    <path fill-rule="evenodd" clip-rule="evenodd"
-                                        d="m3.99 16.854-1.314 3.504a.75.75 0 0 0 .966.965l3.503-1.314a3 3 0 0 0 1.068-.687L18.36 9.175s-.354-1.061-1.414-2.122c-1.06-1.06-2.122-1.414-2.122-1.414L4.677 15.786a3 3 0 0 0-.687 1.068zm12.249-12.63 1.383-1.383c.248-.248.579-.406.925-.348.487.08 1.232.322 1.934 1.025.703.703.945 1.447 1.025 1.934.058.346-.1.677-.348.925L19.774 7.76s-.353-1.06-1.414-2.12c-1.06-1.062-2.121-1.415-2.121-1.415z"
-                                        fill="currentColor" />
-                                </svg>
-                            </a>
 
-                            <a href="#" onclick="deleteArticle('{{ article.uuid }}')" class="">
-                                <svg fill="currentColor" stroke="currentColor" width="24px" height="24px"
-                                    viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                    <path
-                                        d="M5.755,20.283,4,8H20L18.245,20.283A2,2,0,0,1,16.265,22H7.735A2,2,0,0,1,5.755,20.283ZM21,4H16V3a1,1,0,0,0-1-1H9A1,1,0,0,0,8,3V4H3A1,1,0,0,0,3,6H21a1,1,0,0,0,0-2Z" />
-                                </svg>
-                            </a>
                         </div>
                     </div>
                 </label>
@@ -178,7 +173,6 @@
     {% endfor %}
 
 </section>
-
 
 <div class="pagination flex flex-row align-middle items-center gap-2 m-4">
     <!-- Previous button -->
@@ -200,7 +194,17 @@
     </button>
 
     <!-- Page info -->
-    <div id="page-info flex items-center justify-center">Page {{ current_page }} of {{ total_pages }}</div>
+    <div id="page-info flex items-center justify-center">Page <input 
+            id="page-number" 
+            type="text" 
+            min="1" 
+            max="{{ total_pages }}" 
+            value="{{ current_page }}"
+            placeholder="Page" 
+            class="w-16 p-2 border rounded text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
+            oninput="this.value = Math.min(Math.max(this.value, 1), {{ total_pages }});" 
+            onblur="jumpToPage(this.value, '{{ entry | safe }}', {{ total_pages }})"
+        /> of {{ total_pages }}</div>
 
     <!-- Next button -->
     <button {% if current_page>= total_pages %}disabled class="bg-blue-500 text-white font-bold py-2 px-4 rounded
@@ -225,6 +229,5 @@
 </div>
 
 </div>
-<script src="{{url_for('static',filename='js/common.js')}}"></script>
 <script src="{{url_for('static',filename='js/repository.js')}}"></script>
 {% endblock %}

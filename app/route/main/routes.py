@@ -1,26 +1,37 @@
-from datetime import datetime
 import math
-from pprint import pprint
-import uuid
-from flask import jsonify, render_template,make_response, request, send_from_directory
+from flask import jsonify, render_template,make_response, request
 import requests
 
 from time import time
 
 
-from app.decorator import verify_LIBRARYMANAGER_role, verify_session, verify_user
+from app.decorator import verify_FACULTY_role, verify_LIBRARYMANAGER_role, verify_session, verify_user
 from app.models import Client
-from app.extension import db
+from app.models.user import UserRole
 from app.mylogger import error_logger
-from app.models.article import Article
-from app.schema import ArticleSchema
-from app.util import get_base_url, getIP, setCookie
+from app.util import get_base_url
 from app.session import settingSession
-from . import main_bp
+from app.route.main import main_bp
 from flask import current_app as app
 
 
+def getRole(user):
+	roles = []
 
+	if user:
+		if user.has_role(UserRole.SUPERADMIN):
+			roles.append("SUPERADMIN")
+
+		if user.has_role(UserRole.LIBRARYMANAGER):
+			roles.append("LIBRARYMANAGER")
+
+		if user.has_role(UserRole.FACULTY):
+			roles.append("FACULTY")
+
+		if user.has_role(UserRole.RESIDENT):
+			roles.append("RESIDENT")
+
+	return roles
 
 @main_bp.route("/", methods=["GET"])
 def index():
@@ -30,9 +41,9 @@ def index():
 
 		if session is not None:
 			if session.isValid() and session.user_id is not None:
-				response = make_response(render_template('index.html',time=time(),logged_in=session.user_id is not None))
+				response = make_response(render_template('index.html',roles = getRole(session.user),logged_in=True))
 				return settingSession(request,response)
-	response = make_response(render_template('index.html', time=time()))
+	response = make_response(render_template('index.html', roles = getRole(None),logged_in=False))
 	return settingSession(request,response)
 
 @main_bp.route('/login')
@@ -44,11 +55,9 @@ def loginPage():
 
 		if session is not None:
 			if session.isValid() and session.user_id is not None:
-				return render_template('home.html',logged_in=session.user_id is not None)
-	response = make_response(render_template('login.html'))
+				return render_template('home.html',roles = getRole(session.user),logged_in=True)
+	response = make_response(render_template('login.html', roles = getRole(None),logged_in=False))
 	return settingSession(request,response)
-
-
 
 @main_bp.route('/home')
 def homePage():
@@ -58,9 +67,9 @@ def homePage():
 
 		if session is not None:
 			if session.isValid() and session.user_id is not None:
-				return render_template('home.html',logged_in=True)
+				return render_template('home.html',roles = getRole(session.user),logged_in=True)
 	
-	response = make_response(render_template('login.html'))
+	response = make_response(render_template('login.html', roles = getRole(None),logged_in=False))
 	return settingSession(request,response)
 
 
@@ -100,9 +109,9 @@ def repositoryPage():
 
 			if session is not None:
 				if session.isValid() and session.user_id is not None:
-					return render_template('repository.html',articles=articles,current_page=page,entry=entry,total_pages = total_pages,logged_in=True)
+					return render_template('repository.html',articles=articles,current_page=page,entry=entry,total_pages = total_pages,roles = getRole(session.user),logged_in=True)
 
-		response = make_response(render_template('repository.html',articles=articles,current_page=page,entry=entry,total_pages = total_pages))
+		response = make_response(render_template('repository.html',articles=articles,current_page=page,entry=entry,total_pages = total_pages,roles = getRole(None),logged_in=False))
 		return settingSession(request,response)
 	else:
 		error_logger.info(response.json())
@@ -147,15 +156,74 @@ def searchPage(session):
 			unique_keywords=search_results['unique_keywords'],
 			unique_journals=search_results['unique_journals'],
    			current_page=current_page,
-      		offset = search_results["offset"],
+	  		offset = search_results["offset"],
 	  		entry=entry,
 			total_pages = total_pages,
+   			roles = getRole(session.user),
 			logged_in=session.user_id is not None
 		)
 	else:
 		# If the external API request fails, return an error page or message
 		return jsonify({"error": "Failed to fetch search results from external API"}), 500
-	# If no parameters are provided, render the page with empty filter options
+
+
+@main_bp.route('/ownershipresult')
+@verify_FACULTY_role
+def ownershipresultPage(session):
+	# If there are any query parameters, call the external search API
+	search_params = request.args.to_dict(flat=False)
+
+	# Prepare the server URL and endpoint
+	server_url = get_base_url()
+	url = f"{server_url}/researchrepository/api/article/searchspecific"
+
+	# Prepare headers (you can adjust this according to your API needs)
+	headers = {
+		"API-ID": app.config.get('API_ID')  # Assuming the API_ID is set in your Flask config
+	}
+
+	# Prepare cookies from the current request
+	cookies = request.cookies.to_dict()  # Converts ImmutableMultiDict to a regular dict
+
+	# Send the GET request to the external search API
+	response = requests.get(url, headers=headers, cookies=cookies, params=search_params)
+
+	# Check if the response is successful
+	if response.status_code == 200:
+		# Parse the JSON response
+		search_results = response.json()
+		# Render the search page with the results from the external API
+		current_page=(search_results["offset"]//search_results["limit"]) + 1
+		entry=search_results["limit"]
+		total_pages = math.ceil(search_results["total_articles"]/search_results["limit"])
+  
+		return render_template(
+			'ownershipresult.html',
+			query=search_params['query'][0],
+			myfilters = search_results["filters"],
+			articles=search_results['articles'],
+			unique_authors=search_results['unique_authors'],
+			unique_keywords=search_results['unique_keywords'],
+			unique_journals=search_results['unique_journals'],
+   			current_page=current_page,
+	  		offset = search_results["offset"],
+	  		entry=entry,
+			total_pages = total_pages,
+   			roles = getRole(session.user),
+			logged_in=session.user_id is not None
+		)
+	else:
+		# If the external API request fails, return an error page or message
+		return jsonify({"error": "Failed to fetch search results from external API"}), 500
+
+
+@main_bp.route('/ownership')
+@verify_FACULTY_role
+def ownershipPage(session):
+	
+	response = make_response(render_template('ownership.html',roles = getRole(session.user),logged_in=True))
+	return settingSession(request,response)
+
 
 
 @main_bp.route('/article/<string:id>')
@@ -171,12 +239,15 @@ def articlePage(session,id):
 
 	response = requests.get(url, headers=headers, cookies=cookies)  # Use `requests.get`
 
-
 	userlogged = session.user_id is not None
 
 	if response.status_code==200:
 		article_data = response.json()
-		return render_template('article.html',article=article_data,edit=userlogged,logged_in=session.user_id is not None)
+		return render_template('article.html',
+				article=article_data,
+				roles = getRole(session.user),
+				logged_in=userlogged
+			)
 	else:
 		return jsonify({"message":f"Article id {id} not found"}),404
 
@@ -195,14 +266,16 @@ def editArticlePage(session,id):
 
 	if response.status_code==200:
 		article_data = response.json()
-		return render_template('edit_article.html',article=article_data,logged_in=session.user_id is not None)
+		return render_template('edit_article.html',article=article_data,
+				roles = getRole(session.user),
+				logged_in=session.user_id is not None)
 	else:
 		return jsonify({"message":f"Article id {id} not found"}),404
 
 
-@main_bp.route('/duplicate-by-title')
+@main_bp.route('/duplicate/<string:field>')
 @verify_LIBRARYMANAGER_role
-def duplicateByTitlePage(session):
+def duplicateByPage(session,field):
 	server_url = get_base_url()
 	url = f"{server_url}/researchrepository/api/article/duplicates"
 	headers = {
@@ -210,15 +283,22 @@ def duplicateByTitlePage(session):
 	}
 
 	params = {
-		"field":"title"
+		"field":field
 	}	
+	duplicateBy = {
+		"title":"Title",
+		"pubmed_id":"PUBMED ID",
+		"pmc_id":"PMC ID",
+		"doi":"DOI"
+	}
+
 	cookies = request.cookies.to_dict()  # Converts the ImmutableMultiDict to a regular dictionary
 
 	response = requests.get(url, headers=headers,params=params, cookies=cookies)  # Use `requests.get`
 
 	if response.status_code==200:
 		results = response.json()
-		return render_template('duplicate.html',results=results["title"],duplicateBy="Title",logged_in=session.user_id is not None)
+		return render_template('duplicate.html',results=results[field],duplicateBy=duplicateBy[field],roles = getRole(session.user),logged_in=session.user_id is not None)
 	else:
 		return jsonify({"message":f"Article id {id} not found"}),404
 
@@ -240,83 +320,11 @@ def singleArticleDuplicatePage(session,id):
 		for uuid in result["articles"]:
 			article_url = f"{server_url}/researchrepository/api/article/{uuid}"
 			new_response = requests.get(article_url, headers=headers, cookies=cookies)  # Use `requests.get`
-		
 			article = new_response.json()
 			articles.append(article)
-  
-		return render_template('singleDuplicate.html',uuid = id, result=result,articles = articles,logged_in=session.user_id is not None)
+		return render_template('singleDuplicate.html',uuid = id, result=result,articles = articles,roles = getRole(session.user),logged_in=session.user_id is not None)
 	else:
 		return jsonify({"message":f"Duplicate id {id} not found"}),404
-
-
-
-@main_bp.route('/duplicate-by-pubmed-id')
-@verify_LIBRARYMANAGER_role
-def duplicateByPubmedIDPage(session):
-	server_url = get_base_url()
-	url = f"{server_url}/researchrepository/api/article/duplicates"
-	headers = {
-		"API-ID":app.config.get('API_ID')
-	}
-
-	params = {
-		"field":"pubmed_id"
-	}	
-	cookies = request.cookies.to_dict()  # Converts the ImmutableMultiDict to a regular dictionary
-
-	response = requests.get(url, headers=headers,params=params, cookies=cookies)  # Use `requests.get`
-
-	if response.status_code==200:
-		results = response.json()
-		return render_template('duplicate.html',results=results["pubmed_id"],duplicateBy="PUBMED ID",logged_in=session.user_id is not None)
-	else:
-		return jsonify({"message":f"Article id {id} not found"}),404
-
-@main_bp.route('/duplicate-by-pmc-id')
-@verify_LIBRARYMANAGER_role
-def duplicateByPMCIDPage(session):
-	server_url = get_base_url()
-	url = f"{server_url}/researchrepository/api/article/duplicates"
-	headers = {
-		"API-ID":app.config.get('API_ID')
-	}
-
-	params = {
-		"field":"pmc_id"
-	}	
-	cookies = request.cookies.to_dict()  # Converts the ImmutableMultiDict to a regular dictionary
-
-	response = requests.get(url, headers=headers,params=params, cookies=cookies)  # Use `requests.get`
-
-	if response.status_code==200:
-		results = response.json()
-		return render_template('duplicate.html',results=results["pmc_id"],duplicateBy="PMC ID",logged_in=session.user_id is not None)
-	else:
-		return jsonify({"message":f"Article id {id} not found"}),404
-
-
-@main_bp.route('/duplicate-by-doi')
-@verify_LIBRARYMANAGER_role
-def duplicateByDOIPage(session):
-	server_url = get_base_url()
-	url = f"{server_url}/researchrepository/api/article/duplicates"
-	headers = {
-		"API-ID":app.config.get('API_ID')
-	}
-
-	params = {
-		"field":"doi"
-	}	
-	cookies = request.cookies.to_dict()  # Converts the ImmutableMultiDict to a regular dictionary
-
-	response = requests.get(url, headers=headers,params=params, cookies=cookies)  # Use `requests.get`
-
-	if response.status_code==200:
-		results = response.json()
-		return render_template('duplicate.html',results=results["doi"],duplicateBy="DOI",logged_in=session.user_id is not None)
-	else:
-		return jsonify({"message":f"Duplicate id {id} not found"}),404
-
 
 @main_bp.route('/author')
 @verify_session
@@ -333,7 +341,7 @@ def authorPage(session):
 
 	params = {
 		"q":query,
-		"search_by":"author",
+		"search_by":"employee",
 		"offset":offset,
 		"limit":limit
 	}	
@@ -342,7 +350,7 @@ def authorPage(session):
 
 	if response.status_code==200:
 		results = response.json()
-		return render_template('author.html',results=results["articles"],result_for=results["result_for"],logged_in=session.user_id is not None)
+		return render_template('author.html',results=results["articles"],result_for=results["result_for"],roles = getRole(session.user),logged_in=session.user_id is not None)
 	else:
 		return jsonify({"message":f"Internal Error occured"}),500
 
@@ -373,7 +381,6 @@ def keywordPage(session):
 		return render_template('keyword.html',results=results["articles"],result_for=results["result_for"],logged_in=session.user_id is not None)
 	else:
 		return jsonify({"message":f"Internal Error occured"}),500
-
 
 @main_bp.route('/journal')
 @verify_session
