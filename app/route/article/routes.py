@@ -66,12 +66,16 @@ def getownership_article(session,id):
 	author = Author.query.filter_by(id=id).first()
 	if author:
 		if author.employee_id:
+			if author.employee_id == session.user.employee_id:
+				author.employee_id = None
+				db.session.commit()
+				return jsonify({"message":"Ownership removed for the author"}),200
 			return jsonify({"message":"Ownership cannot be set for the author"}),400
 		author.employee_id = session.user.employee_id
 		db.session.commit()
 		return jsonify({"message":"Ownership set for the author"}),200
 	else:
-		return jsonify({"message":f"Article id {id} not found"}),404
+		return jsonify({"message":f"Author id {id} not found"}),404
 
 
 def check_duplicates(article_data):

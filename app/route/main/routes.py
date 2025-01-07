@@ -1,4 +1,5 @@
 import math
+from pprint import pprint
 from flask import jsonify, render_template,make_response, request
 import requests
 
@@ -13,7 +14,10 @@ from app.util import get_base_url
 from app.session import settingSession
 from app.route.main import main_bp
 from flask import current_app as app
+from app.schema import UserSchema
+ 
 
+user_schema = UserSchema() 
 
 def getRole(user):
 	roles = []
@@ -41,7 +45,7 @@ def index():
 
 		if session is not None:
 			if session.isValid() and session.user_id is not None:
-				response = make_response(render_template('index.html',roles = getRole(session.user),logged_in=True))
+				response = make_response(render_template('index.html',roles = getRole(session.user),logged_in=True,user = user_schema.dump(session.user)))
 				return settingSession(request,response)
 	response = make_response(render_template('index.html', roles = getRole(None),logged_in=False))
 	return settingSession(request,response)
@@ -67,7 +71,7 @@ def homePage():
 
 		if session is not None:
 			if session.isValid() and session.user_id is not None:
-				return render_template('home.html',roles = getRole(session.user),logged_in=True)
+				return render_template('home.html',roles = getRole(session.user),logged_in=True,user = user_schema.dump(session.user))
 	
 	response = make_response(render_template('login.html', roles = getRole(None),logged_in=False))
 	return settingSession(request,response)
@@ -109,7 +113,7 @@ def repositoryPage():
 
 			if session is not None:
 				if session.isValid() and session.user_id is not None:
-					return render_template('repository.html',articles=articles,current_page=page,entry=entry,total_pages = total_pages,roles = getRole(session.user),logged_in=True)
+					return render_template('repository.html',articles=articles,current_page=page,entry=entry,total_pages = total_pages,roles = getRole(session.user),logged_in=True,user = user_schema.dump(session.user))
 
 		response = make_response(render_template('repository.html',articles=articles,current_page=page,entry=entry,total_pages = total_pages,roles = getRole(None),logged_in=False))
 		return settingSession(request,response)
@@ -160,7 +164,8 @@ def searchPage(session):
 	  		entry=entry,
 			total_pages = total_pages,
    			roles = getRole(session.user),
-			logged_in=session.user_id is not None
+			logged_in=session.user_id is not None,
+			user = user_schema.dump(session.user) if session.user_id is not None else {}
 		)
 	else:
 		# If the external API request fails, return an error page or message
@@ -210,7 +215,8 @@ def ownershipresultPage(session):
 	  		entry=entry,
 			total_pages = total_pages,
    			roles = getRole(session.user),
-			logged_in=session.user_id is not None
+			logged_in=session.user_id is not None,
+			user = user_schema.dump(session.user) if session.user_id is not None else {}
 		)
 	else:
 		# If the external API request fails, return an error page or message
@@ -221,7 +227,7 @@ def ownershipresultPage(session):
 @verify_FACULTY_role
 def ownershipPage(session):
 	
-	response = make_response(render_template('ownership.html',roles = getRole(session.user),logged_in=True))
+	response = make_response(render_template('ownership.html',roles = getRole(session.user),logged_in=True,user = user_schema.dump(session.user)))
 	return settingSession(request,response)
 
 
@@ -246,7 +252,8 @@ def articlePage(session,id):
 		return render_template('article.html',
 				article=article_data,
 				roles = getRole(session.user),
-				logged_in=userlogged
+				logged_in=userlogged,
+				user = user_schema.dump(session.user) if session.user_id is not None else {}
 			)
 	else:
 		return jsonify({"message":f"Article id {id} not found"}),404
@@ -268,7 +275,9 @@ def editArticlePage(session,id):
 		article_data = response.json()
 		return render_template('edit_article.html',article=article_data,
 				roles = getRole(session.user),
-				logged_in=session.user_id is not None)
+				logged_in=session.user_id is not None,
+			    user = user_schema.dump(session.user) if session.user_id is not None else {}
+    )
 	else:
 		return jsonify({"message":f"Article id {id} not found"}),404
 
@@ -298,7 +307,7 @@ def duplicateByPage(session,field):
 
 	if response.status_code==200:
 		results = response.json()
-		return render_template('duplicate.html',results=results[field],duplicateBy=duplicateBy[field],roles = getRole(session.user),logged_in=session.user_id is not None)
+		return render_template('duplicate.html',results=results[field],duplicateBy=duplicateBy[field],roles = getRole(session.user),logged_in=session.user_id is not None,user = user_schema.dump(session.user) if session.user_id is not None else {})
 	else:
 		return jsonify({"message":f"Article id {id} not found"}),404
 
@@ -322,7 +331,7 @@ def singleArticleDuplicatePage(session,id):
 			new_response = requests.get(article_url, headers=headers, cookies=cookies)  # Use `requests.get`
 			article = new_response.json()
 			articles.append(article)
-		return render_template('singleDuplicate.html',uuid = id, result=result,articles = articles,roles = getRole(session.user),logged_in=session.user_id is not None)
+		return render_template('singleDuplicate.html',uuid = id, result=result,articles = articles,roles = getRole(session.user),logged_in=session.user_id is not None,user = user_schema.dump(session.user) if session.user_id is not None else {})
 	else:
 		return jsonify({"message":f"Duplicate id {id} not found"}),404
 
@@ -350,7 +359,7 @@ def authorPage(session):
 
 	if response.status_code==200:
 		results = response.json()
-		return render_template('author.html',results=results["articles"],result_for=results["result_for"],roles = getRole(session.user),logged_in=session.user_id is not None)
+		return render_template('author.html',results=results["articles"],result_for=results["result_for"],roles = getRole(session.user),logged_in=session.user_id is not None,user = user_schema.dump(session.user) if session.user_id is not None else {})
 	else:
 		return jsonify({"message":f"Internal Error occured"}),500
 
@@ -378,7 +387,7 @@ def keywordPage(session):
 
 	if response.status_code==200:
 		results = response.json()
-		return render_template('keyword.html',results=results["articles"],result_for=results["result_for"],logged_in=session.user_id is not None)
+		return render_template('keyword.html',results=results["articles"],result_for=results["result_for"],logged_in=session.user_id is not None,user = user_schema.dump(session.user) if session.user_id is not None else {})
 	else:
 		return jsonify({"message":f"Internal Error occured"}),500
 
@@ -406,7 +415,7 @@ def journalPage(session):
 
 	if response.status_code==200:
 		results = response.json()
-		return render_template('journal.html',results=results["articles"],result_for=results["result_for"],logged_in=session.user_id is not None)
+		return render_template('journal.html',results=results["articles"],result_for=results["result_for"],logged_in=session.user_id is not None,user = user_schema.dump(session.user) if session.user_id is not None else {})
 	else:
 		return jsonify({"message":f"Internal Error occured"}),500
 

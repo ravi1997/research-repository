@@ -175,23 +175,56 @@
                 {% endif%} {% endif%}
               </li>
 
-              <li>
-                {% if logged_in %}
+              {% if logged_in %}
+              <li
+                class="dropdown group relative m-2 block px-2 py-4 tracking-wide transition duration-300 ease-out hover:bg-gray-600 hover:text-slate-200 hover:ease-in-out md:m-0 md:px-4 md:py-2"
+              >
+                <a>{{ user.firstname }}</a>
+                <div
+                  class="dropdown-menu absolute hidden h-auto group-hover:block"
+                >
+                  <ul class="top-0 w-56 bg-slate-400/90 md:items-center">
+                    <li class="py-1">
+                      <a
+                        href="/researchrepository/home"
+                        class="m-2 block px-2 py-4 transition duration-300 ease-out hover:bg-gray-600 hover:text-slate-200 hover:ease-in-out md:m-0 md:px-4 md:py-2"
+                        >Upload Articles</a
+                      >
+                    </li>
+                    <li class="py-1">
+                      <a
+                        href="/researchrepository/ownership"
+                        class="m-2 block px-2 py-4 transition duration-300 ease-out hover:bg-gray-600 hover:text-slate-200 hover:ease-in-out md:m-0 md:px-4 md:py-2"
+                        >Identify your articles</a
+                      >
+                    </li>
+                    <li class="py-1">
+                      <a
+                        href="/researchrepository/author?q={{user.employee_id}}"
+                        class="m-2 block px-2 py-4 transition duration-300 ease-out hover:bg-gray-600 hover:text-slate-200 hover:ease-in-out md:m-0 md:px-4 md:py-2"
+                        >My Articles</a
+                      >
+                    </li>
                 <a
                   class="m-2 block px-2 py-4 transition duration-300 ease-out hover:bg-gray-600 hover:text-slate-200 hover:ease-in-out md:m-0 md:px-4 md:py-2"
                   href="#"
                   onclick="logout()"
                   >Logout</a
                 >
-                {% else %}
+                    
+                  </ul>
+                </div>
+              </li>
+              {% else %}
+              <li>
                 <a
                   class="m-2 block px-2 py-4 transition duration-300 ease-out hover:bg-gray-600 hover:text-slate-200 hover:ease-in-out md:m-0 md:px-4 md:py-2"
                   href="/researchrepository/login"
                   >Log In</a
                 >
-
-                {% endif%}
               </li>
+
+              {% endif%}
             </ul>
           </div>
         </div>
