@@ -1,6 +1,7 @@
 function generateCaptcha(id) {
     const captcha = Math.random().toString(36).substring(2, 8).toUpperCase();
     document.getElementById(id).textContent = captcha;
+    currentCaptcha = captcha;
 }
 
 

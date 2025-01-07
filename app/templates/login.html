@@ -16,11 +16,12 @@
                 <div id="captchaCode" class="captcha-code"></div>
                 <button type="button" class="refresh-btn" onclick="generateCaptcha('captchaCode')">⟳</button>
             </div>
-            <input type="text" name="captcha" placeholder="Enter CAPTCHA" required>
+            <input type="text" id="captchaInput" name="captcha" placeholder="Enter CAPTCHA" required>
             <button id="login-button" class="button p-4 px-8 bg-teal-800 rounded-lg text-white font-semibold" type="submit">
                 <span class="button-text">Send OTP</span>
                 <span class="loading-spinner inline-block w-5 h-5 border-2 border-transparent border-t-white rounded-full animate-spin align-middle" style="display: none;"></span>
             </button>
+            <p id="captchaFeedback" style="color: red; display: none;">CAPTCHA does not match.</p>
         </form>
 
         <!-- OTP Verification Form with CAPTCHA -->
@@ -31,11 +32,12 @@
                 <div id="captchaCode2" class="captcha-code"></div>
                 <button type="button" class="refresh-btn" onclick="generateCaptcha('captchaCode2')">⟳</button>
             </div>
-            <input type="text" name="captcha2" placeholder="Enter CAPTCHA" required>
+            <input type="text" id="captchaInput2" name="captcha2" placeholder="Enter CAPTCHA" required>
             <button id="verify-button" class="button p-4 px-8 bg-teal-800 rounded-lg text-white font-semibold" type="submit">
                 <span class="button-text">Verify OTP</span>
                 <span class="loading-spinner inline-block w-5 h-5 border-2 border-transparent border-t-white rounded-full animate-spin align-middle" style="display: none;"></span>
             </button>
+            <p id="captchaFeedback2" style="color: red; display: none;">CAPTCHA does not match.</p>
         </form>
     </div>
 

@@ -9,8 +9,8 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 
 class BaseConfig:
     DB_NAME = "backend"
-    OTP_FLAG = False
-    OTP_GENERATION = False
+    OTP_FLAG = True
+    OTP_GENERATION = True
     LOG_REQUEST = True
     LOG_RESPONSE = True
     OTP_DELTA = timedelta(minutes=30)    
