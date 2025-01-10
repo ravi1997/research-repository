@@ -83,7 +83,7 @@ def repositoryPage():
 	entry = request.args.get('entry', 10, type=int)
 
 	server_url = get_base_url()
-	url = f"{server_url}/researchrepository/api/article/table"
+	url = f"{server_url}/api/article/table"
 	
 	headers = {
 		"API-ID":app.config.get('API_ID')
@@ -92,7 +92,7 @@ def repositoryPage():
 	if request.cookies:	
 		cookies = request.cookies.to_dict()  # Converts the ImmutableMultiDict to a regular dictionary
 	else:
-		cookies = requests.get(f"{server_url}/researchrepository/api/public/generateSession", headers=headers).json()
+		cookies = requests.get(f"{server_url}/api/public/generateSession", headers=headers).json()
 
  
 	params = {
@@ -129,7 +129,7 @@ def searchPage(session):
 
 	# Prepare the server URL and endpoint
 	server_url = get_base_url()
-	url = f"{server_url}/researchrepository/api/article/searchspecific"
+	url = f"{server_url}/api/article/searchspecific"
 
 	# Prepare headers (you can adjust this according to your API needs)
 	headers = {
@@ -180,7 +180,7 @@ def ownershipresultPage(session):
 
 	# Prepare the server URL and endpoint
 	server_url = get_base_url()
-	url = f"{server_url}/researchrepository/api/article/searchspecific"
+	url = f"{server_url}/api/article/searchspecific"
 
 	# Prepare headers (you can adjust this according to your API needs)
 	headers = {
@@ -236,7 +236,7 @@ def ownershipPage(session):
 @verify_session
 def articlePage(session,id):
 	server_url = get_base_url()
-	url = f"{server_url}/researchrepository/api/article/{id}"
+	url = f"{server_url}/api/article/{id}"
 	headers = {
 		"API-ID":app.config.get('API_ID')
 	}
@@ -262,7 +262,7 @@ def articlePage(session,id):
 @verify_user
 def editArticlePage(session,id):
 	server_url = get_base_url()
-	url = f"{server_url}/researchrepository/api/article/{id}"
+	url = f"{server_url}/api/article/{id}"
 	headers = {
 		"API-ID":app.config.get('API_ID')
 	}
@@ -286,7 +286,7 @@ def editArticlePage(session,id):
 @verify_LIBRARYMANAGER_role
 def duplicateByPage(session,field):
 	server_url = get_base_url()
-	url = f"{server_url}/researchrepository/api/article/duplicates"
+	url = f"{server_url}/api/article/duplicates"
 	headers = {
 		"API-ID":app.config.get('API_ID')
 	}
@@ -315,7 +315,7 @@ def duplicateByPage(session,field):
 @verify_LIBRARYMANAGER_role
 def singleArticleDuplicatePage(session,id):
 	server_url = get_base_url()
-	url = f"{server_url}/researchrepository/api/article/duplicate/{id}"
+	url = f"{server_url}/api/article/duplicate/{id}"
 	headers = {
 		"API-ID":app.config.get('API_ID')
 	}
@@ -327,7 +327,7 @@ def singleArticleDuplicatePage(session,id):
 		result = response.json()
 		articles = []
 		for uuid in result["articles"]:
-			article_url = f"{server_url}/researchrepository/api/article/{uuid}"
+			article_url = f"{server_url}/api/article/{uuid}"
 			new_response = requests.get(article_url, headers=headers, cookies=cookies)  # Use `requests.get`
 			article = new_response.json()
 			articles.append(article)
@@ -343,7 +343,7 @@ def authorPage(session):
 	limit = request.args.get('limit', 10, type=int)
 	
 	server_url = get_base_url()
-	url = f"{server_url}/researchrepository/api/article/search"
+	url = f"{server_url}/api/article/search"
 	headers = {
 		"API-ID":app.config.get('API_ID')
 	}
@@ -371,7 +371,7 @@ def keywordPage(session):
 	limit = request.args.get('limit', 10, type=int)
 	
 	server_url = get_base_url()
-	url = f"{server_url}/researchrepository/api/article/search"
+	url = f"{server_url}/api/article/search"
 	headers = {
 		"API-ID":app.config.get('API_ID')
 	}
@@ -399,7 +399,7 @@ def journalPage(session):
 	limit = request.args.get('limit', 10, type=int)
 	
 	server_url = get_base_url()
-	url = f"{server_url}/researchrepository/api/article/searchspec"
+	url = f"{server_url}/api/article/searchspec"
 	headers = {
 		"API-ID":app.config.get('API_ID')
 	}

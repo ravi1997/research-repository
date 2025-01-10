@@ -3,7 +3,7 @@ window.onload = async function () {
         // Fetch and update article counts
         await updateArticleStatistics();
         try {
-            const response = await fetch(`/researchrepository/api/article/statistic?q=recentArticles`);
+            const response = await fetch(`/api/article/statistic?q=recentArticles`);
             if (response.ok) {
                 const result = await response.json();
                 const articles = result.result;
@@ -31,7 +31,7 @@ window.onload = async function () {
                     ${article.created_at ? `Created at: ${article.created_at}` : ''}
                 </div>
                 <div class="p-2 flex flex-col align-middle gap-2">
-                    <a href="/researchrepository/article/${article.uuid}" target="_blank">
+                    <a href="/article/${article.uuid}" target="_blank">
                         <svg width="24px" height="24px" viewBox="0 0 1024 1024" class="icon" version="1.1"
                                         xmlns="http://www.w3.org/2000/svg">
                                         <path
@@ -79,7 +79,7 @@ async function updateArticleStatistics() {
     // Fetch counts and update elements
     for (const { id, query } of endpoints) {
         try {
-            const response = await fetch(`/researchrepository/api/article/statistic?q=${query}`);
+            const response = await fetch(`/api/article/statistic?q=${query}`);
             if (response.ok) {
                 const result = await response.json();
                 document.getElementById(id).innerHTML = result.result;
@@ -91,7 +91,7 @@ async function updateArticleStatistics() {
 
     // Fetch and process word cloud data
     try {
-        const responseWord = await fetch('/researchrepository/api/article/statistic?q=keyword');
+        const responseWord = await fetch('/api/article/statistic?q=keyword');
         if (responseWord.ok) {
             const result = await responseWord.json();
             const myWords = result.result;
@@ -106,7 +106,7 @@ async function updateArticleStatistics() {
 
 document.addEventListener("DOMContentLoaded", async function () {
     try {
-        const response = await fetch('/researchrepository/api/article/statistic?q=yearData');
+        const response = await fetch('/api/article/statistic?q=yearData');
         const data = await response.json();
 
         const labels = data.labels || []; // X-axis labels

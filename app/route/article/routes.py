@@ -538,7 +538,7 @@ def search_articles():
 		return jsonify({"error": "Offset must be non-negative and Limit must be greater than 0"}), 400
 
 	server_url = get_base_url()
-	url = f"{server_url}/researchrepository/api/article/search"
+	url = f"{server_url}/api/article/search"
 	headers = {
 		"API-ID":app.config.get('API_ID')
 	}
@@ -702,7 +702,7 @@ def statistic():
 		max_count = max(keyword_counts, key=lambda x: x[1])[1]
 		# Format the result as a list of dictionaries
 		result = [
-			{"url":f"/researchrepository/keyword?q={keyword}","word": keyword, "size": calculate_font_size(article_count, min_count, max_count)}
+			{"url":f"/keyword?q={keyword}","word": keyword, "size": calculate_font_size(article_count, min_count, max_count)}
 			for keyword, article_count in keyword_counts
 		]
 		return jsonify({"message":"Successfull result","result":result}),200

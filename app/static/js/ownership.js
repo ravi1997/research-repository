@@ -17,7 +17,7 @@ document.getElementById('close-modal').addEventListener('click', function () {
 // Function to handle the author click (success or failure)
 function handleAuthorClick(authorId) {
     // Perform the operation (example: making a fetch request to the server)
-    fetch(`/researchrepository/api/article/ownership/${authorId}`)
+    fetch(`/api/article/ownership/${authorId}`)
         .then(response => {
             if (response.ok) {
                 // Show success message

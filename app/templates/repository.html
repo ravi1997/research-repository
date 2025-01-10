@@ -99,7 +99,7 @@
                 <a href="https://doi.org/{{ article.doi }}" target="_blank">{{ article.doi }}</a>
                 {% endif %}
             </td>
-            <td><a href="/researchrepository/article/{{ article.uuid }}">
+            <td><a href="article/{{ article.uuid }}">
                     <img src="{{url_for('static',filename='assets/logo/browse-svgrepo-com.svg')}}" alt="Icon"
                         class="link-icon" style="width: 70%; height:auto; max-height:100%;"></a></td>
         </tr>
@@ -145,7 +145,7 @@
                             {% endif %}
                         </div>
                         <div class="p-2 flex flex-col align-middle gap-2">
-                            <a href="/researchrepository/article/{{ article.uuid }}" target="_blank">
+                            <a href="article/{{ article.uuid }}" target="_blank">
                                 <svg width="24px" height="24px" viewBox="0 0 1024 1024" class="icon" version="1.1"
                                     xmlns="http://www.w3.org/2000/svg">
                                     <path

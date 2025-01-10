@@ -5,8 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link
       rel="icon"
-      href="{{ url_for('static', filename='assets/favicon.png', version=time) }}"
+      href="{{ url_for('static', filename='assets/favicon.ico') }}"
     />
+
+    <link rel="apple-touch-icon" sizes="192x192" href="{{ url_for('static', filename='assets/android-chrome-192x192.png') }}">
+    <link rel="apple-touch-icon" sizes="512x512" href="{{ url_for('static', filename='assets/android-chrome-512x512.png') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='assets/apple-touch-icon.png') }}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='assets/favicon-32x32.png') }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='assets/favicon-16x16.png') }}">
+    <link rel="manifest" href="{{ url_for('static', filename='assets/site.webmanifest') }}">
+
     <link
       rel="stylesheet"
       href="{{url_for('static',filename='style/style.css')}}"
@@ -94,7 +102,7 @@
             >
               <li>
                 <div >
-                    <form action="/researchrepository/search" class="max-w-[480px] w-full px-4">
+                    <form action="search" class="max-w-[480px] w-full px-4">
                         <div class="relative">
                             <input type="text" name="query" class="w-full border h-12 shadow p-4 rounded-full dark:text-gray-800 dark:border-gray-700 dark:bg-gray-200" placeholder="Search Articles">
                             <button type="submit">
@@ -115,14 +123,14 @@
               <li>
                 <a
                   class="m-2 block px-2 py-4 transition duration-300 ease-out hover:bg-gray-600 hover:text-slate-200 hover:ease-in-out md:m-0 md:px-4 md:py-2"
-                  href="/researchrepository/"
+                  href=""
                   >Home</a
                 >
               </li>
               <li>
                 <a
                   class="m-2 block px-2 py-4 transition duration-300 ease-out hover:bg-gray-600 hover:text-slate-200 hover:ease-in-out md:m-0 md:px-4 md:py-2"
-                  href="/researchrepository/repository"
+                  href="repository"
                   >Repository</a
                 >
               </li>
@@ -144,28 +152,28 @@
                   <ul class="top-0 w-56 bg-slate-400/90 md:items-center">
                     <li class="py-1">
                       <a
-                        href="/researchrepository/duplicate/title"
+                        href="duplicate/title"
                         class="m-2 block px-2 py-4 transition duration-300 ease-out hover:bg-gray-600 hover:text-slate-200 hover:ease-in-out md:m-0 md:px-4 md:py-2"
                         >Duplicate by Title</a
                       >
                     </li>
                     <li class="py-1">
                       <a
-                        href="/researchrepository/duplicate/pubmed_id"
+                        href="duplicate/pubmed_id"
                         class="m-2 block px-2 py-4 transition duration-300 ease-out hover:bg-gray-600 hover:text-slate-200 hover:ease-in-out md:m-0 md:px-4 md:py-2"
                         >Duplicate by PubMed ID</a
                       >
                     </li>
                     <li class="py-1">
                       <a
-                        href="/researchrepository/duplicate/pmc_id"
+                        href="duplicate/pmc_id"
                         class="m-2 block px-2 py-4 transition duration-300 ease-out hover:bg-gray-600 hover:text-slate-200 hover:ease-in-out md:m-0 md:px-4 md:py-2"
                         >Duplicate by PMC ID</a
                       >
                     </li>
                     <li class="py-1">
                       <a
-                        href="/researchrepository/duplicate/doi"
+                        href="duplicate/doi"
                         class="m-2 block px-2 py-4 transition duration-300 ease-out hover:bg-gray-600 hover:text-slate-200 hover:ease-in-out md:m-0 md:px-4 md:py-2"
                         >Duplicate by DOI</a
                       >
@@ -186,21 +194,21 @@
                   <ul class="top-0 w-56 bg-slate-400/90 md:items-center">
                     <li class="py-1">
                       <a
-                        href="/researchrepository/home"
+                        href="home"
                         class="m-2 block px-2 py-4 transition duration-300 ease-out hover:bg-gray-600 hover:text-slate-200 hover:ease-in-out md:m-0 md:px-4 md:py-2"
                         >Upload Articles</a
                       >
                     </li>
                     <li class="py-1">
                       <a
-                        href="/researchrepository/ownership"
+                        href="ownership"
                         class="m-2 block px-2 py-4 transition duration-300 ease-out hover:bg-gray-600 hover:text-slate-200 hover:ease-in-out md:m-0 md:px-4 md:py-2"
                         >Identify your articles</a
                       >
                     </li>
                     <li class="py-1">
                       <a
-                        href="/researchrepository/author?q={{user.employee_id}}"
+                        href="author?q={{user.employee_id}}"
                         class="m-2 block px-2 py-4 transition duration-300 ease-out hover:bg-gray-600 hover:text-slate-200 hover:ease-in-out md:m-0 md:px-4 md:py-2"
                         >My Articles</a
                       >
@@ -219,7 +227,7 @@
               <li>
                 <a
                   class="m-2 block px-2 py-4 transition duration-300 ease-out hover:bg-gray-600 hover:text-slate-200 hover:ease-in-out md:m-0 md:px-4 md:py-2"
-                  href="/researchrepository/login"
+                  href="login"
                   >Log In</a
                 >
               </li>

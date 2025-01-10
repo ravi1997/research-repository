@@ -41,12 +41,12 @@ function getCookie(name) {
 
 async function logout() {
     try {
-        const response = await fetch("/researchrepository/api/auth/logout", {
+        const response = await fetch("/api/auth/logout", {
             method: "GET",
         });
 
         if (response.ok) {
-            window.location.href = "/researchrepository/login";
+            window.location.href = "/login";
         } else {
             const error = await response.json()["message"];
             showAlert(error, false);

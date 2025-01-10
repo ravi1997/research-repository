@@ -44,7 +44,7 @@ async function submitFormVerify(event) {
             // Check if the response is successful
             if (response.ok) {
                 console.log("successfull");
-                window.location.href = "../researchrepository/home";
+                window.location.href = "../home";
             } else {
                 // Handle errors, if any (e.g., show an error message)
                 const data = await response.json();

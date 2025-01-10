@@ -16,7 +16,7 @@ def settingSession(request,response):
     
     client_ip = getIP(request)
     server_url = get_base_url()
-    url = f"{server_url}/researchrepository/api/public/generateSession"
+    url = f"{server_url}/api/public/generateSession"
     
     headers = {
         "API-ID":app.config.get('API_ID')

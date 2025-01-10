@@ -212,12 +212,12 @@ def create_app():
 		return jsonify(cdac_service("E1500065")["Data"][0]),200
 
 	# Register blueprints
-	app.register_blueprint(main_bp, url_prefix="/researchrepository")
-	app.register_blueprint(auth_bp, url_prefix="/researchrepository/api/auth")
-	app.register_blueprint(public_bp, url_prefix="/researchrepository/api/public")
-	app.register_blueprint(user_bp, url_prefix="/researchrepository/api/user")
-	app.register_blueprint(article_bp, url_prefix="/researchrepository/api/article")
-	app.register_blueprint(superadmin_bp, url_prefix="/researchrepository/api/superadmin")
+	app.register_blueprint(main_bp, url_prefix="")
+	app.register_blueprint(auth_bp, url_prefix="/api/auth")
+	app.register_blueprint(public_bp, url_prefix="/api/public")
+	app.register_blueprint(user_bp, url_prefix="/api/user")
+	app.register_blueprint(article_bp, url_prefix="/api/article")
+	app.register_blueprint(superadmin_bp, url_prefix="/api/superadmin")
 
 
 	app.logger.info(f"API-ID : {app.config.get('API_ID')}")

@@ -23,7 +23,7 @@
             const formData = new FormData(form);
 
             try {
-                const response = await fetch("http://127.0.0.1:5000/researchrepository/public/upload_ris", {
+                const response = await fetch("http://127.0.0.1:5000public/upload_ris", {
                     method: "POST",
                     body: formData
                 });

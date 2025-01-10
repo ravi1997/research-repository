@@ -34,7 +34,7 @@
                                 {{article.title}}
                                 <br />
                                 {% for author in article.authors %}
-                                <a href="/researchrepository/author?q={{author.fullName}}" target="_blank">{{ author.fullName }}</a>{% if not loop.last %}; {% endif %}
+                                <a href="author?q={{author.fullName}}" target="_blank">{{ author.fullName }}</a>{% if not loop.last %}; {% endif %}
                                 {% endfor %}
                                 <br />
                                 <span class="italic"> {{ article.journal or '' }} </span>
@@ -54,7 +54,7 @@
                                 {% endif %}
                             </div>
                             <div class="p-2 flex flex-col align-middle gap-2">
-                                <a href="/researchrepository/article/{{ article.uuid }}" target="_blank">
+                                <a href="article/{{ article.uuid }}" target="_blank">
                                     <svg width="24px" height="24px" viewBox="0 0 1024 1024" class="icon" version="1.1"
                                         xmlns="http://www.w3.org/2000/svg">
                                         <path
@@ -72,7 +72,7 @@
                                     </svg>
                                 </a>
 
-                                <a href="/researchrepository/article/edit/{{ article.uuid }}" target="_blank">
+                                <a href="article/edit/{{ article.uuid }}" target="_blank">
                                     <svg width="24px" height="24px" viewBox="0 0 24 24" fill="currentColor"
                                         stroke="currentColor" xmlns="http://www.w3.org/2000/svg">
                                         <path fill-rule="evenodd" clip-rule="evenodd"
