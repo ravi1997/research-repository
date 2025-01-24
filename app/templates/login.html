@@ -10,7 +10,7 @@
         <h2>Login to AIIMS Research Publication Repository</h2>
 
         <!-- Mobile Number Form with CAPTCHA -->
-        <form id="login-form" action="..api/auth/login" method="post" onsubmit="submitForm(event)">
+        <form id="login-form" action="../api/auth/login" method="post" onsubmit="submitForm(event)">
             <input type="text" name="employee_id" placeholder="Enter Employee ID" required pattern="[A-Z]\d{7}">
             <div class="captcha-box">
                 <div id="captchaCode" class="captcha-code"></div>
@@ -25,7 +25,7 @@
         </form>
 
         <!-- OTP Verification Form with CAPTCHA -->
-        <form id="otp-form" action="..api/auth/verify_otp" method="post" style="display:none;"
+        <form id="otp-form" action="../api/auth/verify_otp" method="post" style="display:none;"
             onsubmit="submitFormVerify(event)">
             <input type="text" name="OTP" placeholder="Enter OTP" required pattern="\d{6}">
             <div class="captcha-box">

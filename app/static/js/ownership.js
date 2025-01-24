@@ -24,7 +24,13 @@ function handleAuthorClick(authorId) {
                 showModal('Success', 'The author has been successfully updated.');
                 // Reload the page on success
                 setTimeout(() => {
-                    location.reload();
+                    const authorElement = document.querySelector(`[data-author-uuid="${authorId}"]`);
+
+                    // To apply some effect or access the element
+                    if (authorElement) {
+                        // Do something with the author element, e.g., change the background color
+                        authorElement.classList.toggle('font-bold');
+                    } 
                 }, 2000);
             } else {
                 // Show failure message

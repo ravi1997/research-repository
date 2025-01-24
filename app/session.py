@@ -2,7 +2,7 @@
 from flask import current_app as app
 import requests
 from app.models.user import Client
-from app.util import get_base_url, getIP, setCookie
+from app.utility import get_base_url, getIP, setCookie
 
 
 def settingSession(request,response):

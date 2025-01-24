@@ -228,7 +228,7 @@
                         <label for="{{ article.uuid }}" class="w-full">
                             <div id="{{ article.uuid }}"
                                 class="rounded overflow-hidden shadow-lg p-2 mx-auto my-2 flex flex-row justify-between
-                                                        hover:text-teal-100 hover:bg-teal-900 ease-in duration-100 border dark:border-gray-300">
+                                                        ease-in duration-100 border dark:border-gray-300">
                                 <div>
             
                                     {{article.title}}
@@ -236,12 +236,12 @@
                                     {% for author in article.authors %}
                                         {% if "FACULTY" in roles %}
                                             <a href="#" class="author-link" data-author-id="{{ author.id }}">
-                                                <span {% if author.employee_id %}class="font-bold" {% endif %}>{{ author.fullName }}</span>
+                                                <span {% if author.employee_id %} class="font-bold" {% endif %} data-author-uuid="{{ author.id }}" class="px-2 hover:text-teal-100 hover:bg-teal-900 ease-in duration-100">{{ author.fullName }}</span>
                                             </a>
                                         {% else %}
-                                            <span {% if author.employee_id %}class="font-bold" {% endif %}>{{ author.fullName }}</span>
+                                            <span {% if author.employee_id %}class="font-bold" {% endif %} class="px-2 hover:text-teal-100 hover:bg-teal-900 ease-in duration-100">{{ author.fullName }}</span>
                                         {% endif %}
-                                        {% if not loop.last %}; {% endif %}
+                                  
                                     {% endfor %}
 
                                     <br />

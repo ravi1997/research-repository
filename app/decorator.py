@@ -6,7 +6,7 @@ from pprint import pprint
 from flask import jsonify, request,current_app as app
 
 from app.models import Client, UserRole
-from app.util import decode_text
+from app.utility import decode_text
 from app.mylogger import error_logger
 
 

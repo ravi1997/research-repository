@@ -80,9 +80,32 @@ class ProdConfig(BaseConfig):
         JWT_ACCESS_TOKEN_EXPIRES = timedelta(minutes=float(JWT_ACCESS_TOKEN_EXPIRES))
     
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+
+
+    SCHEDULER_API_ENABLED = True
+    MAIL_SERVER = os.getenv('MAIL_SERVER')
+    MAIL_PORT = os.getenv('MAIL_PORT')
+    MAIL_USERNAME = os.getenv('MAIL_USERNAME')
+    MAIL_PASSWORD = os.getenv('MAIL_PASSWORD')
+    MAIL_USE_TLS = os.getenv('MAIL_USE_TLS')
+    MAIL_USE_SSL = os.getenv('MAIL_USE_SSL')
     
+    OTP_SERVER = os.getenv('OTP_SERVER')
+    OTP_USERNAME = os.getenv('OTP_USERNAME')
+    OTP_PASSWORD = os.getenv('OTP_PASSWORD')
+    OTP_ID = os.getenv('OTP_ID')
+    OTP_SENDERID = os.getenv('OTP_SENDERID')
+    
+    
+    CDAC_USERNAME = os.getenv('CDAC_USERNAME')
+    CDAC_PASSWORD = os.getenv('CDAC_PASSWORD')
+    CDAC_AUTH_SERVER = os.getenv('CDAC_AUTH_SERVER')
+    CDAC_SERVER = os.getenv('CDAC_SERVER')
+    CDAC_ID = os.getenv('CDAC_ID')
+
+    
+    UPLOAD_FOLDER = os.getenv('UPLOAD_FOLDER')
     SCHEDULER_JOBSTORES = {
         "default": SQLAlchemyJobStore(url=SQLALCHEMY_DATABASE_URI)
     }
 
-    SCHEDULER_API_ENABLED = True

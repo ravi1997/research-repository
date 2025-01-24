@@ -6,7 +6,7 @@ from sqlalchemy import func
 
 from enum import Enum
 
-from app.util import getNewSalt
+from app.utility import getNewSalt
 
 # ENUMS
 class UserState(Enum):

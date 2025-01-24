@@ -20,9 +20,9 @@
 </section>
 
 <section class="mb-10 flex w-full flex-col rounded-md p-5 text-center">
-  <div class="flex flex-row items-stretch justify-center gap-5 p-5" id="stats">
+  <div class="flex flex-col justify-center items-center lg:flex-row  gap-5 p-5" id="stats">
     <div
-      class="w-1/4 grow content-center rounded-lg border bg-teal-700 p-2 text-teal-100 shadow-md duration-100 ease-in hover:bg-teal-900 hover:text-teal-100 dark:border-gray-300"
+      class="w-3/4 lg:w-1/4 grow content-center rounded-lg border bg-teal-700 p-2 md:p-4 text-teal-100 shadow-md duration-100 ease-in hover:bg-teal-900 hover:text-teal-100 dark:border-gray-300"
       id="Totals"
     >
       <div class="text-center text-lg">Articles</div>
@@ -30,14 +30,14 @@
     </div>
 
     <div
-      class="w-1/4 grow content-center rounded-lg border bg-teal-700 p-2 text-teal-100 shadow-md duration-100 ease-in hover:bg-teal-900 hover:text-teal-100 dark:border-gray-300"
+      class="w-3/4 lg:w-1/4 grow content-center rounded-lg border bg-teal-700 p-2 md:p-4 text-teal-100 shadow-md duration-100 ease-in hover:bg-teal-900 hover:text-teal-100 dark:border-gray-300"
       id="views"
     >
       <div class="text-center">Views</div>
       <div class="text-center text-5xl" id="article_view_count"></div>
     </div>
 
-    <div class="w-1/2 grow rounded-lg bg-green-900" id="Graphical">
+    <div class="w-full lg:w-1/2 grow rounded-lg bg-green-900" id="Graphical">
       <div class="rounded-lg bg-white p-2 shadow dark:bg-gray-800">
         <div class="flex flex-row justify-between">
           <div>
@@ -49,46 +49,7 @@
               Articles Published This Year
             </p>
           </div>
-          <div
-            id="percentage"
-            class="flex items-center px-2.5 py-0.5 text-center text-base font-semibold"
-          >
-            <span id="percentageValue"></span>%
-            <svg
-              id="gain"
-              class="ms-1 h-3 w-3"
-              aria-hidden="true"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 10 14"
-            >
-              <path
-                stroke="currentColor"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M5 13V1m0 0L1 5m4-4 4 4"
-              />
-            </svg>
-            <svg
-              id="loss"
-              class="ms-1 h-3 w-3"
-              aria-hidden="true"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 10 14"
-            >
-              <g transform="rotate(180 5 7)">
-                <path
-                  stroke="currentColor"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M5 13V1m0 0L1 5m4-4 4 4"
-                />
-              </g>
-            </svg>
-          </div>
+        
         </div>
         <div id="area-chart" class="h-48 w-full"></div>
       </div>
@@ -97,18 +58,18 @@
 
   <div class="flex flex-col items-center pt-4">
     <div class="text-center text-4xl font-bold">Recent Publications</div>
-    <div id="recent_articles" class="w-auto"></div>
+      <ul id="recent_articles" class="flex flex-col items-stretch" ></ul>
   </div>
 
   <div class="m-2 flex flex-col items-center p-4">
     <div class="p-4 text-center text-4xl font-bold">Keywords</div>
-    <div id="my_dataviz" class="w-auto rounded-lg border shadow-lg"></div>
+    <div id="my_dataviz" class="px-4 rounded-lg border shadow-lg"></div>
   </div>
 </section>
 
-<div class="flex gap-5 pb-10">
+<div class="flex flex-col items-center justify-center md:flex-row md:items-stretch gap-5 pb-10" id="cards_home">
   <div
-    class="flex w-1/3 grow flex-col items-center rounded-lg border bg-teal-700 p-6 text-teal-100 shadow-md duration-100 ease-in hover:bg-teal-900 hover:text-teal-100 dark:border-gray-300"
+    class="flex w-3/4 md:w-1/3 grow flex-col items-center rounded-lg border bg-teal-700 p-6 text-teal-100 shadow-md duration-100 ease-in hover:bg-teal-900 hover:text-teal-100 dark:border-gray-300"
   >
     <div class="pb-4 text-xl font-bold">Explore Research</div>
     <div>
@@ -117,7 +78,7 @@
     </div>
   </div>
   <div
-    class="flex w-1/3 grow flex-col items-center rounded-lg border bg-teal-700 p-6 text-teal-100 shadow-md duration-100 ease-in hover:bg-teal-900 hover:text-teal-100 dark:border-gray-300"
+    class="flex h-full w-3/4 md:w-1/3 grow flex-col items-center rounded-lg border bg-teal-700 p-6 text-teal-100 shadow-md duration-100 ease-in hover:bg-teal-900 hover:text-teal-100 dark:border-gray-300"
   >
     <div class="pb-4 text-xl font-bold">
       <h3>Contribute Your Work</h3>
@@ -128,7 +89,7 @@
     </p>
   </div>
   <div
-    class="flex w-1/3 grow flex-col items-center rounded-lg border bg-teal-700 p-6 text-teal-100 shadow-md duration-100 ease-in hover:bg-teal-900 hover:text-teal-100 dark:border-gray-300"
+    class="flex h-full w-3/4 md:w-1/3 grow flex-col items-center rounded-lg border bg-teal-700 p-6 text-teal-100 shadow-md duration-100 ease-in hover:bg-teal-900 hover:text-teal-100 dark:border-gray-300"
   >
     <div class="pb-4 text-xl font-bold">Collaborate & Share</div>
     <p>
@@ -141,8 +102,6 @@
 <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 <script src="https://d3js.org/d3.v4.js"></script>
 
-<!-- Load d3-cloud -->
-<!-- <script src="https://cdn.jsdelivr.net/gh/holtzy/D3-graph-gallery@master/LIB/d3.layout.cloud.js"></script> -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-cloud/1.2.5/d3.layout.cloud.min.js"></script>
 <script src="{{url_for('static',filename='js/index.js')}}"></script>
 {% endblock %}

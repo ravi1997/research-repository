@@ -1,8 +1,8 @@
 let currentCaptcha = '';
 
 window.onload = function () {
-    generateCaptcha("captchaCode");
     generateCaptcha("captchaCode2");
+    generateCaptcha("captchaCode");
 };
 
 

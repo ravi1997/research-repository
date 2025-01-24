@@ -6,27 +6,17 @@ function showModal(title, summary, data) {
     const modalContent = document.getElementById("modalContent");
     modalContent.innerHTML = ""; // Clear previous content
 
-    const addedCount = data.added_articles || 0;
-    const duplicateCount = Object.values(data.duplicate_articles || {}).flat().length;
-    const skippedCount = data.skipped_articles || 0;
+    const summaryHtml = `
+    <div class="p-4 bg-gray-100 rounded-lg">
+      <p><strong>Upload Summary:</strong></p>
+      <ul>
+        <li class="text-green-600">Added Articles: ${data.added_articles || 0}</li>
+        <li class="text-yellow-600">Duplicate Articles: ${Object.values(data.duplicate_articles || {}).flat().length}</li>
+        <li class="text-red-600">Skipped Articles: ${data.skipped_articles || 0}</li>
+      </ul>
+    </div>`;
+    modalContent.innerHTML = summaryHtml;
 
-    const summarySection = document.createElement("div");
-    summarySection.classList.add("p-4", "space-y-3", "bg-gray-100", "rounded-lg");
-
-    summarySection.innerHTML = `
-        <p class="text-gray-800 text-lg">
-            <strong>Upload Summary:</strong>
-        </p>
-        <ul class="list-disc pl-5 space-y-1">
-            <li class="text-green-700 font-medium">Added Articles: ${addedCount}</li>
-            <li class="text-yellow-700 font-medium">Duplicate Articles: ${duplicateCount}</li>
-            <li class="text-red-700 font-medium">Skipped Articles: ${skippedCount}</li>
-        </ul>
-    `;
-
-    modalContent.appendChild(summarySection);
-
-    // Show the modal
     document.getElementById("resultModal").classList.remove("hidden");
 }
 
@@ -35,111 +25,74 @@ function closeModal() {
     document.getElementById("resultModal").classList.add("hidden");
 }
 
-// Upload .ris File
-async function uploadrisFile() {
-    const form = document.getElementById("uploadForm");
-    const formData = new FormData(form);
-    const button = form.querySelector("button");
+// Helper: Show Alert
+function showAlert(message, isSuccess = false) {
+    const alertBox = document.getElementById("customAlert");
+    const alertMessage = document.getElementById("alertMessage");
 
-    showLoading('upload_ris_btn');
+    alertBox.classList.remove("hidden", isSuccess ? "bg-red-500" : "bg-green-500");
+    alertBox.classList.add(isSuccess ? "bg-green-500" : "bg-red-500");
+    alertMessage.textContent = message;
+
+    setTimeout(() => alertBox.classList.add("hidden"), 3000);
+}
+
+// File Upload Functionality
+async function uploadFile(fileType) {
+    const form = fileType === "ris" ? document.getElementById("uploadFormRIS") : document.getElementById("uploadFormNBIB");
+    const formData = new FormData(form);
+    const buttonId = fileType === "ris" ? "uploadRISButton" : "uploadNBIBButton";
+
+    const button = document.getElementById(buttonId);
+    button.disabled = true;
 
     try {
-        const response = await fetch("../api/article/upload_ris", {
+        const response = await fetch(`../api/article/upload_${fileType}`, {
             method: "POST",
             body: formData,
         });
 
-        stopLoading('upload_ris_btn');
-
         if (response.ok) {
             const result = await response.json();
-            showModal(
-                "Upload Successful",
-                `File uploaded: ${result.filename}`,
-                result
-            );
+            showModal("Upload Successful", `File uploaded: ${result.filename}`, result);
         } else {
             const error = await response.json();
             showAlert(`Error: ${error.error}`);
         }
     } catch (error) {
-        console.error("Upload error:", error);
+        console.error("Error uploading file:", error);
         showAlert("An error occurred while uploading the file.");
-        stopLoading('upload_ris_btn');
+    } finally {
+        button.disabled = false;
     }
 }
 
-// Upload .nbib File
-async function uploadnbibFile() {
-    const form = document.getElementById("uploadForm-nbib");
-    const formData = new FormData(form);
-    const button = form.querySelector("button");
-
-    showLoading('upload_nib_btn');
-
-    try {
-        const response = await fetch("../api/article/upload_nbib", {
-            method: "POST",
-            body: formData,
-        });
-        stopLoading('upload_nib_btn');
-
-
-        if (response.ok) {
-            const result = await response.json();
-            showModal(
-                "Upload Successful",
-                `File uploaded: ${result.filename}`,
-                result
-            );
-        } else {
-            const error = await response.json();
-            showAlert(`Error: ${error.error}`);
-        }
-    } catch (error) {
-        console.error("Upload error:", error);
-        showAlert("An error occurred while uploading the file.");
-        stopLoading('upload_nib_btn');
-    }
-}
-
-// Submit PubMed Form
-async function submitForm(event) {
+// PubMed Fetch Functionality
+async function submitPubMed(event) {
     event.preventDefault();
-    const form = document.getElementById("pubmed-form");
-    const formData = new FormData(form);
-    const salt = getCookie("Session-SALT");
-    showLoading('upload_pubmed_btn');
 
-    if (!salt) {
-        console.error("Salt not found in cookies.");
-        showAlert("Error: Session expired. Please log in again.");
-        return;
-    }
-
-    const formDataJson = Object.fromEntries(formData.entries());
-    const data = JSON.stringify(formDataJson);
-    const encodeFunction = await cipher(salt);
-    const encryptedData = encodeFunction(data);
+    const pubmedID = document.getElementById("pubmedID").value;
+    const button = document.getElementById("fetchPubMedButton");
+    button.disabled = true;
 
     try {
-        const response = await fetch(form.action, {
-            method: form.method,
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ data: encryptedData }),
+        const response = await fetch(`../api/article/pubmedFetch`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ pmid: pubmedID }),
         });
-        stopLoading('upload_pubmed_btn');
 
         if (response.ok) {
+            const result = await response.json();
             showAlert("PubMed data added successfully", true);
         } else {
-            showAlert("Error: Unable to add PubMed data.");
+            const error = await response.json();
+            showAlert(`Error: ${error.message}`);
         }
     } catch (error) {
-        console.error("An error occurred:", error);
-        showAlert("An error occurred while submitting the PubMed form.");
-        stopLoading('upload_pubmed_btn');
+        console.error("Error fetching PubMed data:", error);
+        showAlert("An error occurred while fetching PubMed data.");
+    } finally {
+        button.disabled = false;
     }
 }

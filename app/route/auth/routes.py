@@ -11,7 +11,7 @@ from app.models import OTP, User
 from app.extension import db,scheduler
 from app.models.user import UserRole, UserRoles, UserState, ValidState
 from app.schema import UserSchema
-from app.util import  cdac_service, decode_text, generate_otp, send_sms
+from app.utility import  cdac_service, generate_otp, send_sms
 from . import auth_bp
 
 @auth_bp.route("/")

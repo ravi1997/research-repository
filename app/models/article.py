@@ -100,8 +100,10 @@ class Asset(db.Model):
 
 class ArticleAuthor(db.Model):
     __tablename__ = 'article_authors'
-    article_id = db.Column(db.Integer, db.ForeignKey('articles.id'), primary_key=True,nullable=False)
-    author_id = db.Column(db.Integer, db.ForeignKey('authors.id'), primary_key=True,nullable=False)
+    
+    id = db.Column(db.Integer, primary_key=True)
+    article_id = db.Column(db.Integer, db.ForeignKey('articles.id'), nullable=False)
+    author_id = db.Column(db.Integer, db.ForeignKey('authors.id'), nullable=False)
     sequence_number = db.Column(db.Integer, nullable=False)  # New field for sequence number
 
     author = relationship("Author", back_populates="articles")

@@ -1,0 +1,285 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Container for overall layout -->
+<div class="container mx-auto px-4 sm:px-6 lg:px-8">
+
+  <!-- Total Metrics Overview -->
+<!-- Total Metrics Overview -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-10">
+  <!-- Total Authors -->
+  <div class="grow content-center rounded-lg border bg-teal-700 p-2 text-teal-100 shadow-md duration-100 ease-in hover:bg-teal-900 hover:text-teal-100 dark:border-gray-300">
+    <h2 class="text-center text-sm font-semibold mb-2">Total Authors</h2>
+    <p class="text-center text-3xl font-bold">{{ total_authors }}</p>
+  </div>
+
+  <!-- Total Articles -->
+  <div class="bg-gradient-to-r from-yellow-500 to-amber-600 text-gray-800 dark:text-gray-100 rounded-lg shadow-xl p-6 flex flex-col items-center justify-center hover:scale-105 transform transition-all duration-200">
+    <h2 class="text-sm font-semibold mb-2">Total Articles</h2>
+    <p class="text-3xl font-bold">{{ total_articles }}</p>
+  </div>
+
+  <!-- Total Keywords -->
+  <div class="bg-gradient-to-r from-pink-500 to-red-600 text-gray-200 dark:text-gray-100 rounded-lg shadow-xl p-6 flex flex-col items-center justify-center hover:scale-105 transform transition-all duration-200">
+    <h2 class="text-sm font-semibold mb-2">Total Keywords</h2>
+    <p class="text-3xl font-bold">{{ total_keywords }}</p>
+  </div>
+
+  <!-- Total Views -->
+  <div class="bg-gradient-to-r from-green-500 to-teal-600 text-gray-200 dark:text-gray-100 rounded-lg shadow-xl p-6 flex flex-col items-center justify-center hover:scale-105 transform transition-all duration-200">
+    <h2 class="text-sm font-semibold mb-2">Total Views</h2>
+    <p class="text-3xl font-bold">{{ total_views }}</p>
+  </div>
+</div>
+
+
+  <!-- Charts Section -->
+  <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-6">
+    <!-- Top Articles by Views -->
+    <div class="bg-gray-50 rounded-lg shadow-md p-6 flex flex-col items-center justify-center border border-gray-200">
+      <h2 class="text-base font-semibold mb-2 text-gray-800">Top Articles by Views</h2>
+      <canvas id="topViewedChart" height="150"></canvas>
+    </div>
+
+    <!-- Keyword Usage -->
+    <div class="bg-gray-50 rounded-lg shadow-md p-6 flex flex-col items-center justify-center border border-gray-200">
+      <h2 class="text-base font-semibold mb-2 text-gray-800">Keyword Usage</h2>
+      <canvas id="keywordChart" height="150"></canvas>
+    </div>
+  </div>
+
+  <!-- Author Activity & Article Trends -->
+  <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-6">
+    <!-- Author Activity -->
+    <div class="bg-gray-50 rounded-lg shadow-md p-6 flex flex-col items-center justify-center border border-gray-200">
+      <h2 class="text-base font-semibold mb-2 text-gray-800">Top Authors by Articles</h2>
+      <canvas id="authorActivityChart" height="150"></canvas>
+    </div>
+
+    <!-- Articles Creation Over Time -->
+    <div class="bg-gray-50 rounded-lg shadow-md p-6 flex flex-col items-center justify-center border border-gray-200">
+      <h2 class="text-base font-semibold mb-2 text-gray-800">Articles Created Over Time</h2>
+      <canvas id="articleTrendsChart" height="150"></canvas>
+    </div>
+  </div>
+
+  <!-- Word Cloud Section -->
+  <div class="m-2 flex flex-col items-center p-6">
+    <div class="text-center text-2xl font-bold text-gray-700 mb-4">Top Keywords - Word Cloud</div>
+    <div id="my_dataviz" class="w-auto rounded-lg bg-gray-50 border border-gray-200 shadow-lg p-4"></div>
+  </div>
+
+</div>
+
+<script src="https://d3js.org/d3.v4.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3-cloud/1.2.5/d3.layout.cloud.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+  // Data for Charts
+  const topViewedData = {
+    labels: {{ top_viewed_articles|map(attribute='0')|list|tojson }},
+    datasets: [{
+      label: "Views",
+      data: {{ top_viewed_articles|map(attribute='1')|list|tojson }},
+      backgroundColor: "rgba(54, 162, 235, 0.6)",
+      borderColor: "rgba(54, 162, 235, 1)",
+      borderWidth: 1
+    }]
+  };
+
+  const keywordData = {
+    labels: {{ keyword_usage|map(attribute='0')|list|tojson }},
+    datasets: [{
+      label: "Usage",
+      data: {{ keyword_usage|map(attribute='1')|list|tojson }},
+      backgroundColor: [
+        'rgba(255, 99, 132, 0.6)',
+        'rgba(54, 162, 235, 0.6)',
+        'rgba(255, 206, 86, 0.6)',
+        'rgba(75, 192, 192, 0.6)',
+        'rgba(153, 102, 255, 0.6)'
+      ],
+      borderColor: [
+        'rgba(255, 99, 132, 1)',
+        'rgba(54, 162, 235, 1)',
+        'rgba(255, 206, 86, 1)',
+        'rgba(75, 192, 192, 1)',
+        'rgba(153, 102, 255, 1)'
+      ],
+      borderWidth: 1
+    }]
+  };
+
+  const authorActivityData = {
+    labels: {{ top_authors|map(attribute='0')|list|tojson }},
+    datasets: [{
+      label: "Articles",
+      data: {{ top_authors|map(attribute='1')|list|tojson }},
+      backgroundColor: "rgba(255, 159, 64, 0.6)",
+      borderColor: "rgba(255, 159, 64, 1)",
+      borderWidth: 1
+    }]
+  };
+
+  const articleTrendsData = {
+    labels: {{ article_trends|map(attribute='0')|list|tojson }},
+    datasets: [{
+      label: "Articles Created",
+      data: {{ article_trends|map(attribute='1')|list|tojson }},
+      backgroundColor: "rgba(75, 192, 192, 0.6)",
+      borderColor: "rgba(75, 192, 192, 1)",
+      borderWidth: 1
+    }]
+  };
+
+  // Render Top Viewed Articles Chart
+  const ctx1 = document.getElementById('topViewedChart').getContext('2d');
+  const topViewedChart = new Chart(ctx1, {
+    type: 'bar',
+    data: topViewedData,
+    options: {
+      responsive: true,
+      animation: {
+        duration: 1000,
+        easing: 'easeInOutQuad'
+      },
+      plugins: {
+        legend: {
+          display: true,
+          position: 'top',
+          labels: { font: { size: 14 } }
+        }
+      }
+    }
+  });
+
+  // Render Keyword Usage Doughnut Chart
+  const ctx2 = document.getElementById('keywordChart').getContext('2d');
+  const keywordChart = new Chart(ctx2, {
+    type: 'doughnut',
+    data: keywordData
+  });
+
+  // Render Author Activity Bar Chart
+  const ctx3 = document.getElementById('authorActivityChart').getContext('2d');
+  const authorActivityChart = new Chart(ctx3, {
+    type: 'bar',
+    data: authorActivityData
+  });
+
+  // Render Article Trends Line Chart
+  const ctx4 = document.getElementById('articleTrendsChart').getContext('2d');
+  const articleTrendsChart = new Chart(ctx4, {
+    type: 'line',
+    data: articleTrendsData
+  });
+
+
+window.onload = async function () {
+    try {
+        // Fetch and update article counts
+        await updateArticleStatistics();
+    } catch (error) {
+        console.error("Error in window.onload:", error);
+    }
+};
+async function updateArticleStatistics() {
+  // Render Word Cloud
+    try {
+        const responseWord = await fetch('/api/article/statistic?q=keyword');
+        if (responseWord.ok) {
+            const result = await responseWord.json();
+            const myWords = result.result;
+            // console.log(myWords);            
+            createWordCloud(myWords);
+
+        }
+    } catch (error) {
+        console.error("Error fetching word cloud data:", error);
+    }
+  }
+function createWordCloud(myWords) {
+    if (!Array.isArray(myWords) || myWords.length === 0) {
+        console.error("No words provided for the word cloud.");
+        return;
+    }
+
+    // Screen size-based logic
+    const screenWidth = window.innerWidth;
+    const wordCount = screenWidth <= 768 ? 25 : screenWidth <= 1200 ? 50 : 100;
+    const selectedWords = myWords.slice(0, Math.min(wordCount, myWords.length));
+
+    const margin = { top: 10, right: 10, bottom: 10, left: 10 },
+        width = Math.min(screenWidth, 1200) - margin.left - margin.right,
+        height = Math.min(window.innerHeight, 500) - margin.top - margin.bottom;
+
+    // Clear existing SVG
+    d3.select("#my_dataviz").html("");
+
+    const svg = d3.select("#my_dataviz").append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+        .append("g")
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+    // Font size scaling
+    const maxWordSize = Math.max(...selectedWords.map(d => d.size));
+    const minWordSize = Math.min(...selectedWords.map(d => d.size));
+    const scaleFontSize = d3.scaleLinear()
+        .domain([minWordSize, maxWordSize])
+        .range([10, Math.min(width, height) / 10]);
+
+    if (isNaN(maxWordSize) || isNaN(minWordSize)) {
+        console.error("Invalid word sizes detected. Please verify your data.");
+        return;
+    }
+
+    // Create layout
+    const layout = d3.layout.cloud()
+        .size([width, height])
+        .words(selectedWords.map(d => ({
+            text: d.word,  // Word text
+            size: scaleFontSize(d.size),  // Scaled font size
+            url: d.url,  // Optional URL for the word
+        })))
+        .padding(5)
+        .rotate(() => (Math.random() < 0.5 ? 0 : 90))
+        .spiral("archimedean")
+        .fontSize(d => d.size)
+        .on("end", draw);
+
+    layout.start();
+
+    function draw(words) {
+        svg.append("g")
+            .attr("transform", `translate(${layout.size()[0] / 2},${layout.size()[1] / 2})`)
+            .selectAll("text")
+            .data(words)
+            .enter().append("text")
+            .style("font-size", d => `${d.size}px`)
+            .style("fill", () => d3.interpolateRainbow(Math.random()))
+            .attr("text-anchor", "middle")
+            .style("font-family", "Impact")
+            .attr("transform", d => `translate(${d.x},${d.y})rotate(${d.rotate})`)
+            .text(d => d.text)  // Use the text for display
+            .on("click", function (event, d) {
+                if (event.url) {
+                    window.open(event.url, "_blank");  // Open the URL in a new tab
+                } else {
+                    console.warn("No URL provided for this word.");
+                }
+            })
+            .style("cursor", "pointer"); // Change cursor to pointer for clickable words
+    }
+
+    // Handle window resize
+    d3.select(window).on("resize", () => {
+        d3.select("#my_dataviz").html("");
+        createWordCloud(myWords);
+    });
+}
+
+
+</script>
+{% endblock %}

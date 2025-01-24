@@ -34,7 +34,11 @@
                                 {{article.title}}
                                 <br />
                                 {% for author in article.authors %}
-                                <a href="author?q={{author.fullName}}" target="_blank">{{ author.fullName }}</a>{% if not loop.last %}; {% endif %}
+                                    {% if author.employee_id %}
+                                    <a href="author?q={{author.employee_id}}" target="_blank"><span class="font-bold px-2 hover:text-teal-100 hover:bg-teal-900 ease-in duration-100">{{ author.fullName }}</span></a>
+                                    {% else %}
+                                    <span class="px-2 hover:text-teal-100 hover:bg-teal-900 ease-in duration-100">{{ author.fullName }}</span>
+                                    {%endif%}
                                 {% endfor %}
                                 <br />
                                 <span class="italic"> {{ article.journal or '' }} </span>

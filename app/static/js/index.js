@@ -12,9 +12,9 @@ window.onload = async function () {
 
                 articles.forEach(article => {
                     const articleHtml = `
-                    <ul>
-    <li id="${article.uuid}-uuid" class="w-full">
-        <div class="flex flex-row ps-3 w-full">
+                    
+    <li id="${article.uuid}-uuid" class="">
+        <div class="flex flex-row">
             <div id="${article.uuid}"
                 class="rounded w-full overflow-hidden shadow-lg p-2 mx-auto my-2 flex flex-row justify-between
                                     hover:text-teal-100 hover:bg-teal-900 ease-in duration-100 border dark:border-gray-300">
@@ -53,7 +53,7 @@ window.onload = async function () {
             </div>
         </div>
     </li>
-</ul>
+
         `;
                     targetDiv.insertAdjacentHTML('beforeend', articleHtml);
                 });
@@ -111,27 +111,6 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         const labels = data.labels || []; // X-axis labels
         const values = data.values || []; // Y-axis values
-        const rvalues = [...values].reverse();
-
-        if (rvalues.length >= 2) {
-            const percentage = rvalues[1] !== 0
-                ? (rvalues[0] > rvalues[1]) ? (((rvalues[0] - rvalues[1]) / rvalues[1]) * 100) : 100 - (((rvalues[1] - rvalues[0]) / rvalues[1]) * 100)
-                : 100;
-            if (rvalues[0] > rvalues[1]) {
-                document.getElementById("percentage").classList.add("text-green-500")
-                document.getElementById("percentage").classList.add("dark:text-green-500")
-                document.getElementById("loss").classList.add("hidden")
-
-            } else {
-                document.getElementById("percentage").classList.add("text-red-500")
-                document.getElementById("percentage").classList.add("dark:text-red-500")
-                document.getElementById("gain").classList.add("hidden")
-            }
-
-            document.getElementById("percentageValue").innerHTML = percentage.toFixed(2);
-        } else {
-            console.warn("Not enough data to calculate percentage.");
-        }
 
         // Initialize the chart with fetched data
         createAreaChart(labels, values);
@@ -151,7 +130,7 @@ function createWordCloud(myWords) {
     const wordCount = screenWidth <= 768 ? 25 : screenWidth <= 1200 ? 50 : 100;
     const selectedWords = myWords.slice(0, Math.min(wordCount, myWords.length));
 
-    const margin = { top: 10, right: 10, bottom: 10, left: 10 },
+    const margin = { top: 10, right: 20, bottom: 10, left: 20 },
         width = Math.min(screenWidth, 1200) - margin.left - margin.right,
         height = Math.min(window.innerHeight, 500) - margin.top - margin.bottom;
 
@@ -159,7 +138,7 @@ function createWordCloud(myWords) {
     d3.select("#my_dataviz").html("");
 
     const svg = d3.select("#my_dataviz").append("svg")
-        .attr("width", width + margin.left + margin.right)
+        .attr("width", width)
         .attr("height", height + margin.top + margin.bottom)
         .append("g")
         .attr("transform", "translate(" + margin.left + "," + margin.top + ")");

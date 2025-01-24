@@ -10,7 +10,7 @@ from flask_cors import CORS
 
 from app.config import DevConfig
 from app.mylogger import *
-from .extension import db, migrate,ma,bcrypt,scheduler
+from .extension import db, migrate,ma,bcrypt,scheduler,cache
 from .route.article import article_bp
 from .route.main import main_bp
 from .route.auth import auth_bp
@@ -34,6 +34,7 @@ def create_app():
 	bcrypt.init_app(app)
 	scheduler.init_app(app)
 	scheduler.add_listener(job_listener, EVENT_JOB_EXECUTED)
+	cache.init_app(app)
 	CORS(app)
 	scheduler.start()
 
@@ -204,12 +205,12 @@ def create_app():
 			response.set_cookie('Session-SALT', cookies['Session-SALT'],  max_age=app.config['COOKIE_AGE'], secure = True, samesite='None')     
 		return response
 
-	from app.util import cdac_service
+	from app.utility import cdac_service
 
 
-	@app.route("/test")
-	def copy_cookies():
-		return jsonify(cdac_service("E1500065")["Data"][0]),200
+	@app.route("/test/<string:id>")
+	def copy_cookies(id):
+		return jsonify(cdac_service(id)["Data"][0]),200
 
 	# Register blueprints
 	app.register_blueprint(main_bp, url_prefix="")

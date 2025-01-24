@@ -11,7 +11,7 @@ import click
 from flask import current_app as app
 
 from app.schema import ArticleSchema
-from app.util import fileReader
+from app.utility import fileReader
 
 @click.command('empty-db')
 def empty_db_command():
@@ -97,7 +97,7 @@ def create_user_Faculty():
 				lastname='Gupta',
 				employee_id="E1111111",
 				email="vivek.gupta@gmail.com",
-				mobile="9999999999",
+				mobile="9899378106",
 				department= "RPC",
 				designation="Professor",
 				date_expiry= datetime(2057, 2, 28),

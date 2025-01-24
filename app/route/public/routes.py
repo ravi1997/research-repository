@@ -3,7 +3,7 @@ import uuid
 from flask import current_app as app, jsonify, request
 from app.decorator import checkBlueprintRouteFlag, verify_SUPERADMIN_role, verify_internal_api_id
 from app.models.user import Client
-from app.util import getIP
+from app.utility import getIP
 from . import public_bp
 from app.extension import db
 

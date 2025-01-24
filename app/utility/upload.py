@@ -1,244 +1,16 @@
-		
-# UTILS
-from datetime import date, datetime, timedelta
-from functools import reduce
-import json
-import random
-import string
-import requests
-from flask import current_app as app
-import rispy
-import uuid
-from app.models import Article
-import secrets
-import hashlib
-from nbib import read_file
+from datetime import date, datetime
 import re
-from cryptography.hazmat.primitives.ciphers import Cipher
-from cryptography.hazmat.backends import default_backend
-import base64
-import os
-from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-from cryptography.hazmat.backends import default_backend
+import uuid
+import requests
 import xml.etree.ElementTree as ET
 
-from urllib.parse import urlparse
+import rispy
+from nbib import read_file
+
 from app.mylogger import error_logger
+from app.utility.misc import is_valid_url
 
-def getUnique(data):
-	# Create a set to store unique JSON objects
-	unique_json_set = set()
-
-	# Convert the dictionaries to JSON strings (serialization) and store in a set
-	for item in data:
-		# Convert the dictionary to a JSON string
-		json_str = json.dumps(item, sort_keys=True)
-		unique_json_set.add(json_str)
-
-	# Convert back to list of JSON objects (dictionaries)
-	unique_json_list = [json.loads(json_str) for json_str in unique_json_set]
-	return unique_json_list
-
-def is_valid_url(url):
-	parsed = urlparse(url)
-	return all([parsed.scheme, parsed.netloc])
-
-
-def getIP(request):
-	x_forwarded_for = request.headers.get('X-Forwarded-For')
-	if x_forwarded_for:
-		# Take the first IP if there are multiple IPs listed
-		client_ip = x_forwarded_for.split(',')[0]
-	else:
-		client_ip = request.remote_addr
-	client = request.args.get('ip', client_ip, type=str)
-
-
-def generate_otp(length=6):
-	"""Generate a random OTP of specified length."""
-	digits = '0123456789'
-	otp = ''.join(random.choice(digits) for _ in range(length))
-	return otp
-def send_sms(mobile,message):
-	# Data for the POST request
-
-	data = {
-		'username': app.config.get('OTP_USERNAME'),
-		'password': app.config.get('OTP_PASSWORD'),
-		'senderid': app.config.get('OTP_SENDERID'),
-		'mobileNos': mobile,
-		'message': f'{message}',
-		'templateid1': app.config.get('OTP_ID')
-	}
-
-	# Headers for the POST request
-	headers = {
-		'Content-Type': 'application/x-www-form-urlencoded'
-	}
-
-	# URL of the service
-	url = app.config.get('OTP_SERVER')
-	# Send the POST request
-	response = requests.post(url, data=data, headers=headers)
-
-	# Return the response from the SMS service
-	return response.status_code
-
-
-
-def call_third_party_api(search_mode, search_key, org_code, access_token):
-	api_url = app.config["CDAC_SERVER"]
-	headers = {
-		"Authorization": f"Bearer {access_token}",
-		"searchMode": str(search_mode),
-		"searchKey": search_key,
-		"orgCode": org_code
-	}
-	response = requests.post(api_url, headers=headers)
-	return response
-
-def cdac_service(emp_id):
-	# Extract parameters from the request
-	type_ = "emp_id" # ["emp_id", "pan"]
-	search_key = emp_id # emp id or pan
-
-	search_mode = 2
-	org_code = "33101"
-
-	auth_url = app.config["CDAC_AUTH_SERVER"]
-	auth_data = {
-		"client_id": app.config["CDAC_USERNAME"],
-		"client_secret": app.config["CDAC_PASSWORD"],
-		"client_serID": app.config["CDAC_ID"]
-	}
-
-	# Call the third-party API
-	response_auth = requests.post(auth_url, json=auth_data)
-	if response_auth.status_code == 200:
-		access_token = response_auth.json().get('access_token')
-		if access_token:
-			response_api = call_third_party_api(search_mode, search_key, org_code, access_token)
-			if response_api.status_code == 200:
-				data = response_api.json()
-				return data
-			else:
-				error_logger.error(f"Either employee id is wrong or something went wrong. {response_api.status_code}")
-				return f"Either employee id is wrong or something went wrong."
-		else:
-			error_logger.error("Access token not found in response")
-			return "Something went wrong"
-	else:
-		error_logger.error(f"Authentication API call failed with status code {response_auth.status_code}")
-		return f"Something went wrong"    
-
-
-def to_date(date_string): 
-	try:
-		return datetime.strptime(date_string, "%Y-%m-%d").date()
-	except ValueError:
-		raise ValueError('{} is not valid date in the format YYYY-MM-DD'.format(date_string))
-
-def randomword(length):
-	letters = 'abcdefghijklmnopqrstuvwxyz'
-	return ''.join(random.choice(letters) for i in range(length))
-
-def generate_random_phone_number():
-	# Generate a random 10-digit number (excluding any specific formatting)
-	number = ''.join(random.choices('0123456789', k=10))
-	
-	# Format the number as a typical phone number (e.g., ###-###-####)
-	formatted_number = f'{number[:3]}-{number[3:6]}-{number[6:]}'
-	
-	return formatted_number
-
-def generate_random_dob(start_date='1970-01-01', end_date='2005-12-31'):
-	# Convert start_date and end_date to datetime objects
-	start_date = datetime.strptime(start_date, '%Y-%m-%d')
-	end_date = datetime.strptime(end_date, '%Y-%m-%d')
-	
-	# Calculate the range in days
-	delta = end_date - start_date
-	random_days = random.randint(0, delta.days)
-	
-	# Generate a random date within the specified range
-	random_dob = start_date + timedelta(days=random_days)
-	
-	return random_dob.date()
-
-def generate_strong_password(length=10):
-	# Define characters to use in the password
-	characters = string.ascii_letters + string.digits + string.punctuation
-	
-	# Generate password
-	password = ''.join(random.choice(characters) for _ in range(length))
-	
-	return password
-
-def getNewSalt(length: int = 16) -> str:
-	characters = string.ascii_letters + string.digits
-	salt = ''.join(secrets.choice(characters) for _ in range(length))
-	return salt
-
-def get_base_url():
-	# Get the host and port from the app's configuration
-	host = "127.0.0.1" # Default to localhost if not set
-	port = app.config.get("PORT", 5000)  # Default port is 5000
-
-	# Determine the scheme based on whether the app is running in debug mode or not
-	scheme = "http"
-	
-	# Construct the base URL
-	base_url = f"{scheme}://{host}:{port}/"
-	return base_url
-
-def setCookie(response,name,value,httponly=True):
-	response.set_cookie(name,value, httponly=httponly, max_age=app.config['COOKIE_AGE'], secure = True, samesite='None')  
-
-def hash_salt(salt: str) -> str:
-	# Encode the salt and generate SHA-256 hash
-	hash_object = hashlib.sha256(salt.encode('UTF-8'))
-	# Convert to hexadecimal format
-	return hash_object.hexdigest()
-
-def decipher(salt: str):
-	# Get the hashed salt
-	hashed_salt = hash_salt(salt)
-	
-	# Function to convert text to char codes
-	def text_to_chars(text):
-		return [ord(c) for c in text]
-	
-	# Apply the hashed salt to the character code
-	def apply_salt_to_char(code):
-		# Reduce the XOR operation across all characters in the hashed salt
-		return reduce(lambda a, b: a ^ b, text_to_chars(hashed_salt), code)
-	
-	# The main decode function
-	def decode(encoded: str) -> str:
-		# Split the encoded string into hex pairs and convert to integers
-		chars = [int(encoded[i:i+2], 16) for i in range(0, len(encoded), 2)]
-		# Apply salt to each char code and convert back to characters
-		decoded_chars = [chr(apply_salt_to_char(char_code)) for char_code in chars]
-		return ''.join(decoded_chars)
-	
-	return decode
-
-
-def find_full_row_match(cls,instance):
-	# Create a filter expression dynamically based on the instance's attributes
-	filters = {column.name: getattr(instance, column.name) for column in cls.__table__.columns}
-
-	filters.pop('id')
-
-	# Query to find the user with matching attributes
-	matched_object = cls.query.filter_by(**filters).first()
-
-	return matched_object
-
-# Example function to decode text
-def decode_text(salt: str, encoded: str) -> str:
-	decode_function = decipher(salt)
-	return decode_function(encoded)
+from flask import current_app as app
 
 def parse_date(date_string):
 	# Clean up the date string by removing extra slashes or invalid characters
@@ -414,7 +186,6 @@ def fileReader(filepath):
 
 	return articles,skipped
 
-
 def download_xml(pmid, filename):
 	# Construct the URL for the E-utilities API
 	url = f"https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id={pmid}"
@@ -433,7 +204,6 @@ def download_xml(pmid, filename):
 
 	return response.status_code == 200
 	
-
 def parse_pubmed_xml(file_path):
 	article_data = {}
 	
