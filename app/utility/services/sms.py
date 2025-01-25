@@ -37,16 +37,17 @@ def send_sms(mobile, message):
 
     try:
         app.logger.info(f"Sending SMS to {mobile}. URL: {url}, Data: {data}")
-        
-        # Send the POST request
-        response = requests.post(url, data=data, headers=headers)
-        
-        
-        app.logger.info(f"SMS sent to {mobile}. Response status: {response.status_code}")
-        if response.status_code != 200:
-            error_logger.warning(f"Failed to send SMS. Status code: {response.status_code}, Response: {response.text}")
-        
-        return response.status_code
+
+        if app.config.get('OTP_FLAG'):            
+            # Send the POST request
+            response = requests.post(url, data=data, headers=headers)
+            app.logger.info(f"SMS sent to {mobile}. Response status: {response.status_code}")
+            if response.status_code != 200:
+                error_logger.warning(f"Failed to send SMS. Status code: {response.status_code}, Response: {response.text}")
+            
+            return response.status_code
+        app.logger.info(f"message : {message}")
+        return 200
     except requests.RequestException as e:
         error_logger.error(f"Error occurred while sending SMS to {mobile}: {e}", exc_info=True)
         return 500

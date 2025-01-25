@@ -86,13 +86,17 @@ def fileReader(filepath):
 	# Process each entry
 	for entry in entries:
 		try:
+			for key12, value12 in entry.items():
+				app.logger.info(f"  {key12}: {value12}")
+			app.logger.info("-" * 40)
 			# Extract common fields with null handling
 			publication_type_list = entry.get('publication_types', None) or []
 			publication_type_t = entry.get('type_of_reference', None)
 
 			pub_date = entry.get('date', None) or entry.get('publication_date', None)
 			publication_date = parse_date(pub_date) if pub_date else None
-			
+			app.logger.info(f"pub_date : {pub_date}, publication_date : {publication_date}")
+			app.logger.info(f"year : {entry.get('year', None)}")
 
 			if 'Journal Article' not in publication_type_list and publication_type_t != "JOUR":
 				# Handle missing essential fields
