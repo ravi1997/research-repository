@@ -1745,7 +1745,7 @@ def journals(session):
 
 
 @article_bp.route("/duplicate/<string:id>")
-@verify_session
+@verify_LIBRARYMANAGER_role
 @verify_internal_api_id
 def getSingle_duplicate(session,id):
 	duplicate = Duplicate.query.filter_by(uuid=id).first()
@@ -1757,7 +1757,7 @@ def getSingle_duplicate(session,id):
 
 
 @article_bp.route("/duplicate/<string:id>/resolved",methods=["DELETE"])
-@verify_session
+@verify_LIBRARYMANAGER_role
 def resolved_duplicate(session,id):
 	duplicate = Duplicate.query.filter_by(uuid=id).first()
 	if duplicate:
@@ -1769,7 +1769,7 @@ def resolved_duplicate(session,id):
 
 
 @article_bp.route("/<string:id>",methods=['DELETE'])
-@verify_session
+@verify_LIBRARYMANAGER_role
 def delete_article(session,id):
 	article = Article.query.filter_by(uuid=id).first()
 	if article:
