@@ -9,56 +9,6 @@
 <br>
 <p class="text-center text-2xl">Duplicates = <strong id="count">{{ articles | length }}</strong></p>
 <br>
-
-<!--
-<table>
-    <thead>
-        <tr>
-            <th>Author(s)</th>
-            <th>Published Date</th>
-            <th>Journal</th>
-            <th>Issue</th>
-            <th>Volume</th>
-            <th>Pages</th>
-            <th>PubMed ID</th>
-            <th>DOI</th>
-            <th>Action</th>
-        </tr>
-    </thead>
-    <tbody id="table-body">
-        {% for article in articles %}
-        <tr>
-            <td>{% for author in article.authors %}
-                {{ author.fullName }}{% if not loop.last %}; {% endif %}
-                {% endfor %}</td>
-            <td>{{ article.publication_date or '' }}</td>
-            <td>{{ article.journal or '' }}</td>
-            <td>{{ article.journal_issue or '' }}</td>
-            <td>{{ article.journal_volume or '' }}</td>
-            <td>{{ article.pages or '' }}</td>
-            <td>{{ article.pubmed_id or '' }}</td>
-            <td>
-                {% if article.doi %}
-                <a href="https://doi.org/{{ article.doi }}" target="_blank">{{ article.doi }}</a>
-                {% endif %}
-            </td>
-            <td class="w-24">
-                    <a href="article/{{ article.uuid }}" target="_blank">
-                    <img src="{{url_for('static',filename='assets/logo/browse-svgrepo-com.svg')}}" alt="Icon"
-                        class="w-8 "></a>
-                    
-                    
-                    <a href="article/{{ article.uuid }}" class="text-red-500">
-                    <svg fill="#4a5699" stroke="#4a5699" width="24px" height="24px" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path
-                            d="M5.755,20.283,4,8H20L18.245,20.283A2,2,0,0,1,16.265,22H7.735A2,2,0,0,1,5.755,20.283ZM21,4H16V3a1,1,0,0,0-1-1H9A1,1,0,0,0,8,3V4H3A1,1,0,0,0,3,6H21a1,1,0,0,0,0-2Z" />
-                    </svg></a>
-                    </td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
--->
 <div id="mainbody">
     <p class="text-left italic"> Please check each record and delete the ones which are redundant. You may edit and
         correct the articles that need to be retained. <br />Once only the articles to be retained are left, please

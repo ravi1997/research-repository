@@ -86,17 +86,21 @@ def fileReader(filepath):
 	# Process each entry
 	for entry in entries:
 		try:
-			for key12, value12 in entry.items():
-				app.logger.info(f"  {key12}: {value12}")
-			app.logger.info("-" * 40)
 			# Extract common fields with null handling
 			publication_type_list = entry.get('publication_types', None) or []
 			publication_type_t = entry.get('type_of_reference', None)
 
 			pub_date = entry.get('date', None) or entry.get('publication_date', None)
+   
+			pub_year = entry.get('year', None)
+   
+			year_match = re.search(r'\b(19|20)\d{2}\b', pub_date)
+
+			if not year_match:
+				pub_date = pub_year + " " + pub_date
+   
 			publication_date = parse_date(pub_date) if pub_date else None
-			app.logger.info(f"pub_date : {pub_date}, publication_date : {publication_date}")
-			app.logger.info(f"year : {entry.get('year', None)}")
+			app.logger.info(f"pub_date : {pub_date}, publication_date : {publication_date}, year : {entry.get('year', None)}")
 
 			if 'Journal Article' not in publication_type_list and publication_type_t != "JOUR":
 				# Handle missing essential fields
@@ -158,9 +162,27 @@ def fileReader(filepath):
 
 			if urls:
 				for link in urls:
+					app.logger.info(f"link : {link}")
 					if is_valid_url(link):
-						links.append({"link": link})
+						app.logger.info(f"pubmed_id : {pubmed_id}, condition : {("ncbi.nlm.nih.gov/pubmed" in link or "pubmed.ncbi.nlm.nih.gov/" in link)}")
+						if pubmed_id == None and ("ncbi.nlm.nih.gov/pubmed" in link or "pubmed.ncbi.nlm.nih.gov/" in link):
+							result = link.rsplit('/', 2)  # Split only once from the right
+							app.logger.info(f"result : {result}")
+							last_split = result[-1] if len(str(result[-1])) > 3 else result[-2]
+							app.logger.info(f"last_split : {last_split}")
+							pubmed_id = str(last_split)
+							app.logger.info(f"pubmed_id : {pubmed_id}")
 
+						app.logger.info(f"pmc_id : {pmc_id},condition : {"ncbi.nlm.nih.gov/pmc" in link}")
+						if pmc_id == None and "ncbi.nlm.nih.gov/pmc" in link:
+							result = link.rsplit('/', 2)  # Split only once from the right
+							app.logger.info(result)
+							
+							last_split = result[-1] if len(str(result[-1])) > 3 else result[-2]
+							pmc_id = str(last_split)
+							app.logger.info(f"pmc_id : {pmc_id}")
+       
+    
 			article = {
 				"uuid": str(uuid.uuid4()),
 				"publication_types": publication_type,

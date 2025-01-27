@@ -1103,10 +1103,10 @@ def upload(session, request, ALLOWED_EXTENSIONS):
 		duplicate_count = 0
 
 		try:
-			app.logger.info(f"length of myjsons:{myjsons}")
+			app.logger.info(f"length of myjsons:{len(myjsons)}")
 			for myjson in myjsons:
 				temp_json = myjson.copy()
-				app.logger.info(f"current json : {temp_json}")
+				# app.logger.info(f"current json : {temp_json}")
 
 				publication_types = temp_json.pop('publication_types', [])
 				keywords = temp_json.pop('keywords', [])
@@ -1116,7 +1116,6 @@ def upload(session, request, ALLOWED_EXTENSIONS):
 				# Check for duplicates
 				duplicate_article = check_duplicates(temp_json)
 
-    
 				if duplicate_article:
 					duplicate_count += 1
 					if duplicate_article.title is not None and duplicate_article.title == myjson['title']:
@@ -1132,6 +1131,7 @@ def upload(session, request, ALLOWED_EXTENSIONS):
 					continue
  
 				# Create new article
+				app.logger.info(f"my json : {temp_json}")
 				new_article = article_schema.load(temp_json)
 				db.session.add(new_article)
 				db.session.commit()  # Get article ID

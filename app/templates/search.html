@@ -141,60 +141,9 @@
         </div>
 
         <h2 class="text-center text-5xl font-bold mb-8">Search Results</h2>
-        
-<div class="pagination flex flex-row align-middle items-center gap-2 m-4">
-    <!-- Previous button -->
-    <button {% if current_page<=1 %}disabled
-        class="bg-blue-500 text-white font-bold py-2 px-4 rounded opacity-50 cursor-not-allowed" {% endif %}
-        type="button" onclick="navigateToPage(1, '{{ entry | safe }}', {{ total_pages }})" {% if current_page>1
-        %}class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 border border-blue-700 rounded"{% endif %}
-        >
-        First
-    </button>
+        {% include 'pagination.html' %}
 
-    <button {% if current_page<=1 %}disabled
-        class="bg-blue-500 text-white font-bold py-2 px-4 rounded opacity-50 cursor-not-allowed" {% endif %}
-        type="button" onclick="navigateToPage({{ current_page - 1 }}, '{{ entry | safe }}', {{ total_pages }})" {% if
-        current_page>1 %}class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 border border-blue-700
-        rounded"{% endif %}
-        >
-        Previous
-    </button>
 
-    <!-- Page info -->
-    <div id="page-info flex items-center justify-center">Page <input 
-            id="page-number" 
-            type="text" 
-            min="1" 
-            max="{{ total_pages }}" 
-            value="{{ current_page }}"
-            placeholder="Page" 
-            class="w-16 p-2 border rounded text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
-            oninput="this.value = Math.min(Math.max(this.value, 1), {{ total_pages }});" 
-            onblur="jumpToPage(this.value, '{{ entry | safe }}', {{ total_pages }})"
-        /> of {{ total_pages }}</div>
-
-    <!-- Next button -->
-    <button {% if current_page>= total_pages %}disabled class="bg-blue-500 text-white font-bold py-2 px-4 rounded
-        opacity-50 cursor-not-allowed"{% endif %}
-        type="button"
-        onclick="navigateToPage({{ current_page + 1 }}, '{{ entry | safe }}', {{ total_pages }})"
-        {% if current_page< total_pages
-            %}class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 border border-blue-700 rounded" {%
-            endif %}>
-            Next
-    </button>
-    <button {% if current_page>= total_pages %}disabled class="bg-blue-500 text-white font-bold py-2 px-4 rounded
-        opacity-50
-        cursor-not-allowed"{% endif %}
-        type="button"
-        onclick="navigateToPage({{total_pages}}, '{{ entry | safe }}', {{ total_pages }})"
-        {% if current_page< total_pages
-            %}class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 border border-blue-700 rounded" {%
-            endif %}>
-            Last
-    </button>
-</div>
         <div class="text-center text-xl font-bold">
                 <span>
                     {% set string1 = (current_page-1) * entry +1 %}
@@ -267,59 +216,7 @@
             </ul>
             {% endfor %}
         </div>
-<div class="pagination flex flex-row align-middle items-center gap-2 m-4">
-    <!-- Previous button -->
-    <button {% if current_page<=1 %}disabled
-        class="bg-blue-500 text-white font-bold py-2 px-4 rounded opacity-50 cursor-not-allowed" {% endif %}
-        type="button" onclick="navigateToPage(1, '{{ entry | safe }}', {{ total_pages }})" {% if current_page>1
-        %}class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 border border-blue-700 rounded"{% endif %}
-        >
-        First
-    </button>
-
-    <button {% if current_page<=1 %}disabled
-        class="bg-blue-500 text-white font-bold py-2 px-4 rounded opacity-50 cursor-not-allowed" {% endif %}
-        type="button" onclick="navigateToPage({{ current_page - 1 }}, '{{ entry | safe }}', {{ total_pages }})" {% if
-        current_page>1 %}class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 border border-blue-700
-        rounded"{% endif %}
-        >
-        Previous
-    </button>
-
-    <!-- Page info -->
-    <div id="page-info flex items-center justify-center">Page <input 
-            id="page-number" 
-            type="text" 
-            min="1" 
-            max="{{ total_pages }}" 
-            value="{{ current_page }}"
-            placeholder="Page" 
-            class="w-16 p-2 border rounded text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
-            oninput="this.value = Math.min(Math.max(this.value, 1), {{ total_pages }});" 
-            onblur="jumpToPage(this.value, '{{ entry | safe }}', {{ total_pages }})"
-        /> of {{ total_pages }}</div>
-
-    <!-- Next button -->
-    <button {% if current_page>= total_pages %}disabled class="bg-blue-500 text-white font-bold py-2 px-4 rounded
-        opacity-50 cursor-not-allowed"{% endif %}
-        type="button"
-        onclick="navigateToPage({{ current_page + 1 }}, '{{ entry | safe }}', {{ total_pages }})"
-        {% if current_page< total_pages
-            %}class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 border border-blue-700 rounded" {%
-            endif %}>
-            Next
-    </button>
-    <button {% if current_page>= total_pages %}disabled class="bg-blue-500 text-white font-bold py-2 px-4 rounded
-        opacity-50
-        cursor-not-allowed"{% endif %}
-        type="button"
-        onclick="navigateToPage({{total_pages}}, '{{ entry | safe }}', {{ total_pages }})"
-        {% if current_page< total_pages
-            %}class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 border border-blue-700 rounded" {%
-            endif %}>
-            Last
-    </button>
-</div>
+        {% include 'pagination.html' %}
     </div>
 </div>
 
