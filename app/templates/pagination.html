@@ -27,7 +27,7 @@
 
     <!-- Page info -->
     <div id="page-info" class="flex items-center justify-center">
-        Page 
+        Page &nbsp;
         <input 
             id="page-number" 
             type="text" 
@@ -38,7 +38,7 @@
             class="w-16 p-2 border rounded text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
             oninput="this.value = Math.min(Math.max(this.value, 1), {{ total_pages }});" 
             onblur="jumpToPage(this.value, '{{ entry | safe }}', {{ total_pages }})"
-        /> 
+        /> &nbsp;
         of {{ total_pages }}
     </div>
 

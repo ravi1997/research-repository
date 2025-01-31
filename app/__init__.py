@@ -19,7 +19,7 @@ from .route.public import public_bp
 from .route.user import user_bp
 from app.extra import job_listener
 from apscheduler.events import EVENT_JOB_EXECUTED
-from app.db_initializer import seed_db_command, empty_db_command,test_command
+from app.db_initializer import create_index_command, seed_db_command, empty_db_command,test_command
 from app.models import *
 
 
@@ -46,6 +46,7 @@ def create_app():
 	app.cli.add_command(seed_db_command)
 	app.cli.add_command(test_command)
 	app.cli.add_command(empty_db_command)
+	app.cli.add_command(create_index_command)
 
 	# Define the log directory
 	log_dir = os.path.join('logs')
@@ -135,6 +136,21 @@ def create_app():
 		
 
 
+	@app.template_filter('format_date')
+	def format_date(value):
+		if value:
+			try:
+				dt = datetime.strptime(value, '%Y-%m-%dT%H:%M:%S')
+				return dt.strftime('%d-%m-%Y')
+			except ValueError:
+				return value
+		return ''
+
+	app.jinja_env.filters['format_date'] = format_date
+
+
+
+
 	@app.before_request
 	def log_request():
 		if app.config['LOG_REQUEST']:
@@ -175,9 +191,8 @@ def create_app():
 		if app.config['LOG_RESPONSE']:
 			log = "\n=== New Response ===\n"
 			log += f"Response Status: {response.status}\n"
-			log += f"Request Path: {request.path}\n"
+			log += f"Request URL: {request.url}\n"
 			log += f"Response Headers: {dict(response.headers)}\n"
-
 			
 			if response.direct_passthrough:
 				log = f"Response is in passthrough mode. Status: {response.status_code}\n"

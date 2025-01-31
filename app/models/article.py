@@ -1,3 +1,4 @@
+from sqlalchemy.dialects.postgresql import TSVECTOR
 from sqlalchemy import DateTime, func, Enum as SQLAlchemyEnum
 from app.extension import db
 from sqlalchemy.orm import relationship
@@ -14,7 +15,9 @@ class Author(db.Model):
     author_abbreviated = db.Column(db.Text, nullable=True)
     affiliations = db.Column(db.JSON, nullable=True)
     employee_id = db.Column(db.Text, nullable=True)
-
+    # Full-Text Search (FTS) column
+    fts_vector = db.Column(TSVECTOR)
+    
     # Establish a many-to-many relationship with Article through the ArticleAuthor association
     articles = db.relationship('ArticleAuthor', back_populates='author')
 
@@ -32,6 +35,7 @@ class Article(db.Model):
         secondary="article_publication_types",
         back_populates="articles"
     )
+    fts_vector = db.Column(TSVECTOR)
     
     # Many-to-Many relationship with Keyword
     keywords = db.relationship(
@@ -131,6 +135,7 @@ class Keyword(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     keyword = db.Column(db.Text, nullable=False)
     uuid = db.Column(db.Text, nullable=False,server_default=str(uuid.uuid4()))
+    fts_vector = db.Column(TSVECTOR)
     
     # Many-to-Many relationship with Article
     articles = db.relationship(

@@ -30,40 +30,88 @@
 
 {% block content %} 
 
-{% if logged_in %}
-<div
-  class="fixed bottom-12 right-6 z-40 flex h-10 w-10 rounded-[50%] bg-[#007bff] text-center pt-1 pl-1"
->
-      <a
-        href="article/edit/{{ article.uuid }}"
-        title="Edit Article"
-      >
-      <?xml version="1.0" encoding="utf-8"?><!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools -->
-    <svg 
-      width="30px" 
-      height="30px" 
-      viewBox="0 0 24 24" 
-      fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path 
-          fill-rule="evenodd" 
-          clip-rule="evenodd" 
-          d="m3.99 16.854-1.314 3.504a.75.75 0 0 0 .966.965l3.503-1.314a3 3 0 0 0 1.068-.687L18.36 9.175s-.354-1.061-1.414-2.122c-1.06-1.06-2.122-1.414-2.122-1.414L4.677 15.786a3 3 0 0 0-.687 1.068zm12.249-12.63 1.383-1.383c.248-.248.579-.406.925-.348.487.08 1.232.322 1.934 1.025.703.703.945 1.447 1.025 1.934.058.346-.1.677-.348.925L19.774 7.76s-.353-1.06-1.414-2.12c-1.06-1.062-2.121-1.415-2.121-1.415z"
-          fill="#000000"
-        />
-    </svg>
-    <!-- <img
-      src="{{url_for('static',filename='assets/logo/edit-svgrepo-com.svg')}}"
-      alt="Icon"
-      class="link-icon"
-      style="width: 70%; height: auto; max-height: 100%"
-    /> -->
-  </a>
+
+<!-- Modal -->
+<div id="resultModal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black bg-opacity-50">
+  <div class="w-full max-w-lg space-y-4 rounded-lg bg-white p-6 shadow-lg">
+    <div class="flex items-center justify-between">
+      <h3 id="modalTitle" class="text-xl font-semibold text-gray-800"></h3>
+      <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="h-6 w-6">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+    <p id="modalSummary" class="text-sm text-gray-600"></p>
+    <div id="modalContent" class="space-y-2"></div>
+    <button onclick="closeModal()" class="w-full rounded-lg bg-teal-800 py-2 text-white hover:bg-teal-900">
+      Close
+    </button>
+  </div>
 </div>
-{% endif %}
 
 
 <main id="article" class="container my-auto space-y-5">
   <h1 class="font-bold text-center text-3xl">{{ article.title }}</h1>
+
+  <div class="flex flex-row items-center space-x-2">
+
+{% if logged_in %}
+
+{% if 'FACULTY' in roles or 'SCIENTIST' in roles or 'LIBRARYMANAGER' in roles %}
+    <a 
+    href="/article/edit/{{ article.uuid }}" 
+    title="Edit Article" 
+    class=" flex items-center space-x-2 
+    cursor-pointer rounded  bg-white dark:bg-teal-900  px-2 py-3.5 text-center text-md
+     hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+  >
+    <span>Edit Article</span>
+    <svg 
+      width="24px" 
+      height="24px" 
+      viewBox="0 0 24 24" 
+      fill="none" 
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path
+        fill-rule="evenodd"
+        clip-rule="evenodd"
+        d="M3.99 16.854l-1.314 3.504a.75.75 0 0 0 .966.965l3.503-1.314a3 3 0 0 0 1.068-.687L18.36 9.175s-.354-1.061-1.414-2.122c-1.06-1.06-2.122-1.414-2.122-1.414L4.677 15.786a3 3 0 0 0-.687 1.068zM16.239 4.224l1.383-1.383c.248-.248.579-.406.925-.348.487.08 1.232.322 1.934 1.025.703.703.945 1.447 1.025 1.934.058.346-.1.677-.348.925L19.774 7.76s-.353-1.06-1.414-2.12c-1.06-1.062-2.121-1.415-2.121-1.415z"
+        fill="#000000"
+      />
+    </svg>
+  </a>
+
+{% endif %}
+
+{% if 'LIBRARYMANAGER' in roles %}
+
+    <button 
+    onclick="deleteSingleArticle('{{article.uuid}}')"
+    class=" flex items-center space-x-2 
+    cursor-pointer rounded  bg-white dark:bg-teal-900  px-2 py-3.5 text-center text-md
+     hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+  >
+    <span>Delete Article</span>
+                                    <svg fill="currentColor" stroke="currentColor" width="24px" height="24px"
+                                        viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path
+                                            d="M5.755,20.283,4,8H20L18.245,20.283A2,2,0,0,1,16.265,22H7.735A2,2,0,0,1,5.755,20.283ZM21,4H16V3a1,1,0,0,0-1-1H9A1,1,0,0,0,8,3V4H3A1,1,0,0,0,3,6H21a1,1,0,0,0,0-2Z" />
+                                    </svg>
+  </a>
+
+{% endif %}
+
+
+{% endif %}
+
+
+</div>
+
+
 
   <section class="section space-y-2">
     <h2 class="font-bold text-center text-2xl">Abstract</h2>
@@ -79,7 +127,7 @@
       >
         {% if author.employee_id %}
         <a
-          href="author?q={{author.employee_id}}"
+          href="/author?q={{author.employee_id}}"
           target="_blank"
           ><h3 class="mb-1 text-xl font-bold">{{ author.fullName }}</h3></a
         >
@@ -110,7 +158,7 @@
   <section class="section space-y-2">
     <h2 class="font-bold pb-2 text-center text-2xl">Publication Details</h2>
    <a
-        href="journal?q={{article.journal}}"
+        href="/journal?q={{article.journal}}"
         target="_blank"
         >
         <span class="italic"> {{ article.journal or '' }} </span>
@@ -147,7 +195,7 @@
         class="cursor-pointer rounded  bg-white dark:bg-teal-900  px-2 py-3.5 text-center text-sm"
       >
         <a
-          href="keyword?q={{keyword.keyword}}"
+          href="/keyword?q={{keyword.keyword}}"
           target="_blank"
           >{{ keyword.keyword }}</a
         >
@@ -175,4 +223,55 @@
   </section>
   {% endif %}
 </main>
+
+<script>
+
+function showModal(title, summary) {
+    document.getElementById("modalTitle").textContent = title;
+    document.getElementById("modalSummary").textContent = summary;
+
+    const modalContent = document.getElementById("modalContent");
+    modalContent.innerHTML = ""; // Clear previous content
+
+    const summaryHtml = `
+    <div class="p-4 bg-gray-100 rounded-lg">
+      <p><strong>Article deleted. Please close this tab.</strong></p>
+    </div>`;
+    modalContent.innerHTML = summaryHtml;
+
+    document.getElementById("resultModal").classList.remove("hidden");
+}
+
+
+// Helper: Close Modal
+function closeModal() {
+
+  window.close();
+
+}
+
+
+
+async function deleteSingleArticle(uuid) {
+    let confirmAction = confirm("Are you sure you want to delete this article?");
+      
+      // If user clicks "OK", open the new window
+    if (confirmAction) {
+      const response = await fetch('../api/article/'+uuid, {
+          method: "DELETE",
+      });
+
+      if (response.ok) {
+        showModal("Article Deleted","");
+      } else {
+          const error = await response.json();
+          document.getElementById("message").innerText = "Error: " + error.error;
+      }
+    }
+}
+
+
+</script>
+
+
 {% endblock %}

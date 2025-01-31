@@ -63,7 +63,15 @@ def login(data,session):
                 fname = name
                 lastname = fname.pop()
                 firstname = "".join(fname)                
-                
+            
+            roles = []
+            if "Professor".lower() in response["designation"].lower():
+                roles = [UserRoles(role=UserRole.FACULTY)]
+            elif "resident".lower() in response["designation"].lower():
+                roles = [UserRoles(role=UserRole.RESIDENT)]
+            elif "scientist".lower() in response["designation"].lower():
+                roles = [UserRoles(role=UserRole.SCIENTIST)]
+
             user = User(
                 firstname = firstname,
                 middlename = "",
@@ -73,9 +81,7 @@ def login(data,session):
                 department= response["department"],
                 designation=  response["designation"],
                 date_expiry= parser.parse(response["retirement_date"]),
-                roles=[
-                    UserRoles(role=UserRole.FACULTY)
-                ] if "Professor".lower() in response["designation"].lower() else [],
+                roles=roles,
                 employee_id = employee_id
             )
             
@@ -231,4 +237,3 @@ def logout(session):
     session.user_id = None
     db.session.commit()
     return jsonify(logged_in_as=current_user), 200
-

@@ -7,14 +7,22 @@
 <br>
 <h2 class="text-center text-2xl">{{result_for}}</h2>
 <br>
-<p class="text-center text-2xl">result found = <strong id="count">{{ results | length }}</strong></p>
+{% if articles | length > 100 %} 
+Results found = <strong id="count">{{ articles | length }}</strong>. Showing first 100 results</p>
+{% else %}
+Results found = <strong id="count">{{ articles | length }}</strong></p>
+
+{% endif %}
 <br>
 
 <div id="mainbody">
 
     <section class="container mx-auto flex flex-col justify-center">
 
-        {% for article in results %}
+
+        {% include 'article_list.html' %}
+
+        <!-- {% for article in results %}
         <ul>
             {% set string1 = article.uuid %}
             {% set string2 = "-uuid" %}
@@ -35,7 +43,7 @@
                                 <br />
                                 {% for author in article.authors %}
                                     {% if author.employee_id %}
-                                    <a href="author?q={{author.employee_id}}" target="_blank"><span class="font-bold px-2 hover:text-teal-100 hover:bg-teal-900 ease-in duration-100">{{ author.fullName }}</span></a>
+                                    <a href="/author?q={{author.employee_id}}" target="_blank"><span class="font-bold px-2 hover:text-teal-100 hover:bg-teal-900 ease-in duration-100">{{ author.fullName }}</span></a>
                                     {% else %}
                                     <span class="px-2 hover:text-teal-100 hover:bg-teal-900 ease-in duration-100">{{ author.fullName }}</span>
                                     {%endif%}
@@ -58,7 +66,7 @@
                                 {% endif %}
                             </div>
                             <div class="p-2 flex flex-col align-middle gap-2">
-                                <a href="article/{{ article.uuid }}" target="_blank">
+                                <a href="/article/{{ article.uuid }}" target="_blank">
                                     <svg width="24px" height="24px" viewBox="0 0 1024 1024" class="icon" version="1.1"
                                         xmlns="http://www.w3.org/2000/svg">
                                         <path
@@ -76,7 +84,7 @@
                                     </svg>
                                 </a>
 
-                                <a href="article/edit/{{ article.uuid }}" target="_blank">
+                                <a href="/article/edit/{{ article.uuid }}" target="_blank">
                                     <svg width="24px" height="24px" viewBox="0 0 24 24" fill="currentColor"
                                         stroke="currentColor" xmlns="http://www.w3.org/2000/svg">
                                         <path fill-rule="evenodd" clip-rule="evenodd"
@@ -98,7 +106,7 @@
                 </div>
             </li>
         </ul>
-        {% endfor %}
+        {% endfor %} -->
 
     </section>
 

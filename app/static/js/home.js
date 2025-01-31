@@ -20,6 +20,24 @@ function showModal(title, summary, data) {
     document.getElementById("resultModal").classList.remove("hidden");
 }
 
+
+function showProgressModal(title, summary) {
+    document.getElementById("modalTitle").textContent = title;
+    document.getElementById("modalSummary").textContent = summary;
+
+    const modalContent = document.getElementById("modalContent");
+    modalContent.innerHTML = ""; // Clear previous content
+
+    const summaryHtml = `
+    <div class="p-4 bg-gray-100 rounded-lg">
+      <p><strong>Processing request, please wait.</strong></p>
+    </div>`;
+    modalContent.innerHTML = summaryHtml;
+
+    document.getElementById("resultModal").classList.remove("hidden");
+}
+
+
 // Helper: Close Modal
 function closeModal() {
     document.getElementById("resultModal").classList.add("hidden");
@@ -47,20 +65,24 @@ async function uploadFile(fileType) {
     button.disabled = true;
 
     try {
+        showProgressModal("Uploading and Processing file", `File uploading`)
         const response = await fetch(`../api/article/upload_${fileType}`, {
             method: "POST",
             body: formData,
         });
-
+        
         if (response.ok) {
             const result = await response.json();
+            document.getElementById("resultModal").classList.add("hidden");
             showModal("Upload Successful", `File uploaded: ${result.filename}`, result);
         } else {
             const error = await response.json();
+            document.getElementById("resultModal").classList.add("hidden");
             showAlert(`Error: ${error.error}`);
         }
     } catch (error) {
         console.error("Error uploading file:", error);
+        document.getElementById("resultModal").classList.add("hidden");
         showAlert("An error occurred while uploading the file.");
     } finally {
         button.disabled = false;
@@ -74,6 +96,7 @@ async function submitPubMed(event) {
     const pubmedID = document.getElementById("pubmedID").value;
     const button = document.getElementById("fetchPubMedButton");
     button.disabled = true;
+    showProgressModal("Uploading and Processing request", ``)
 
     try {
         const response = await fetch(`../api/article/pubmedFetch`, {
@@ -84,13 +107,16 @@ async function submitPubMed(event) {
 
         if (response.ok) {
             const result = await response.json();
+            document.getElementById("resultModal").classList.add("hidden");
             showAlert("PubMed data added successfully", true);
         } else {
             const error = await response.json();
+            document.getElementById("resultModal").classList.add("hidden");
             showAlert(`Error: ${error.message}`);
         }
     } catch (error) {
         console.error("Error fetching PubMed data:", error);
+        document.getElementById("resultModal").classList.add("hidden");
         showAlert("An error occurred while fetching PubMed data.");
     } finally {
         button.disabled = false;
