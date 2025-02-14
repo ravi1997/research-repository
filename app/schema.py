@@ -47,14 +47,14 @@ class AuthorSchemaWithoutArticle(ma.SQLAlchemyAutoSchema):
         model = Author
         load_instance = True
         include_fk = True  # Include foreign keys
-        exclude = ("fts_vector",)  # Exclude TSVECTOR field
-
+        exclude = ("fts_vector",)
+        
 class AuthorSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = Author
         load_instance = True
         include_fk = True  # Include foreign keys
-        exclude = ("fts_vector",)  # Exclude TSVECTOR field
+        exclude = ("fts_vector",)
     articles = fields.Nested("ArticleSchema",many=True,exclude=('authors',))
 
 class ArticleAuthorSchema(ma.SQLAlchemyAutoSchema):
@@ -62,22 +62,22 @@ class ArticleAuthorSchema(ma.SQLAlchemyAutoSchema):
         model = ArticleAuthor
         load_instance = True
         include_fk = True  # Include foreign keys
-        exclude = ("fts_vector",)  # Exclude TSVECTOR field
+
     author = fields.Nested(AuthorSchema)  # Include full Author object
 
 class KeywordSchemaWithoutArticle(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = Keyword
         load_instance = True
+        exclude = ("fts_vector",)
         include_fk = True  # Include foreign keys
-        exclude = ("fts_vector",)  # Exclude TSVECTOR field
 
 class KeywordSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = Keyword
         load_instance = True
         include_fk = True  # Include foreign keys
-        exclude = ("fts_vector",)  # Exclude TSVECTOR field
+        exclude = ("fts_vector",)
     articles = fields.Nested("ArticleSchema",many=True,exclude=('keywords',))
 
     def get_authors(self, obj):
@@ -128,7 +128,7 @@ class ArticleSchema(ma.SQLAlchemyAutoSchema):
         model = Article
         load_instance = True
         include_fk = True
-        exclude = ("fts_vector",)  # Exclude TSVECTOR field
+        exclude = ("fts_vector",)
 
     authors = fields.Method("get_authors")  # Use a custom method to serialize authors
 

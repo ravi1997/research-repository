@@ -42,7 +42,6 @@ logs/
 # Python environment files
 *.env
 *.venv
-*.requirements.txt
 *.pdb
 *.coverage
 .coverage.*
@@ -73,3 +72,4 @@ dmypy.json
 node_modules/
 
 
+uploads/

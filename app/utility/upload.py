@@ -3,7 +3,7 @@ import re
 import uuid
 import requests
 import xml.etree.ElementTree as ET
-
+import html
 import rispy
 from nbib import read_file
 
@@ -279,8 +279,20 @@ def parse_pubmed_xml(file_path):
 		article_data["title"] = title.text if title is not None else "No title available"
 
 		# Extract Abstract
-		abstract = article.find(".//Abstract/AbstractText")
-		article_data["abstract"] = abstract.text if abstract is not None else "No abstract available"
+		abstract_texts = [
+			f"**{text.attrib.get('Label', '').upper()}**: {html.unescape(text.text.strip())}"
+			for text in root.findall(".//AbstractText") if text.text
+		]
+
+		# Extract copyright information
+		copyright_info = root.find(".//CopyrightInformation")
+		copyright_text = f"\n\n**Copyright**: {html.unescape(copyright_info.text.strip())}" if copyright_info is not None else ""
+
+		# Join all sections into a formatted abstract with bold labels
+		full_abstract = "\n".join(abstract_texts) + copyright_text
+		article_data["abstract"] = full_abstract if full_abstract is not None else "No abstract available"
+
+
 
 		# Extract Publication Date (handling None)
 		pub_date = article.find(".//PubDate")

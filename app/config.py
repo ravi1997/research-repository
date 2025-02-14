@@ -27,8 +27,7 @@ class DevConfig(BaseConfig):
     SECRET_KEY = os.getenv("SECRET_KEY", "default_secret_key")
     TEMPLATES_AUTO_RELOAD = True
     SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URI', 'sqlite:///' + os.path.join(basedir, 'app.db'))
-    
-    SQLALCHEMY_TRACK_MODIFICATIONS = os.getenv('SQLALCHEMY_TRACK_MODIFICATIONS', False)
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
     
     MAIL_SERVER = os.getenv('MAIL_SERVER')
     MAIL_PORT = os.getenv('MAIL_PORT')
@@ -55,6 +54,9 @@ class DevConfig(BaseConfig):
     SCHEDULER_JOBSTORES = {
         "default": SQLAlchemyJobStore(url=SQLALCHEMY_DATABASE_URI)
     }
+    TEMPLATES_AUTO_RELOAD = False
+    DEBUG_TB_INTERCEPT_REDIRECTS = False
+    SQLALCHEMY_RECORD_QUERIES = True
 
 class ProdConfig(BaseConfig):
     load_dotenv('.env.production')
