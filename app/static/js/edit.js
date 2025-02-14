@@ -54,7 +54,8 @@ function addRow(tableId, fields) {
         if (field === 'remove') {
             cell.innerHTML = `<button type="button" class="btn btn-sm btn-danger" onclick="removeRow(this)">Remove</button>`;
         } else {
-            const name = `${field}[${index}]`;
+            const table = tableId.split('-')[0];
+            const name = `${table}[${index}][${field}]`;
             cell.innerHTML = `<input type="text" name="${name}" value="" required class="input input-bordered w-full">`;
         }
     });
@@ -123,6 +124,10 @@ async function submitForm(event) {
                 data.push(rowData);
             }
         });
+
+        console.log(tableId);
+        console.log(data);
+
 
         formDataJson[tableId] = data;
     });

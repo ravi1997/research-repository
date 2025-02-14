@@ -1,7 +1,6 @@
 from logging.handlers import RotatingFileHandler
 from pprint import pprint
 from sqlalchemy import Text
-
 import json
 import logging
 import os
@@ -13,20 +12,22 @@ from app.mylogger import *
 from .extension import db, migrate,ma,bcrypt,scheduler,cache
 from .route.article import article_bp
 from .route.main import main_bp
+from .route.search import search_bp
+
 from .route.auth import auth_bp
 from .route.superadmin import superadmin_bp
 from .route.public import public_bp
 from .route.user import user_bp
 from app.extra import job_listener
 from apscheduler.events import EVENT_JOB_EXECUTED
-from app.db_initializer import create_index_command, seed_db_command, empty_db_command,test_command
+from app.db_initializer import seed_db_command, empty_db_command,test_command
 from app.models import *
 
 
 def create_app():
 	app = Flask(__name__,static_folder='static')
 	app.config.from_object(DevConfig)
-
+	
 	# Initialize extensions
 	db.init_app(app)
 	migrate.init_app(app, db)
@@ -46,7 +47,6 @@ def create_app():
 	app.cli.add_command(seed_db_command)
 	app.cli.add_command(test_command)
 	app.cli.add_command(empty_db_command)
-	app.cli.add_command(create_index_command)
 
 	# Define the log directory
 	log_dir = os.path.join('logs')
@@ -234,8 +234,10 @@ def create_app():
 	app.register_blueprint(user_bp, url_prefix="/api/user")
 	app.register_blueprint(article_bp, url_prefix="/api/article")
 	app.register_blueprint(superadmin_bp, url_prefix="/api/superadmin")
+	app.register_blueprint(search_bp, url_prefix="/api/search")
 
 
 	app.logger.info(f"API-ID : {app.config.get('API_ID')}")
+	app.logger.info(f"API db uri : {app.config.get('SQLALCHEMY_DATABASE_URI')}")
 
 	return app

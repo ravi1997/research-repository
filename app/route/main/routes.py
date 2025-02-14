@@ -19,7 +19,7 @@ from app.utility import get_base_url
 from app.session import settingSession
 from app.route.main import main_bp
 from flask import current_app as app
-from app.schema import UserSchema
+from app.schema import ArticleSchema, UserSchema
  
 
 user_schema = UserSchema() 
@@ -94,9 +94,9 @@ def dashboard():
 	.limit(5).all()
 
 	article_trends = db.session.query(
-		func.strftime('%Y-%m', Article.created_at).label('month'),
+		func.to_char(Article.created_at, 'YYYY-MM').label('month'),
 		func.count(Article.id).label('article_count')
-	).group_by(func.strftime('%Y-%m', Article.created_at))\
+	).group_by(func.to_char(Article.created_at, 'YYYY-MM'))\
 	.order_by('month')\
 	.all()
 
@@ -141,7 +141,7 @@ def loginPage():
 				user_info = user_schema.dump(session.user)
 				return render_template('home.html',roles = getRole(session.user),logged_in=True,
 						user=user_info   
-                           )
+						   )
 	response = make_response(render_template('login.html', roles = getRole(None),logged_in=False))
 	return settingSession(request,response)
 
@@ -153,6 +153,10 @@ def homePage():
 
 		if session is not None:
 			if session.isValid() and session.user_id is not None:
+				roles = getRole(session.user)
+				if roles == []:
+					return render_template('index.html',roles = getRole(session.user),logged_in=True,user = user_schema.dump(session.user))
+					
 				return render_template('home.html',roles = getRole(session.user),logged_in=True,user = user_schema.dump(session.user))
 	
 	response = make_response(render_template('login.html', roles = getRole(None),logged_in=False))
@@ -297,216 +301,165 @@ def paginate_articles(filtered_articles, offset, limit):
 	current_app.logger.info(f"Paginating articles, offset: {offset}, limit: {limit}")
 	return filtered_articles[offset:offset + limit]
 
-@retry(stop=stop_after_attempt(3), wait=wait_fixed(2))
-def fetch_results(search_by, query, headers, cookies, url):
-	"""
-	Fetches results for a specific search criterion (e.g., author, keyword).
-
-	Args:
-		search_by (str): The field to search by (e.g., keyword, title, author).
-		query (str): The search query.
-		headers (dict): Headers for the request.
-		cookies (dict): Cookies for the request.
-		url (str): The API endpoint to call.
-
-	Returns:
-		dict: The JSON response from the API containing articles.
-	"""
-	pprint(f"Fetching results for search_by: {search_by}, query: {query}")
-
-	params = {
-		"q": query,
-		"search_by": search_by,
-		"offset": 0,
-		"limit": 100
-	}
-	response = requests.get(url, headers=headers, params=params, cookies=cookies)
-	
-	if response.status_code == 200:
-		pprint(f"Successfully fetched results for {search_by}")
-		return response.json()
-	else:
-		pprint(f"Failed to fetch results for {search_by}, status code: {response.status_code}")
-		return None
-
-# @main_bp.route('/search')
-# @verify_session
-# def searchPage(session):
-# 	current_app.logger.info("Search page requested")
-
-# 	# Retrieve query parameters
-# 	search_params = request.args.to_dict(flat=False)
-# 	headers = {
-# 		"API-ID": app.config.get('API_ID')  # Assuming the API_ID is set in your Flask config
-# 	}
-	
-# 	# Prepare server URL and endpoint
-# 	server_url = get_base_url()
-# 	url = f"{server_url}/api/article/search"
-# 	cookies = request.cookies.to_dict()
-
-# 	# Retrieve and split the search query (same way as before)
-# 	query = search_params.get('query', [''])[0]
-# 	if len(query) > 50:
-# 		return render_template('error.html', message = "Search query parameter exceeded")
-	
-# 	myqueries = re.sub(r"[!\-:&.]", " ", query).strip().split()
-
-# 	# Cache search results (using Flask's cache mechanism)
-# 	cached_results = cache.get(f"search_{query}")
-
-# 	if cached_results:
-# 		app.logger.info(f"Cache hit for query: {query}")
-# 		return render_template('search.html', **cached_results)
-
-# 	current_app.logger.info(f"Cache miss for query: {query}. Fetching results...")
-
-# 	# Fetch search results in parallel for different search_by categories
-# 	search_bys = ["keyword", "title", "author", "journal", "pubmed_id", "doi"] # ["keyword", "title", "author", "journal", "pubmed_id", "doi"]
-# 	with ThreadPoolExecutor() as executor:
-# 		futures = [executor.submit(fetch_results, search_by, q, headers, cookies, url) for q in myqueries for search_by in search_bys]
-# 		results = [future.result() for future in futures]
-
-# 	current_app.logger.info("Processing search results...")
-# 	# Process results (remove duplicates, etc.)
-# 	articles_json = process_search_results(results)
-
-# 	# Apply filters and pagination
-# 	filtered_articles,filter_json = filter_articles(articles_json, search_params)
-# 	offset = request.args.get('offset', 0, type=int)
-# 	limit = request.args.get('limit', 10, type=int)
-# 	paginated_articles = paginate_articles(filtered_articles, offset, limit)
-# 	all_authors = {author["fullName"] for article in articles_json for author in article["authors"]}
-# 	all_keywords = {keyword["keyword"] for article in articles_json for keyword in article["keywords"]}
-# 	all_journals = {article["journal"] for article in articles_json}
-# 	total_pages = math.ceil(len(filtered_articles) / limit)
-# 	current_app.logger.info(f"filter_json:{filter_json}")
-# 	final_results = {
-# 		'query': query,
-# 		'articles': paginated_articles,
-# 		'myfilters': filter_json,
-# 		'unique_authors': list(all_authors),  # List of unique authors
-# 		'unique_keywords': list(all_keywords),  # List of unique keywords
-# 		'unique_journals': list(all_journals),  # List of unique journals
-# 		'current_page': (offset // limit) + 1,
-# 		'total_pages': total_pages,
-# 		'offset': offset,
-# 		'entry': limit,
-# 		'roles': getRole(session.user),
-# 		'logged_in': session.user_id is not None,
-# 		'user': user_schema.dump(session.user) if session.user_id is not None else {},
-# 	}
-
-# 	current_app.logger.info(f"Rendering search results for query: {query}, total articles: {len(final_results['articles'])}")
-
-# 	# Store the results in the cache for subsequent requests
-# 	cache.set(f"search_{query}_filter_{filter_json}", final_results)
-
-# 	return render_template('search.html', **final_results)
-
-
 
 @main_bp.route('/search')
-@verify_session
-def searchPage(session):
+def searchPageCopy():
 	# If there are any query parameters, call the external search API
 	search_params = request.args.to_dict(flat=False)
 	app.logger.info(f"Searching : {search_params}. Fetching results...")
 	# Prepare the server URL and endpoint
-	server_url = get_base_url()
-	url = f"{server_url}/api/article/searchspecific"
+	offset = request.args.get('offset', 0, type=int)
+	limit = request.args.get('limit', 10, type=int)
+	current_page=(offset//limit) + 1
+	entry=limit
+	filter_json = {}
+	# Apply filters for authors
 
-	# Prepare headers (you can adjust this according to your API needs)
-	headers = {
-		"API-ID": app.config.get('API_ID')  # Assuming the API_ID is set in your Flask config
-	}
+	if 'authors' in search_params:
+		filter_json["authors"] = search_params['authors']
 
-	# Prepare cookies from the current request
-	cookies = request.cookies.to_dict()  # Converts ImmutableMultiDict to a regular dict
+	# Apply filters for keywords
+	if 'keywords' in search_params:
+		filter_json["keywords"] = search_params['keywords']
 
-	# Send the GET request to the external search API
-	response = requests.get(url, headers=headers, cookies=cookies, params=search_params)
+	# Apply filters for publication date
+	if 'start_date' in search_params:
+		if search_params['start_date'] and search_params['start_date']!="":
+			filter_json["start_date"] = search_params['start_date']
 
-	# Check if the response is successful
-	if response.status_code == 200:
-		# Parse the JSON response
-		search_results = response.json()
-		# Render the search page with the results from the external API
-		current_page=(search_results["offset"]//search_results["limit"]) + 1
-		entry=search_results["limit"]
-		total_pages = math.ceil(search_results["total_articles"]/search_results["limit"])
-  
-		return render_template(
-			'search.html',
-			query=search_params['query'][0],
-			myfilters = search_results["filters"],
-			articles=search_results['articles'],
-			unique_authors=search_results['unique_authors'],
-			unique_keywords=search_results['unique_keywords'],
-			unique_journals=search_results['unique_journals'],
-   			current_page=current_page,
-	  		offset = search_results["offset"],
-	  		entry=entry,
-			total_pages = total_pages,
-   			roles = getRole(session.user),
-			logged_in=session.user_id is not None,
-			user = user_schema.dump(session.user) if session.user_id is not None else {}
-		)
-	else:
-		# If the external API request fails, return an error page or message
-		return jsonify({"error": "Failed to fetch search results from external API"}), 500
+	if 'end_date' in search_params:
+		if search_params['end_date'] and search_params['end_date']!="":
+			filter_json["end_date"] = search_params['end_date']
+
+	# Apply filters for journals
+	if 'journals' in search_params:
+		filter_json["journals"] = search_params['journals']	# Apply filters for authors
+
+	
+	session_id = request.cookies.get('Session-ID')
+	if session_id is not None:   
+			session = Client.query.filter_by(client_session_id=session_id).first()
+
+			if session is not None:
+				if session.isValid() and session.user_id is not None:
+					return render_template(
+						'search.html',
+						query=search_params['query'][0],
+						myfilters = filter_json,
+						current_page=current_page,
+						offset = offset,
+						entry=entry,
+						roles = getRole(session.user),
+						logged_in=session.user_id is not None,
+						user = user_schema.dump(session.user) if session.user_id is not None else {}
+					)
+	
+	response = make_response(render_template('search.html',
+						query=search_params['query'][0],
+						myfilters = filter_json,
+						current_page=current_page,
+						offset = offset,
+						entry=entry,roles = getRole(None),logged_in=False))
+	return settingSession(request,response)
+
+# @main_bp.route('/search')
+# @verify_session
+# def searchPage(session):
+# 	# If there are any query parameters, call the external search API
+# 	search_params = request.args.to_dict(flat=False)
+# 	app.logger.info(f"Searching : {search_params}. Fetching results...")
+# 	# Prepare the server URL and endpoint
+# 	server_url = get_base_url()
+# 	url = f"{server_url}/api/search/search"
+
+# 	# Prepare headers (you can adjust this according to your API needs)
+# 	headers = {
+# 		"API-ID": app.config.get('API_ID')  # Assuming the API_ID is set in your Flask config
+# 	}
+
+# 	# Prepare cookies from the current request
+# 	cookies = request.cookies.to_dict()  # Converts ImmutableMultiDict to a regular dict
+
+# 	# Send the GET request to the external search API
+# 	response = requests.get(url, headers=headers, cookies=cookies, params=search_params)
+
+# 	# Check if the response is successful
+# 	if response.status_code == 200:
+# 		# Parse the JSON response
+# 		search_results = response.json()
+# 		# Render the search page with the results from the external API
+# 		current_page=(search_results["offset"]//search_results["limit"]) + 1
+# 		entry=search_results["limit"]
+# 		total_pages = math.ceil(search_results["total_articles"]/search_results["limit"])
+# 		app.logger.info(f"total_pages : {total_pages}")
+# 		articles= []
+# 		for uuid in search_results['articles']:
+# 			article = Article.query.filter_by(uuid=uuid).first()
+# 			if article:
+# 				articles.append(ArticleSchema().dump(article))
+# 		return render_template(
+# 			'search.html',
+# 			query=search_params['query'][0],
+# 			myfilters = search_results["filters"],
+# 			articles=articles,
+#    			current_page=current_page,
+# 	  		offset = search_results["offset"],
+# 	  		entry=entry,
+# 			total_pages = total_pages,
+#    			roles = getRole(session.user),
+# 			logged_in=session.user_id is not None,
+# 			user = user_schema.dump(session.user) if session.user_id is not None else {}
+# 		)
+# 	else:
+# 		app.logger.info(f"status code : {response.status_code}")
+# 		return jsonify({"error": "Failed to fetch search results from external API"}), 500
 
 
 @main_bp.route('/ownershipresult')
 @verify_ownership_roles
 def ownershipresultPage(session):
-	# If there are any query parameters, call the external search API
 	search_params = request.args.to_dict(flat=False)
-
+	app.logger.info(f"Searching : {search_params}. Fetching results...")
 	# Prepare the server URL and endpoint
-	server_url = get_base_url()
-	url = f"{server_url}/api/article/searchspecific"
+	offset = request.args.get('offset', 0, type=int)
+	limit = request.args.get('limit', 10, type=int)
+	current_page=(offset//limit) + 1
+	entry=limit
+	filter_json = {}
+	# Apply filters for authors
 
-	# Prepare headers (you can adjust this according to your API needs)
-	headers = {
-		"API-ID": app.config.get('API_ID')  # Assuming the API_ID is set in your Flask config
-	}
+	if 'authors' in search_params:
+		filter_json["authors"] = search_params['authors']
 
-	# Prepare cookies from the current request
-	cookies = request.cookies.to_dict()  # Converts ImmutableMultiDict to a regular dict
+	# Apply filters for keywords
+	if 'keywords' in search_params:
+		filter_json["keywords"] = search_params['keywords']
 
-	# Send the GET request to the external search API
-	response = requests.get(url, headers=headers, cookies=cookies, params=search_params)
+	# Apply filters for publication date
+	if 'start_date' in search_params:
+		if search_params['start_date'] and search_params['start_date']!="":
+			filter_json["start_date"] = search_params['start_date']
 
-	# Check if the response is successful
-	if response.status_code == 200:
-		# Parse the JSON response
-		search_results = response.json()
-		# Render the search page with the results from the external API
-		current_page=(search_results["offset"]//search_results["limit"]) + 1
-		entry=search_results["limit"]
-		total_pages = math.ceil(search_results["total_articles"]/search_results["limit"])
-  
-		return render_template(
-			'ownershipresult.html',
-			query=search_params['query'][0],
-			myfilters = search_results["filters"],
-			articles=search_results['articles'],
-			unique_authors=search_results['unique_authors'],
-			unique_keywords=search_results['unique_keywords'],
-			unique_journals=search_results['unique_journals'],
-   			current_page=current_page,
-	  		offset = search_results["offset"],
-	  		entry=entry,
-			total_pages = total_pages,
-   			roles = getRole(session.user),
-			logged_in=session.user_id is not None,
-			user = user_schema.dump(session.user) if session.user_id is not None else {}
-		)
-	else:
-		# If the external API request fails, return an error page or message
-		return jsonify({"error": "Failed to fetch search results from external API"}), 500
+	if 'end_date' in search_params:
+		if search_params['end_date'] and search_params['end_date']!="":
+			filter_json["end_date"] = search_params['end_date']
 
+	# Apply filters for journals
+	if 'journals' in search_params:
+		filter_json["journals"] = search_params['journals']	# Apply filters for authors
+
+ 
+	return render_template(
+		'ownershipresult.html',
+		query=search_params['query'][0],
+		myfilters = filter_json,
+		current_page=current_page,
+		offset = offset,
+		entry=entry,
+		roles = getRole(session.user),
+		logged_in=session.user_id is not None,
+		user = user_schema.dump(session.user) if session.user_id is not None else {}
+	)
 
 @main_bp.route('/ownership')
 @verify_ownership_roles
@@ -596,7 +549,8 @@ def duplicateByPage(session,field):
 		results = response.json()
 		return render_template('duplicate.html',results=results[field],duplicateBy=duplicateBy[field],roles = getRole(session.user),logged_in=session.user_id is not None,user = user_schema.dump(session.user) if session.user_id is not None else {})
 	else:
-		return jsonify({"message":f"Article id {id} not found"}),404
+		app.logger.info(f"status code : {response.status_code}")
+		return jsonify({"message":f"Article {id} not found"}),404
 
 @main_bp.route('/singleDuplicate/<string:id>')
 @verify_duplicate_roles

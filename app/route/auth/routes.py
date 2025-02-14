@@ -65,12 +65,16 @@ def login(data,session):
                 firstname = "".join(fname)                
             
             roles = []
-            if "Professor".lower() in response["designation"].lower():
+            if "Professor".lower() in response["designation"].lower() or "Head of Department".lower() in response["designation"].lower():
                 roles = [UserRoles(role=UserRole.FACULTY)]
             elif "resident".lower() in response["designation"].lower():
                 roles = [UserRoles(role=UserRole.RESIDENT)]
             elif "scientist".lower() in response["designation"].lower():
                 roles = [UserRoles(role=UserRole.SCIENTIST)]
+            elif "librarian".lower() in response["designation"].lower() or "library attendent".lower() in response["designation"].lower():
+                roles = [UserRoles(role=UserRole.LIBRARYMANAGER)]
+            
+
 
             user = User(
                 firstname = firstname,
@@ -103,10 +107,12 @@ def login(data,session):
         if session.otp != []:
             valid = False
             for otp in session.otp :
+                app.logger.info(f"Looping otps in session.otp {session.otp}")
                 if otp.isValid():
+                    app.logger.info(f"OTP otp.isValid is True {otp.isValid}")
                     valid = True
                     otp = OTP.query.filter_by(id = otp.id).one_or_none()
-                    
+                    app.logger.info(f"Filtering OTPs  otp.id {otp.id} otp = {otp}")
                     if otp is None:
                         if app.config['OTP_GENERATION']:
                             new_otp = generate_otp()
@@ -130,13 +136,16 @@ def login(data,session):
         
         message = f'Your OTP for Login in AIIMS is {new_otp}'
         if not found:
+            app.logger.info(f"NOT FOUND")
             otp = OTP(client_id=session.id,otp=new_otp)
+            app.logger.info(f"runnin OTP Function session id  = {session.id} OTP = {new_otp} - running  db.session.add(otp))")
             db.session.add(otp)
 
 
         if app.config['OTP_FLAG']:
             sms_status = send_sms(phone,message)
             if sms_status == 200:
+                app.logger.info(f"Sent SMS Status = {sms_status} - comitting to session ")
                 db.session.commit()
                 if not found:
                     scheduler.add_job(
@@ -150,12 +159,14 @@ def login(data,session):
                 return jsonify({"message":"OTP has been generated"}),200
             else:
                 db.session.rollback()
+                app.logger.error(f"ROLLING BACK otp ")
                 return jsonify({"message":"something went wrong. Please try again."}),500
         else:
             db.session.commit()
             return jsonify({"message":"OTP has been generated"}),200
 
     except ValidationError as err:
+        app.logger.error(f"error {err.messages}")
         # Return a nice message if validation fails
         return jsonify({"message":err.messages}),401
 
@@ -192,7 +203,10 @@ def verifyOTP(data,session):
         user = User.query.filter_by(
             employee_id=employee_id
         ).one_or_none()
-            
+        
+        otp = OTP.query.filter_by(id=otp.id).first()
+        otp.status = ValidState.INVALID
+
         if not user:
             app.logger.error(f"Account does not exist : {employee_id}")
             app.logger.error(f"Invalid request")

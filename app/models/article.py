@@ -1,4 +1,4 @@
-from sqlalchemy.dialects.postgresql import TSVECTOR
+from sqlalchemy.dialects.postgresql import TSVECTOR,JSONB
 from sqlalchemy import DateTime, func, Enum as SQLAlchemyEnum
 from app.extension import db
 from sqlalchemy.orm import relationship
@@ -17,8 +17,6 @@ class Author(db.Model):
     employee_id = db.Column(db.Text, nullable=True)
     # Full-Text Search (FTS) column
     fts_vector = db.Column(TSVECTOR)
-    
-    # Establish a many-to-many relationship with Article through the ArticleAuthor association
     articles = db.relationship('ArticleAuthor', back_populates='author')
 
     def __repr__(self):
@@ -36,7 +34,6 @@ class Article(db.Model):
         back_populates="articles"
     )
     fts_vector = db.Column(TSVECTOR)
-    
     # Many-to-Many relationship with Keyword
     keywords = db.relationship(
         "Keyword",
@@ -90,7 +87,6 @@ class Link(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     link = db.Column(db.Text, nullable=False)
     article_id = db.Column(db.Integer, db.ForeignKey('articles.id'), nullable=True)
-
     article = relationship("Article", back_populates="links")
 
 class Asset(db.Model):
@@ -99,7 +95,6 @@ class Asset(db.Model):
     asset = db.Column(db.Text, nullable=False)
     article_id = db.Column(db.Integer, db.ForeignKey('articles.id'))
     asset_type = db.Column(db.Text, nullable=False)
-
     article = relationship("Article", back_populates="assets")
 
 class ArticleAuthor(db.Model):
@@ -109,7 +104,6 @@ class ArticleAuthor(db.Model):
     article_id = db.Column(db.Integer, db.ForeignKey('articles.id'), nullable=False)
     author_id = db.Column(db.Integer, db.ForeignKey('authors.id'), nullable=False)
     sequence_number = db.Column(db.Integer, nullable=False)  # New field for sequence number
-
     author = relationship("Author", back_populates="articles")
     article = relationship("Article", back_populates="authors")
 
@@ -122,7 +116,6 @@ class PublicationType(db.Model):
     __tablename__ = 'publication_types'
     id = db.Column(db.Integer, primary_key=True)
     publication_type = db.Column(db.Text, nullable=False)
-
     # Many-to-Many relationship with Article
     articles = db.relationship(
         "Article",
@@ -136,8 +129,6 @@ class Keyword(db.Model):
     keyword = db.Column(db.Text, nullable=False)
     uuid = db.Column(db.Text, nullable=False,server_default=str(uuid.uuid4()))
     fts_vector = db.Column(TSVECTOR)
-    
-    # Many-to-Many relationship with Article
     articles = db.relationship(
         "Article",
         secondary="article_keywords",
@@ -168,7 +159,6 @@ class ArticleStatistic(db.Model):
     __tablename__ = "articlestatistics"
     id = db.Column(db.Integer, primary_key=True)
     article_id = db.Column(db.Integer, db.ForeignKey('articles.id'), nullable=False)
-    
     viewed = db.Column(db.Integer,nullable=False,server_default='0')
     searched = db.Column(db.Integer,nullable=False,server_default='0')
     downloaded = db.Column(db.Integer,nullable=False,server_default='0')
@@ -184,8 +174,9 @@ class Duplicate(db.Model):
     uuid = db.Column(db.Text, nullable=False)
     field = db.Column(db.Text, nullable=False)
     value = db.Column(db.Text, nullable=False)
-    articles = db.Column(db.JSON, nullable=False)
+    articles = db.Column(db.Text, nullable=False)
     created_at = db.Column(DateTime, server_default=func.now())  # Corrected attribute name
+
 
 
 

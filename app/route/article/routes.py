@@ -1,22 +1,14 @@
 from datetime import date, datetime
 from multiprocessing import Pool
 import os
-from pprint import pprint
 import traceback
 from flask import jsonify,current_app as app, request
-from marshmallow import ValidationError
 import requests
-from sqlalchemy import desc, or_
-from sqlalchemy.orm import aliased
+from sqlalchemy import desc, or_,func,text
 import uuid
-from sqlalchemy import select, or_
-from sqlalchemy.orm import joinedload
-from itertools import combinations
-
-from sqlalchemy import func
-from collections import defaultdict
-from app.decorator import checkBlueprintRouteFlag, verify_FACULTY_role, verify_LIBRARYMANAGER_role, verify_SUPERADMIN_role, verify_USER_role, verify_body, verify_create_roles, verify_delete_roles, verify_duplicate_roles, verify_edit_roles, verify_internal_api_id, verify_session
-from app.extension import db,scheduler
+from sqlalchemy.dialects.postgresql import array_agg
+from app.decorator import checkBlueprintRouteFlag, verify_FACULTY_role, verify_SUPERADMIN_role, verify_body, verify_create_roles, verify_delete_roles, verify_duplicate_roles, verify_edit_roles, verify_internal_api_id, verify_session
+from app.extension import db
 from app.models.article import Article, ArticleAuthor, ArticleKeyword, ArticleStatistic, Author, DeletedArticle, Duplicate, Keyword, Link, PublicationType
 from app.models.user import User
 from app.schema import ArticleSchema, AuthorSchemaWithoutArticle, DuplicateSchema, KeywordSchemaWithoutArticle
@@ -29,95 +21,97 @@ from app.mylogger import error_logger
 
 # Logging utility
 def log_error(msg):
-    error_logger.error(f"[ERROR] {msg}")
+	error_logger.error(f"[ERROR] {msg}")
 
-def log_info(msg):
-    app.logger.info(f"[INFO] {msg}")
+def log_info(msg,exc_info=False):
+	app.logger.info(f"[INFO] {msg}",exc_info=exc_info)
 
 @article_bp.route("/")
 @checkBlueprintRouteFlag
 @verify_SUPERADMIN_role
 def index(session):
-    log_info("Accessed the index route for articles.")
-    return "This is the research repository article route"
+	log_info("Accessed the index route for articles.")
+	return "This is the research repository article route"
 
 @article_bp.route("/table")
 @verify_session
 @verify_internal_api_id
 def generateTable(session):
-    try:
-        log_info("Generating articles table.")
-        page = request.args.get("page", 1, type=int)
-        per_page = request.args.get("entry", 10, type=int)
-        start = (page - 1) * per_page
+	try:
+		log_info("Generating articles table.")
+		page = request.args.get("page", 1, type=int)
+		per_page = request.args.get("entry", 10, type=int)
+		start = (page - 1) * per_page
 
-        total = Article.query.count()
-        articles = Article.query.order_by(Article.publication_date.desc()).offset(start).limit(per_page).all()
-        datas = ArticleSchema(many=True).dump(articles)
+		total = Article.query.count()
+		articles = Article.query.order_by(Article.publication_date.desc()).offset(start).limit(per_page).all()
+		datas = ArticleSchema(many=True).dump(articles)
 
-        log_info(f"Successfully fetched {len(datas)} articles for page {page}.")
-        return jsonify({
-            "data": datas,
-            "page": page,
-            "total_pages": total // per_page + (1 if total % per_page > 0 else 0),
-        })
-    except Exception as e:
-        log_error(f"Error generating articles table: {e}")
-        traceback.print_exc()
-        return jsonify({"error": "Failed to generate articles table"}), 500
+		log_info(f"Successfully fetched {len(datas)} articles for page {page}.")
+		return jsonify({
+			"data": datas,
+			"page": page,
+			"total_pages": total // per_page + (1 if total % per_page > 0 else 0),
+		})
+	except Exception as e:
+		log_error(f"Error generating articles table: {e}")
+		traceback.print_exc()
+		return jsonify({"error": "Failed to generate articles table"}), 500
 
 @article_bp.route("/<string:id>")
 @verify_session
-@verify_internal_api_id
 def getSingle_article(session, id):
-    try:
-        log_info(f"Fetching article with ID: {id}")
-        article = Article.query.filter_by(uuid=id).first()
-        if article:
-            stats = ArticleStatistic.query.filter_by(article_id=article.id).first()
-            if not stats:
-                stats = ArticleStatistic(article_id=article.id)
-                db.session.add(stats)
-                db.session.commit()
-            stats.viewed += 1
-            db.session.commit()
-            article_data = ArticleSchema().dump(article)
-            log_info(f"Article with ID {id} fetched successfully.")
-            return article_data, 200
-        else:
-            log_info(f"Article with ID {id} not found.")
-            return jsonify({"message": f"Article id {id} not found"}), 404
-    except Exception as e:
-        log_error(f"Error fetching article with ID {id}: {e}")
-        traceback.print_exc()
-        return jsonify({"error": "An error occurred while fetching the article"}), 500
+	try:
+		log_info(f"Fetching article with ID: {id}")
+		article = Article.query.filter_by(uuid=id).first()
+		if article:
+			stats = ArticleStatistic.query.filter_by(article_id=article.id).first()
+			if not stats:
+				stats = ArticleStatistic(article_id=article.id)
+				db.session.add(stats)
+				db.session.commit()
+			stats.viewed += 1
+			db.session.commit()
+			article_data = ArticleSchema().dump(article)
+			log_info(f"Article with ID {id} fetched successfully.")
+			return article_data, 200
+		else:
+			log_info(f"Article with ID {id} not found.")
+			return jsonify({"message": f"Article id {id} not found"}), 404
+	except Exception as e:
+		log_error(f"Error fetching article with ID {id}: {e}")
+		traceback.print_exc()
+		return jsonify({"error": "An error occurred while fetching the article"}), 500
 
 @article_bp.route("/ownership/<string:id>")
 @verify_FACULTY_role
 def getownership_article(session, id):
-    try:
-        log_info(f"Handling ownership for author ID: {id}")
-        author = Author.query.filter_by(id=id).first()
-        if author:
-            if author.employee_id:
-                if author.employee_id == session.user.employee_id:
-                    author.employee_id = None
-                    db.session.commit()
-                    log_info(f"Ownership removed for author ID {id}.")
-                    return jsonify({"message": "Ownership removed for the author"}), 200
-                log_info(f"Ownership cannot be set for author ID {id}.")
-                return jsonify({"message": "Ownership cannot be set for the author"}), 400
-            author.employee_id = session.user.employee_id
-            db.session.commit()
-            log_info(f"Ownership set for author ID {id}.")
-            return jsonify({"message": "Ownership set for the author"}), 200
-        else:
-            log_info(f"Author ID {id} not found.")
-            return jsonify({"message": f"Author id {id} not found"}), 404
-    except Exception as e:
-        log_error(f"Error handling ownership for author ID {id}: {e}")
-        traceback.print_exc()
-        return jsonify({"error": "An error occurred while handling ownership"}), 500
+	try:
+		log_info(f"session user id: {session.user.id} requested for author uuid : {id}")
+		author = Author.query.filter_by(id=id).first()
+		log_info(f"Author found successfull.")
+		if author:
+			if author.employee_id:
+				log_info(f"author employee_id : {author.employee_id}")
+				if str(author.employee_id) == str(session.user.id):
+					author.employee_id = None
+					db.session.commit()
+					log_info(f"Ownership removed for author ID {id}.")
+					return jsonify({"message": "Ownership removed for the author"}), 200
+				
+				log_info(f"Ownership cannot be set for author ID {session.user.id} and existing : {author.employee_id}.")
+				return jsonify({"message": "Ownership cannot be set for the author"}), 400
+			author.employee_id = session.user.id
+			db.session.commit()
+			log_info(f"Ownership set for author ID {id}.")
+			return jsonify({"message": "Ownership set for the author"}), 200
+		else:
+			log_info(f"Author ID {id} not found.")
+			return jsonify({"message": f"Author id {id} not found"}), 404
+	except Exception as e:
+		log_error(f"Error handling ownership for author ID {id}: {e}")
+		traceback.print_exc()
+		return jsonify({"error": "An error occurred while handling ownership"}), 500
 
 
 def check_duplicates(article_data):
@@ -164,7 +158,7 @@ def add_or_get(model, obj):
 		db.session.rollback()
 		print(f"Database query failed: {e}")
 	return instance
-  
+	
 def upload(session, request, ALLOWED_EXTENSIONS):
 	if 'file' not in request.files:
 		return jsonify({"error": "No file part in the request"}), 400
@@ -273,17 +267,17 @@ def upload(session, request, ALLOWED_EXTENSIONS):
 def upload_ris(session):
 	return upload(session,request,['ris'])
 
-
 @article_bp.route('/upload_nbib', methods=['POST'])
 @verify_create_roles
 def upload_nbib(session):
 	return upload(session,request,['nbib'])
 
-@article_bp.route('/pubmedFectch', methods=['POST'])
+@article_bp.route('/pubmedFetch', methods=['POST'])
 @verify_create_roles
-@verify_body
-def pubmedFectch(data,session):
+def pubmedFetch(session):
+	data = request.json
 	pubmed_id = data["pmid"]
+	article_schema = ArticleSchema()
 
 	filename = os.path.join(app.config["UPLOAD_FOLDER"],'pubfetch',f'pubmed-{pubmed_id}.xml')
 
@@ -292,41 +286,31 @@ def pubmedFectch(data,session):
 		myjson = parse_pubmed_xml(filename)
 		myjson["created_by"] = session.user_id
 		temp_json = myjson.copy()
-		article_schema = ArticleSchema()
-		duplicate_count = 0
-		duplicates = {"title": [], "pubmed_id": [], "doi": [], "pmc_id": []}
+		# app.logger.info(f"current json : {temp_json}")
 
-		publication_types = myjson.pop('publication_types')
-		keywords = myjson.pop('keywords')
-		authors = myjson.pop('authors')
-		links = myjson.pop('links')
+		publication_types = temp_json.pop('publication_types', [])
+		keywords = temp_json.pop('keywords', [])
+		authors = temp_json.pop('authors', [])
+		links = temp_json.pop('links', [])
+
 		# Check for duplicates
-		duplicate_article = check_duplicates(myjson)
-		if duplicate_article:
-			duplicate_count += 1
-			if duplicate_article.title is not None and duplicate_article.title == temp_json['title']:
-				duplicates['title'].append({"existing": article_schema.dump(duplicate_article), "new": temp_json})
-			elif duplicate_article.pubmed_id is not None and duplicate_article.pubmed_id == temp_json['pubmed_id']:
-				duplicates['pubmed_id'].append({"existing": article_schema.dump(duplicate_article), "new": temp_json})
-			elif duplicate_article.doi is not None and duplicate_article.doi == temp_json['doi']:
-				duplicates['doi'].append({"existing": article_schema.dump(duplicate_article), "new": temp_json})
-			elif duplicate_article.pmc_id is not None and duplicate_article.pmc_id == temp_json['pmc_id']:
-				duplicates['pmc_id'].append({"existing": article_schema.dump(duplicate_article), "new": temp_json})
+		duplicate_article = check_duplicates(temp_json)
+		app.logger.info(f"current json : {temp_json}")
 
-			return jsonify({
-				"message": "Duplicate Article found",
-				"added_articles": 0,
-				"articles": article_schema.dump(duplicate_article),
-				"duplicate_articles": duplicates,
-			}), 400
+		if duplicate_article:
+			app.logger.info(f"already present json : {article_schema.dump(Article.query.filter_by(id=duplicate_article.id).first())}")
+			return jsonify({"message": "Pubmed article already existed.","articles": article_schema.dump(Article.query.filter_by(id=duplicate_article.id).first())}), 200
+
+
 		# Create new article
-		new_article = article_schema.load(myjson)
+		# app.logger.info(f"my json : {temp_json}")
+		new_article = article_schema.load(temp_json)
 		db.session.add(new_article)
 		db.session.commit()  # Get article ID
 
 		# Add publication types
 		for pub_type in publication_types:
-			pub_instance = add_or_get(PublicationType, PublicationType( publication_type=pub_type['publication_type']))
+			pub_instance = add_or_get(PublicationType, PublicationType(publication_type=pub_type['publication_type']))
 			new_article.publication_types.append(pub_instance)
 
 		# Add keywords
@@ -340,10 +324,14 @@ def pubmedFectch(data,session):
 			db.session.add(new_link)
 			new_article.links.append(new_link)
 
-		# Add authors
+		db.session.commit()
 		for idx, author in enumerate(authors):
-			author_instance = add_or_get(Author, Author( **author))
-			new_article.authors.append(ArticleAuthor(author=author_instance, sequence_number=idx + 1))
+			author_instance = Author(**author)
+			db.session.add(author_instance)
+			db.session.commit()
+			author_article_instance = add_or_get(ArticleAuthor,ArticleAuthor(article_id = new_article.id,author=author_instance, sequence_number=idx + 1))
+			
+			new_article.authors.append(author_article_instance)
 
 		db.session.commit()
 		log_info("1 item added in the db")  
@@ -357,6 +345,7 @@ def pubmedFectch(data,session):
 @verify_edit_roles
 @verify_body
 def updateSingle_article(data,session,id):
+	log_info(f"data for changing : {data}")
 	article = Article.query.filter_by(uuid=id).first()
 	if article and article.uuid == data['uuid']:
 		
@@ -443,79 +432,96 @@ def updateSingle_article(data,session,id):
 	else:
 		return jsonify({"message":f"Article id {id} not found"}),404
 
-def find_duplicates(model, fields,page,entry):
-	"""
-	Find duplicates in the database based on specified fields.
 
-	Args:
-		model: SQLAlchemy model class.
-		fields: List of fields to check for duplicates (e.g., ['title', 'pmid']).
 
-	Returns:
-		dict: Dictionary where keys are fields and values are lists of duplicate groups.
-	"""
-		
-  
+def find_duplicates(model, fields, page, entry):
+    """
+    Find duplicates in the database based on specified fields.
 
-	duplicates = {}
-	article_schema = ArticleSchema()
-	
-	for field in fields:
-		if db.session.query(Duplicate).filter_by(field=field).count() > 0:
-			duplicate_schema = DuplicateSchema(many=True)
-			field_duplicates = db.session.query(Duplicate).filter_by(field=field).all()
-			duplicates[field] = duplicate_schema.dump(field_duplicates)
-		else:
-			# Dynamically construct the query for duplicates
-			field_attr = getattr(model, field)
-			duplicate_groups = (
-				db.session.query(field_attr, func.group_concat(model.id).label("ids"))
-				.group_by(field_attr)
-				.having(func.count(field_attr) > 1)
-				.all()
-			)
-			duplicate_schema = DuplicateSchema()
-			# Parse results into groups of duplicates
-			duplicate_records = []
-			for _, ids in duplicate_groups:
-				article_ids = list(map(int, ids.split(',')))
-				value = article_schema.dump(Article.query.filter_by(id=article_ids[0]).first())[field]
-				articles = []
-				for row in db.session.query(Article.uuid).filter(model.id.in_(article_ids)).all():
-					myuuid = row._mapping['uuid']
-					# print(uuid)
-					articles.append(myuuid)
-				# pprint(articles)
-				duplicate = Duplicate(
-					uuid = str(uuid.uuid4()),
-					field = field,
-					value = value,
-					articles = articles
-				)
-				db.session.add(duplicate)
-				db.session.commit()
-	
-				duplicate_records.append(
-					duplicate_schema.dump(duplicate)
-				)
-		
-			duplicates[field] = duplicate_records
+    Args:
+        model: SQLAlchemy model class.
+        fields: List of fields to check for duplicates (e.g., ['title', 'pmid']).
+        page: Current page number (for pagination).
+        entry: Number of records per page.
 
-	return duplicates
+    Returns:
+        dict: Dictionary where keys are fields and values are lists of duplicate groups.
+    """
+
+    duplicates = {}
+    article_schema = ArticleSchema()
+
+    for field in fields:
+        if db.session.query(Duplicate).filter_by(field=field).count() > 0:
+            duplicate_schema = DuplicateSchema(many=True)
+            field_duplicates = db.session.query(Duplicate).filter_by(field=field).all()
+            duplicates[field] = duplicate_schema.dump(field_duplicates)
+        else:
+            # Get field attribute dynamically
+            field_attr = getattr(model, field)
+
+            # Optimized Query for PostgreSQL
+            duplicate_groups = (
+                db.session.query(field_attr, array_agg(model.id).label("ids"))
+                .group_by(field_attr)
+                .having(func.count(field_attr) > 1)
+                .limit(entry)
+                .offset((page - 1) * entry)
+                .all()
+            )
+
+            duplicate_schema = DuplicateSchema()
+            duplicate_records = []
+
+            for _, ids in duplicate_groups:
+                article_ids = list(map(int, ids))
+
+                first_article = Article.query.filter_by(id=article_ids[0]).first()
+                if not first_article:
+                    continue  # Skip if no valid article found
+
+                value = article_schema.dump(first_article).get(field, "")
+
+                # Fetch article UUIDs
+                articles = [
+                    row.uuid for row in db.session.query(Article.uuid)
+                    .filter(Article.id.in_(article_ids))
+                    .all()
+                ]
+                articles_str = ';'.join(articles)
+
+                duplicate = Duplicate(
+                    uuid=str(uuid.uuid4()),
+                    field=field,
+                    value=value,
+                    articles=articles_str
+                )
+                db.session.add(duplicate)
+                duplicate_records.append(duplicate_schema.dump(duplicate))
+
+            # Commit once for better performance
+            db.session.commit()
+            duplicates[field] = duplicate_records
+
+    return duplicates
+
 
 @article_bp.route("/duplicates",methods=['GET'])
 @verify_internal_api_id
 @verify_duplicate_roles
 def find_duplicate_groups(session):
-	fields = request.args.getlist('field')
-	page = request.args.get('page')
-	entry = request.args.get('entry')
-	if fields == []:
-		fields = ['pubmed_id','doi','title','pmc_id']
-	duplicates = find_duplicates(Article, fields,page,entry)
+	try:
+		fields = request.args.getlist('field')
+		page = request.args.get('page')
+		entry = request.args.get('entry')
+		if fields == []:
+			fields = ['pubmed_id','doi','title','pmc_id']
+		duplicates = find_duplicates(Article, fields,page or 1,entry or 10)
 
-	# pprint(duplicates)
-	return jsonify(duplicates),200
+		return jsonify(duplicates),200
+	except Exception as e:  # Catches any exception
+		log_info(f"An error occurred: {e}", exc_info=True)
+		return jsonify({"message" : "something went wrong"}),500
 
 def calculate_font_size(article_count, min_count, max_count, min_font=10, max_font=50):
 	"""
@@ -613,15 +619,13 @@ def statistic():
 		count = 0
 		results = (
 			db.session.query(
-				func.extract('year', Article.publication_date).label('year'),  # Extract year from publication_date
-				func.count(Article.id).label('count')  # Count articles
-			)
-			.filter(Article.publication_date.isnot(None))
-			.group_by(func.extract('year', Article.publication_date))  # Group by year
-			.order_by('year')  # Order by year
+				func.to_char(Article.publication_date, 'YYYY').label("year"),
+				func.count(Article.id).label("count")
+			).filter(Article.publication_date.isnot(None)) \
+			.group_by("year") \
+			.order_by("year") \
 			.all()
-		)
-
+			)
   
 		for year, mycount in results:
 	  
@@ -635,6 +639,7 @@ def statistic():
 			db.session.query(Keyword.keyword, func.count(ArticleKeyword.article_id).label('article_count'))
 			.join(ArticleKeyword, Keyword.id == ArticleKeyword.keyword_id)
 			.group_by(Keyword.id)
+			.order_by(desc('article_count'))
 			.limit(200)
 			.all()
 		)
@@ -662,12 +667,11 @@ def statistic():
 			# Query to get counts of articles grouped by year
 			results = (
 				db.session.query(
-					func.strftime('%Y', Article.publication_date).label('year'),  # Extract year from publication_date
-					func.count(Article.id).label('count')  # Count articles
-				)
-				.filter(Article.publication_date.isnot(None))
-				.group_by('year')  # Group by year
-				.order_by('year')  # Order by year
+					func.to_char(Article.publication_date, 'YYYY').label("year"),
+					func.count(Article.id).label("count")
+				).filter(Article.publication_date.isnot(None)) \
+				.group_by("year") \
+				.order_by("year") \
 				.all()
 			)
 
@@ -752,14 +756,10 @@ def delete_article(session,id):
 		for duplicate in Duplicate.query.filter(Duplicate.articles.contains(uuid)).all():
 			articles = []
 			myduplicate = duplicate_schema.dump(duplicate)
-			# pprint(myduplicate["articles"])
 			for myuuid in myduplicate["articles"]:
 				if myuuid != uuid:
-					# pprint(myuuid)
 					articles.append(myuuid)
 			myduplicate["articles"] = articles
-			# pprint(myduplicate["created_at"])
-			# myduplicate["created_at"] = datetime.fromisoformat(myduplicate["created_at"])
 			Duplicate.query.filter_by(id=myduplicate["id"]).delete()
 			myduplicate.pop("id")
 			if len(articles) > 1:
@@ -813,7 +813,8 @@ def search_article(session):
 	search_by = request.args.get('search_by','')
 	offset = request.args.get('offset', 0, type=int)
 	limit = request.args.get('limit', 10, type=int)
-	app.logger.info(f"Starting API Search Search_by = {search_by}. query = {query}.")
+	app.logger.info(f"/n =====================    ROUTE = /search  FUNCTION = search_article =========================================")
+	app.logger.info(f"Starting API Search Search_by fields are = {search_by}. query Terms are = {query}.")
 
 	if not query:
 		return jsonify({"message":"Search must have a query parameter"}),401
@@ -826,7 +827,7 @@ def search_article(session):
 		return jsonify({"error": "Offset must be non negative and Limit must be greater than 0"}), 400
 	
 	if search_by == "author":
-		app.logger.info(f"API Searching by : {search_by}. Fetching results...")
+		app.logger.info(f"API Search creating SQLAlchemy Statement - The search_by are : {search_by}. For query term {query} Fetching results...")
 		author_query = (
 			db.session.query(Article)
 			.join(ArticleAuthor, Article.id == ArticleAuthor.article_id)
@@ -843,7 +844,7 @@ def search_article(session):
 		return search(author_query,query,offset,limit)
 
 	elif search_by == "keyword":
-		app.logger.info(f"API Searching by : {search_by}. Fetching results...")
+		app.logger.info(f"API Search creating SQLAlchemy Statement - The search_by are : {search_by}. For query term {query} Fetching results...")
 		keyword_query = (
 			db.session.query(Article)
 			.join(ArticleKeyword, Article.id == ArticleKeyword.article_id)
@@ -906,7 +907,7 @@ def search_article(session):
 		return search(doi_query,query,offset,limit)
 
 	elif search_by =="employee":
-		user = User.query.filter_by(employee_id=query).first()
+		user = User.query.filter_by(id=query).first()
 		employee_query = (
 			db.session.query(Article)
 			.join(ArticleAuthor, Article.id == ArticleAuthor.article_id)
@@ -919,6 +920,7 @@ def search_article(session):
 			)
 			.distinct()  # Ensure unique articles
 		)
+		app.logger.info(f"SQLALChmey running Employee query {str(employee_query.statement)}")
 		if user:
 			return search(employee_query,query,offset,limit,result_for=f"{user.firstname} {user.lastname}")
 		else:
@@ -928,95 +930,266 @@ def search_article(session):
 		return jsonify({"message":f"Searching for {query}"}),200
 
 
+def sanitizer(search_query):
+	characters_to_replace = r"[^a-zA-Z0-9]"
+	myqueries = re.sub(characters_to_replace, " ", search_query).strip()  # Replace non-alphanumeric with space
+	myqueries = re.sub(r"\s+", " ", myqueries)  # Replace multiple spaces with a single space
+	return myqueries
+
+
+def get_article_uuids(search_query, author_list=[],journal_list=[],keyword_list=[],entry=0,limit=10,start_date='',end_date=''):
+ 
+	santized_authors = [sanitizer(author).replace(" ", " & ") for author in author_list]
+	santized_journals = [sanitizer(journal).replace(" ", " & ") for journal in journal_list]
+	santized_keywords = [sanitizer(keyword).replace(" ", " & ") for keyword in keyword_list]
+	author_query = ' & '.join(santized_authors)
+	journal_query = ' | '.join(santized_journals)
+	keyword_query = ' | '.join(santized_keywords)
+
+	# Sanitize and format search query
+	myqueries = sanitizer(search_query)  # Replace multiple spaces with a single space
+	myqueries = myqueries[:100]
+	and_myqueries = myqueries.replace(" ", " & ")  # Replace single space with " & "
+	or_myqueries = myqueries.replace(" ", " | ")  # Replace single space with " | "
+
+	# Base query
+	query = text("""
+		SELECT a.uuid, a.title, ts_rank(a.fts_vector, to_tsquery(:and_query)) AS rank
+		FROM articles a
+		WHERE (
+			a.fts_vector @@ to_tsquery(:and_query)
+			OR a.fts_vector @@ to_tsquery(:or_query)
+		)
+	""")
+
+	# Parameters dictionary
+	query_params = {
+		"and_query": and_myqueries,
+		"or_query": or_myqueries,
+		"offset":entry,
+		"limit":limit
+	}
+
+	# Dynamically add filters only if they are not empty
+	if author_query:
+		query = text(str(query) + " AND a.fts_vector @@ to_tsquery(:author_query)")
+		query_params["author_query"] = author_query
+
+	if journal_query:
+		query = text(str(query) + " AND a.fts_vector @@ to_tsquery(:journal_query)")
+		query_params["journal_query"] = journal_query
+
+	if keyword_query:
+		query = text(str(query) + " AND a.fts_vector @@ to_tsquery(:keyword_query)")
+		query_params["keyword_query"] = keyword_query
+
+	if start_date:
+		query = text(str(query) + " AND a.publication_date >= to_date(:start_date, 'YYYY-MM-DD')")
+		query_params["start_date"] = start_date
+
+	if end_date:
+		query = text(str(query) + " AND a.publication_date <= to_date(:end_date, 'YYYY-MM-DD')")
+		query_params["end_date"] = end_date
+
+	query = text(str(query) + " ORDER BY rank DESC OFFSET :offset LIMIT :limit;")
+
+	try:
+		app.logger.info(f"query_params : {query_params}")
+		result = db.session.execute(query, query_params)
+		rows = result.fetchall()
+
+		# Extract UUIDs from the results
+		uuids = [row[0] for row in rows]  # row[0] is the 'uuid' column
+		return uuids
+
+	except Exception as e:
+		print(f"Error executing query: {e}")
+		return []
+	finally:
+		db.session.close()
+
+def get_unique_authors(search_query):
+	# Sanitize and format search query
+	myqueries = sanitizer(search_query)  # Replace multiple spaces with a single space
+	myqueries = myqueries[:100]
+	and_myqueries = myqueries.replace(" ", " & ")  # Replace single space with " & "
+	or_myqueries = myqueries.replace(" ", " | ")  # Replace single space with " | "
+
+	# Base query
+	query = text("""
+		SELECT au."fullName", COUNT(a.id) AS article_count
+		FROM authors au
+		JOIN article_authors aa ON au.id = aa.author_id
+		JOIN articles a ON aa.article_id = a.id
+		WHERE (
+			a.fts_vector @@ to_tsquery(:and_query)
+			OR a.fts_vector @@ to_tsquery(:or_query)
+		)
+		GROUP BY au."fullName"
+		ORDER BY article_count DESC;
+	""")
+
+	query_params = {
+		"and_query": and_myqueries,
+		"or_query": or_myqueries
+	}
+
+	try:
+		result = db.session.execute(query, query_params)
+		rows = result.fetchall()
+
+		# Return a list of dictionaries with author names and article counts
+		authors = [{"fullName": row[0], "article_count": row[1]} for row in rows]
+		return authors
+
+	except Exception as e:
+		print(f"Error executing query: {e}")
+		return []
+
+	finally:
+		db.session.remove()  # Properly remove session in Flask-SQLAlchemy
+	
+def get_unique_keywords(search_query):
+	myqueries = sanitizer(search_query)  # Replace multiple spaces with a single space
+	myqueries = myqueries[:100]
+	and_myqueries = myqueries.replace(" ", " & ")  # Replace single space with " & "
+	or_myqueries = myqueries.replace(" ", " | ")  # Replace single space with " | "
+
+	# Base query
+	query = text("""
+		SELECT k."keyword", COUNT(DISTINCT a.id) AS article_count
+		FROM keywords k
+		JOIN article_keywords ak ON k.id = ak.keyword_id
+		JOIN articles a ON ak.article_id = a.id
+		WHERE (
+			a.fts_vector @@ to_tsquery(:and_query)
+			OR a.fts_vector @@ to_tsquery(:or_query)
+		)
+		GROUP BY k."keyword"
+		ORDER BY article_count DESC;
+	""")
+
+	query_params = {
+		"and_query": and_myqueries,
+		"or_query": or_myqueries
+	}
+
+	try:
+		result = db.session.execute(query, query_params)
+		rows = result.fetchall()
+
+		# Return a list of dictionaries with author names and article counts
+		keywords = [{"keyword": row[0], "article_count": row[1]} for row in rows]
+
+		return keywords
+
+	except Exception as e:
+		print(f"Error executing query: {e}")
+		return []
+
+	finally:
+		db.session.remove()  # Properly remove session in Flask-SQLAlchemy
+
+
+ 
+def get_unique_journals(search_query):
+	myqueries = sanitizer(search_query)  # Replace multiple spaces with a single space
+	myqueries = myqueries[:100]
+	and_myqueries = myqueries.replace(" ", " & ")  # Replace single space with " & "
+	or_myqueries = myqueries.replace(" ", " | ")  # Replace single space with " | "
+
+	# Base query
+	query = text("""
+		SELECT DISTINCT a.journal, COUNT(DISTINCT a.id) AS journal_count
+		FROM articles a
+		WHERE (
+			a.fts_vector @@ to_tsquery(:and_query)
+			OR a.fts_vector @@ to_tsquery(:or_query)
+		)
+		GROUP BY a.journal
+		ORDER BY journal_count DESC;
+		;
+	""")
+
+	query_params = {
+		"and_query": and_myqueries,
+		"or_query": or_myqueries
+	}
+
+	try:
+		result = db.session.execute(query, query_params)
+		rows = result.fetchall()
+
+		# Return a list of dictionaries with author names and article counts
+		journals = [{"journal": row[0], "article_count": row[1]} for row in rows]
+
+		return journals
+
+	except Exception as e:
+		print(f"Error executing query: {e}")
+		return []
+
+	finally:
+		db.session.remove()  # Properly remove session in Flask-SQLAlchemy
+
+
+
 @verify_internal_api_id
 @article_bp.route('/searchspecific', methods=['GET'])
 def search_articles():
+	app.logger.info(f"/n =====================    ROUTE = /searchspecific  FUNCTION = search_articles ======================")
 	search_params = request.args.to_dict(flat=False)  # Allows multiple values for the same key
 	app.logger.info(f"Searchspecific search_params : {search_params}. Fetching results...")
 	myquery = search_params.get('query', [""])[0]
-	app.logger.info(f"Searchspecific myquery : {myquery}. Fetching results...")
+	app.logger.info(f"Searchspecific  - myquery : {myquery}. Fetching results...")
 	offset = request.args.get('offset', 0, type=int)
 	limit = request.args.get('limit', 10, type=int)
+	filter_authors = []
+	filter_journals = []
+	filter_keywords = []
+	filter_start_date = ''
+	filter_end_date = ''
 
-	characters_to_replace = r"[!\-:&.,]"
-	myqueries = re.sub(characters_to_replace, " ", myquery).strip().split()
 
 	if offset < 0 or limit <= 0:
 		return jsonify({"error": "Offset must be non-negative and Limit must be greater than 0"}), 400
 
-	server_url = get_base_url()
-	url = f"{server_url}/api/article/search"
-	headers = {
-		"API-ID":app.config.get('API_ID')
-	}
-
-	search_bys = ["keyword","title","author","journal","pubmed_id","doi"]
-	cookies = request.cookies.to_dict()  # Converts the ImmutableMultiDict to a regular dictionary
-
-	articles_json = []
-	for search_by in search_bys:
-		params = {
-			"q":myquery,
-			"search_by":search_by,
-			"offset":0,
-			"limit":1000
-		}
-		response = requests.get(url, headers=headers,params=params, cookies=cookies)  # Use `requests.get`
-
-		if response.status_code==200:
-			results = response.json()
-			articles_json.extend(results["articles"])
-
-	for q in myqueries:
-		for search_by in search_bys:
-			app.logger.info(f"Running {search_by} in {search_bys} ")
-			params = {
-				"q":q,
-				"search_by":search_by,
-				"offset":0,
-				"limit":1000
-			}
-			response = requests.get(url, headers=headers,params=params, cookies=cookies)  # Use `requests.get`
-
-			if response.status_code==200:
-				results = response.json()
-				articles_json.extend(results["articles"])
-
-	app.logger.info(f"Searchspecific Completed.. now adding to articles_json : {len(articles_json)}")
-	seen_uuids = set()
-	unique_articles = []
-
-	for article in articles_json:
-		if article["uuid"] not in seen_uuids:
-			seen_uuids.add(article["uuid"])
-			unique_articles.append(article)
-	
-
-	articles_json =  unique_articles
 	app.logger.info(f"Applying filters")
 
 	filter_json = {}
 	# Apply filters for authors
+
 	if 'authors' in search_params:
 		filter_json["authors"] = search_params['authors']
+		filter_authors = search_params['authors']
   
 	# Apply filters for keywords
 	if 'keywords' in search_params:
 		filter_json["keywords"] = search_params['keywords']
+		filter_keywords = search_params['keywords']
 
 	# Apply filters for publication date
 	if 'start_date' in search_params:
 		if search_params['start_date'] and search_params['start_date']!="":
 			filter_json["start_date"] = search_params['start_date']
+			filter_start_date = search_params['start_date'][0]
   
 	if 'end_date' in search_params:
 		if search_params['end_date'] and search_params['end_date']!="":
 			filter_json["end_date"] = search_params['end_date']
+			filter_end_date = search_params['end_date'][0]
   
 	# Apply filters for journals
 	if 'journals' in search_params:
 		filter_json["journals"] = search_params['journals']	# Apply filters for authors
-  
+		filter_journals = search_params['journals']
+
+
+	articles_json = get_article_uuids(myquery,filter_authors,filter_journals,filter_keywords,0,100000,filter_start_date,filter_end_date)
+
+	app.logger.info(f"Searchspecific Completed.. now adding to articles_json : {len(articles_json)}")
+
+	
 	if articles_json == []:
 		return jsonify({
 			"message": "Offset exceeds the total number of results.",
@@ -1030,44 +1203,41 @@ def search_articles():
 			"filters" : filter_json
 		}), 200
   
-	app.logger.info(f"article_json has articles : {len(articles_json)}")
   
-	all_authors = {author["fullName"] for article in articles_json for author in article["authors"]}
-	all_keywords = {keyword["keyword"] for article in articles_json for keyword in article["keywords"]}
-	all_journals = {article["journal"] for article in articles_json}
+	all_authors = get_unique_authors(myquery)
+	all_keywords = get_unique_keywords(myquery)
+	all_journals = get_unique_journals(myquery)
 	
-	filtered_articles = filter_articles(articles_json, filter_json)
-
+	filtered_articles = articles_json
 	total_articles = len(filtered_articles)
 	app.logger.info(f"ready to return")
+	app.logger.info(f"total_articles : {total_articles}")
+	app.logger.info(f"offset : {offset}")
+	app.logger.info(f"limit : {limit}")
 	
 	# Count total articles before pagination
 	if offset >= total_articles:
-		print(f"{offset} - {total_articles}")
-		pprint(filter_json)
 		return jsonify({
 			"message": "Offset exceeds the total number of results.",
 			"total_articles": total_articles,
 			"offset": offset,
 			"limit": limit,
 			"articles": [],
-			"unique_authors": list(set(all_authors)),
-			"unique_keywords": list(all_keywords),
-			"unique_journals": list(all_journals),
+			"unique_authors": all_authors,
+			"unique_keywords": all_keywords,
+			"unique_journals": all_journals,
 			"filters" : filter_json
 		}), 200
-
-	
 
 	response = {
 		"message": "Search successful.",
 		"total_articles": total_articles,
 		"offset": offset,
 		"limit": limit,
-		"articles": filtered_articles[offset:offset + limit],
-		"unique_authors": list(all_authors),
-		"unique_keywords": list(all_keywords),
-		"unique_journals": list(all_journals),
+		"articles": filtered_articles[offset:offset+limit],
+		"unique_authors": all_authors,
+		"unique_keywords": all_keywords,
+		"unique_journals": all_journals,
 		"filters" : filter_json
 	}
 
