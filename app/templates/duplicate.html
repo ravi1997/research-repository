@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h2 class="text-center text-5xl font-bold">Duplicates by {{duplicateBy}}</h2>
+<h2 class="text-left text-2xl">Duplicate {{duplicateBy}}s found: {{results | length}}</h2>
+
+<table>
+    <thead>
+        <tr>
+            <th>Title</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody id="table-body">
+
+        {% for result in results %}
+        <tr>
+            <td>{{ result.value }}</td>
+            <td>
+                    <button
+                        type="button"
+                        class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 border border-blue-700 rounded"
+                        onclick="window.open('../singleDuplicate/{{result.uuid}}', '_blank')"
+                        >
+                            View Articles
+                    </button>
+                
+                </td>
+
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

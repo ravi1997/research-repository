@@ -1,0 +1,409 @@
+{% extends "base.html" %} {% block content %}
+<div
+  id="customAlert"
+  class="my-5 hidden w-fit rounded-lg bg-yellow-500 p-4 text-white"
+>
+  <span id="alertMessage">This is an alert message!</span>
+  <button class="close-btn text-lg" onclick="closeAlert()">×</button>
+</div>
+
+<!-- Modal for success -->
+<div
+  id="successModal"
+  class="fixed inset-0 flex hidden items-center justify-center bg-black bg-opacity-50"
+>
+  <div class="w-full max-w-lg rounded-lg bg-white p-6 shadow-lg">
+    <div class="flex items-center justify-between">
+      <h5 class="text-lg font-semibold">Article Submitted Successfully</h5>
+      <button onclick="closeModal()" class="text-gray-500 hover:text-gray-700">
+        &times;
+      </button>
+    </div>
+    <div class="mt-4">
+      <p>
+        Your Article has been successfully submitted. Thank you for your input.
+      </p>
+    </div>
+    <div class="mt-6 flex justify-end">
+      <button
+        onclick="closeModal()"
+        class="rounded-lg bg-blue-500 px-4 py-2 text-white hover:bg-blue-600"
+      >
+        Close
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="mx-auto max-w-4xl rounded-lg bg-white p-6 shadow-xl">
+  <h2 class="mb-6 text-center text-4xl font-bold text-gray-800">
+    Edit Article
+  </h2>
+
+  <form
+    id="edit-form"
+    action="/api/article/{{ article.uuid }}"
+    method="POST"
+    class="space-y-6"
+    onsubmit="submitForm(event)"
+  >
+    <!-- Title and Abstract -->
+    <div class="space-y-4">
+      <div class="flex flex-col">
+        <label for="title" class="text-lg font-medium text-gray-700"
+          >Title</label
+        >
+        <input
+          type="text"
+          id="title"
+          name="title"
+          value="{{ article.title or '' }}"
+          required
+          class="input input-bordered w-full rounded-md border-gray-300 shadow-sm"
+        />
+      </div>
+
+      <div class="flex flex-col">
+        <label for="abstract" class="text-lg font-medium text-gray-700"
+          >Abstract</label
+        >
+        <textarea
+          id="abstract"
+          name="abstract"
+          rows="4"
+          class="textarea textarea-bordered w-full rounded-md border-gray-300 shadow-sm"
+        >
+{{ article.abstract or '' }}</textarea
+        >
+      </div>
+    </div>
+
+    <!-- Authors Section -->
+    <div class="space-y-4">
+      <h3 class="text-2xl font-semibold text-gray-800">Authors</h3>
+      <table id="authors-table" class="w-full table-auto">
+        <thead class="bg-gray-200">
+          <tr>
+            <th class="px-4 py-2 text-left">Full Name</th>
+            <th class="px-4 py-2 text-left">Affiliation</th>
+            <th class="px-4 py-2 text-left">Abbreviation</th>
+            <th class="px-4 py-2 text-left">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for author in article.authors %}
+          <tr class="border-b">
+            <td class="px-4 py-2">
+              <input
+                type="text"
+                name="authors[{{ loop.index }}][fullName]"
+                value="{{ author.fullName }}"
+                required
+                class="input input-bordered w-full rounded-md border-gray-300 shadow-sm"
+              />
+            </td>
+            <td class="px-4 py-2">
+              <input
+                type="text"
+                name="authors[{{ loop.index }}][affiliation]"
+                value="{{ author.affiliation }}"
+                class="input input-bordered w-full rounded-md border-gray-300 shadow-sm"
+              />
+            </td>
+            <td class="px-4 py-2">
+              <input
+                type="text"
+                name="authors[{{ loop.index }}][abbreviation]"
+                value="{{ author.abbreviation }}"
+                class="input input-bordered w-full rounded-md border-gray-300 shadow-sm"
+              />
+            </td>
+            <td class="px-4 py-2">
+              <button
+                type="button"
+                class="btn btn-sm btn-danger text-red-500"
+                onclick="removeRow(this)"
+              >
+                Remove
+              </button>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <button
+        type="button"
+        class="btn btn-primary mt-4 rounded-md bg-blue-500 px-4 py-2 text-white hover:bg-blue-600"
+        id="add-author-btn"
+      >
+        + Add Author
+      </button>
+    </div>
+
+    <!-- Publication Details Section -->
+    <div class="space-y-6">
+      <h3 class="text-2xl font-semibold text-gray-800">Publication Details</h3>
+      <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+        <div class="flex flex-col">
+          <label for="journal" class="text-lg font-medium text-gray-700"
+            >Journal</label
+          >
+          <input
+            type="text"
+            id="journal"
+            name="journal"
+            value="{{ article.journal or '' }}"
+            class="input input-bordered w-full rounded-md border-gray-300 shadow-sm"
+          />
+        </div>
+        <div class="flex flex-col">
+          <label
+            for="journal_abbreviation"
+            class="text-lg font-medium text-gray-700"
+            >Journal Abbreviation</label
+          >
+          <input
+            type="text"
+            id="journal_abbreviation"
+            name="journal_abrevated"
+            value="{{ article.journal_abrevated or ''}}"
+            class="input input-bordered w-full rounded-md border-gray-300 shadow-sm"
+          />
+        </div>
+        <div class="flex flex-col">
+          <label for="volume" class="text-lg font-medium text-gray-700"
+            >Volume</label
+          >
+          <input
+            type="text"
+            id="volume"
+            name="journal_volume"
+            value="{{ article.journal_volume or ''}}"
+            class="input input-bordered w-full rounded-md border-gray-300 shadow-sm"
+          />
+        </div>
+        <div class="flex flex-col">
+          <label for="issue" class="text-lg font-medium text-gray-700"
+            >Issue</label
+          >
+          <input
+            type="text"
+            id="issue"
+            name="journal_issue"
+            value="{{ article.journal_issue or ''}}"
+            class="input input-bordered w-full rounded-md border-gray-300 shadow-sm"
+          />
+        </div>
+        <div class="flex flex-col">
+          <label for="pages" class="text-lg font-medium text-gray-700"
+            >Pages</label
+          >
+          <input
+            type="text"
+            id="pages"
+            name="pages"
+            value="{{ article.pages or ''}}"
+            class="input input-bordered w-full rounded-md border-gray-300 shadow-sm"
+          />
+        </div>
+        <div class="flex flex-col">
+          <label
+            for="publication_date"
+            class="text-lg font-medium text-gray-700"
+            >Published Date</label
+          >
+          <input
+            type="date"
+            id="publication_date"
+            name="publication_date"
+            value="{{ article.publication_date or '' }}"
+            class="input input-bordered w-full rounded-md border-gray-300 shadow-sm"
+          />
+        </div>
+        <div class="flex flex-col">
+          <label for="print_issn" class="text-lg font-medium text-gray-700"
+            >Print ISSN</label
+          >
+          <input
+            type="text"
+            id="print_issn"
+            name="print_issn"
+            value="{{ article.print_issn or '' }}"
+            class="input input-bordered w-full rounded-md border-gray-300 shadow-sm"
+          />
+        </div>
+        <div class="flex flex-col">
+          <label for="electronic_issn" class="text-lg font-medium text-gray-700"
+            >Electronic ISSN</label
+          >
+          <input
+            type="text"
+            id="electronic_issn"
+            name="electronic_issn"
+            value="{{ article.electronic_issn or '' }}"
+            class="input input-bordered w-full rounded-md border-gray-300 shadow-sm"
+          />
+        </div>
+        <div class="flex flex-col">
+          <label
+            for="place_of_publication"
+            class="text-lg font-medium text-gray-700"
+            >Place of Publication</label
+          >
+          <input
+            type="text"
+            id="place_of_publication"
+            name="place_of_publication"
+            value="{{ article.place_of_publication or '' }}"
+            class="input input-bordered w-full rounded-md border-gray-300 shadow-sm"
+          />
+        </div>
+        <div class="flex flex-col">
+          <label for="pmc_id" class="text-lg font-medium text-gray-700"
+            >PMC ID</label
+          >
+          <input
+            type="text"
+            id="pmc_id"
+            name="pmc_id"
+            value="{{ article.pmc_id or '' }}"
+            class="input input-bordered w-full rounded-md border-gray-300 shadow-sm"
+          />
+        </div>
+        <div class="flex flex-col">
+          <label for="pubmed_id" class="text-lg font-medium text-gray-700"
+            >PubMed ID</label
+          >
+          <input
+            type="text"
+            id="pubmed_id"
+            name="pubmed_id"
+            value="{{ article.pubmed_id or '' }}"
+            class="input input-bordered w-full rounded-md border-gray-300 shadow-sm"
+          />
+        </div>
+        <div class="flex flex-col">
+          <label for="pii" class="text-lg font-medium text-gray-700">PII</label>
+          <input
+            type="text"
+            id="pii"
+            name="pii"
+            value="{{ article.pii or '' }}"
+            class="input input-bordered w-full rounded-md border-gray-300 shadow-sm"
+          />
+        </div>
+      </div>
+    </div>
+
+    <!-- Keywords Section -->
+    <div class="space-y-4">
+      <h3 class="text-2xl font-semibold text-gray-800">Keywords</h3>
+      <table id="keywords-table" class="w-full table-auto">
+        <thead class="bg-gray-200">
+          <tr>
+            <th class="px-4 py-2 text-left">Keyword</th>
+            <th class="px-4 py-2 text-left">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for keyword in article.keywords %}
+          <tr class="border-b">
+            <td class="px-4 py-2">
+              <input
+                type="text"
+                name="keywords[{{ loop.index }}][keyword]"
+                value="{{ keyword.keyword or '' }}"
+                required
+                class="input input-bordered w-full rounded-md border-gray-300 shadow-sm"
+              />
+            </td>
+            <td class="px-4 py-2">
+              <button
+                type="button"
+                class="btn btn-sm btn-danger text-red-500"
+                onclick="removeRow(this)"
+              >
+                Remove
+              </button>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <button
+        type="button"
+        class="btn btn-primary mt-4 rounded-md bg-blue-500 px-4 py-2 text-white hover:bg-blue-600"
+        id="add-keyword-btn"
+      >
+        + Add Keyword
+      </button>
+    </div>
+
+    <!-- Links Section -->
+    <div class="space-y-4">
+      <h3 class="text-2xl font-semibold text-gray-800">Links</h3>
+      <table id="links-table" class="w-full table-auto">
+        <thead class="bg-gray-200">
+          <tr>
+            <th class="px-4 py-2 text-left">Link</th>
+            <th class="px-4 py-2 text-left">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for link in article.links %}
+          <tr class="border-b">
+            <td class="px-4 py-2">
+              <input
+                type="url"
+                name="links[{{ loop.index }}][link]"
+                value="{{ link.link or '' }}"
+                placeholder="Link"
+                required
+                class="input input-bordered w-full rounded-md border-gray-300 shadow-sm"
+              />
+            </td>
+            <td class="px-4 py-2">
+              <button
+                type="button"
+                class="btn btn-sm btn-danger text-red-500"
+                onclick="removeRow(this)"
+              >
+                Remove
+              </button>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <button
+        type="button"
+        class="btn btn-primary mt-4 rounded-md bg-blue-500 px-4 py-2 text-white hover:bg-blue-600"
+        id="add-link-btn"
+      >
+        + Add Link
+      </button>
+    </div>
+
+    <!-- Form Actions -->
+    <div class="mt-6 flex justify-end space-x-4">
+      <button id="submit-btn" type="submit" class="bg-green-500 text-white px-6 py-3 rounded-md hover:bg-green-600">
+        <span class="button-text">Save Changes</span>
+        <span
+          class="loading-spinner inline-block h-5 w-5 animate-spin rounded-full border-2 border-transparent border-t-white align-middle"
+          style="display: none"
+        ></span>
+      </button>
+      <a
+        href="/article/{{ article.uuid }}"
+        class="rounded-md bg-gray-500 px-6 py-3 text-white hover:bg-gray-600"
+        >Cancel</a
+      >
+    </div>
+  </form>
+</div>
+
+<script>
+  const article_uuid = "{{ article.uuid }}";
+</script>
+<script src="{{url_for('static',filename='js/edit.js')}}"></script>
+{% endblock %}

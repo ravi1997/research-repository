@@ -1,0 +1,183 @@
+/* Upload Section */
+.upload-section {
+    margin-top: 40px;
+    text-align: center;
+}
+
+.upload-section h3 {
+    font-size: 1.8rem;
+    color: var(--text-color);
+    margin-bottom: 15px;
+}
+
+.upload-section input[type="file"] {
+    padding: var(--padding);
+    font-size: var(--font-size-medium);
+}
+
+.upload-section button {
+    margin-top: 10px;
+    padding: var(--padding) 20px;
+    font-size: var(--font-size-medium);
+    color: white;
+    background-color: var(--primary-color);
+    border: none;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.upload-section button:hover {
+    background-color: var(--primary-light);
+}
+
+
+/* Login Container */
+.login-container {
+    background: #fff;
+    padding: 40px;
+    border-radius: 10px;
+    box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.3);
+    max-width: 400px;
+    width: 100%;
+    text-align: center;
+    margin: 0 auto; /* Center alignment */
+    animation: fadeIn 0.8s ease-in-out;
+}
+
+.login-container h2 {
+    margin-bottom: 20px;
+    color: var(--primary-color);
+    font-weight: 500;
+}
+
+.login-container input[type="text"],
+.login-container input[type="password"] {
+    width: 100%;
+    padding: 12px;
+    margin: 10px 0;
+    border-radius: var(--border-radius);
+    border: 1px solid #ddd;
+    font-size: var(--font-size-medium);
+    transition: border-color 0.3s, box-shadow 0.2s; /* Added shadow transition */
+}
+
+.login-container input:focus {
+    border-color: var(--primary-light);
+    outline: none;
+    box-shadow: 0 0 5px var(--primary-light); /* Added shadow on focus */
+}
+
+
+.login-container p {
+    margin-top: 15px;
+    font-size: var(--font-size-small);
+    color: #666;
+}
+
+.login-container a {
+    color: var(--primary-light);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.3s;
+}
+
+.login-container a:hover {
+    text-decoration: underline;
+}
+
+
+/* Captcha Section */
+.captcha-box {
+    display: flex;
+    align-items: center;
+    margin: 10px 0;
+    justify-content: space-between;
+}
+
+.captcha-code {
+    font-weight: 500;
+    background-color: #f2f2f2;
+    padding: 10px;
+    border-radius: var(--border-radius);
+    font-size: 1.1rem;
+    user-select: none; /* Prevent text selection */
+    cursor: not-allowed; /* Change cursor to indicate no selection */
+    text-align: center;
+    color: var(--text-color);
+    flex-grow: 1;
+}
+
+
+.refresh-btn {
+    background: none;
+    border: none;
+    color: var(--primary-light);
+    font-size: 1.1rem;
+    cursor: pointer;
+    margin-left: 10px;
+    transition: color 0.3s;
+}
+
+.refresh-btn:hover {
+    color: var(--primary-color);
+}
+
+
+/* Card Layout Styling */
+.card {
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px var(--shadow);
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.card h3 {
+    font-size: 1.5rem;
+    color: var(--primary-color);
+    margin-bottom: 10px;
+}
+
+.card p {
+    font-size: var(--font-size-medium);
+    color: var(--light-text-color);
+    margin-top: 10px;
+}
+
+/* Input and Button Styling */
+.card input[type="file"],
+.card input[type="text"]{
+    padding: var(--padding);
+    font-size: var(--font-size-medium);
+    border-radius: var(--border-radius);
+    border: 1px solid #ddd;
+    margin: 10px 0;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+
+/* Alert Box Styling */
+.alert-box {
+    display: none; /* Initially hidden */
+    padding: var(--padding);
+    border-radius: var(--border-radius);
+    margin: 20px 0;
+}
+
+.alert-box.show {
+    display: block; /* Show when needed */
+}
+
+.alert-box.success {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.alert-box.error {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
